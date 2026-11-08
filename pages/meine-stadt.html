@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Meine Stadt, meine Wohnung — تفاعلي</title>
+<style>
+:root{--blue:#0a7ee2;--ink:#173153;--muted:#667893;--line:#cfe2f6;--bg1:#eef7ff;--bg2:#fff8f3;}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Tahoma,Arial,sans-serif;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:var(--ink);padding:10px}
+main{max-width:1254px;margin:0 auto}
+.poster-card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:8px;box-shadow:0 14px 34px rgba(18,58,104,.10)}
+.poster-wrap{position:relative;line-height:0;border-radius:16px;overflow:hidden;direction:ltr}
+.poster-wrap img{width:100%;height:auto;display:block;user-select:none;-webkit-user-drag:none}
+.hotspot{position:absolute;display:block;border:none;background:transparent;cursor:pointer;border-radius:14px;transition:box-shadow .18s ease, background .18s ease, transform .18s ease}
+.hotspot:hover,.hotspot:focus-visible{background:rgba(10,126,226,.12);box-shadow:inset 0 0 0 2px rgba(10,126,226,.9);outline:none;transform:scale(1.01)}
+.modal-bg{position:fixed;inset:0;background:rgba(10,28,60,.58);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal-bg.open{display:flex}
+.modal{width:min(520px,100%);background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 24px 80px rgba(0,16,45,.35)}
+.modal-head{display:flex;justify-content:space-between;align-items:center;background:linear-gradient(120deg,#0a83df,#174bb1);color:#fff;padding:15px 18px}
+.modal-head h2{margin:0;font-size:20px}
+.close{border:none;background:rgba(255,255,255,.18);color:#fff;width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:24px;line-height:1}
+.modal-body{padding:18px}
+.de{direction:ltr;text-align:left;font-size:28px;font-weight:800;color:#123a78;margin:0 0 10px;line-height:1.3}
+.ar{font-size:24px;line-height:1.7;color:#1f5138;margin:0 0 16px}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.actions button{flex:1;min-width:150px;border:none;border-radius:14px;padding:12px 14px;cursor:pointer;font-weight:700;font-size:15px}
+.actions .debtn{background:#0a7ee2;color:#fff}
+.actions .arbtn{background:#edf6ff;color:#0a5fad;border:1px solid #cde4fb}
+.note{font-size:12px;color:var(--muted);margin-top:12px;line-height:1.7}
+@media (max-width:640px){body{padding:4px}.poster-card{padding:4px;border-radius:14px}.poster-wrap{border-radius:10px}.de{font-size:23px}.ar{font-size:20px}}
+</style>
+</head>
+<body>
+<main>
+  <div class="poster-card">
+    <div class="poster-wrap" id="posterWrap">
+      <img src="../assets/images/meine-stadt-poster.png" alt="Meine Stadt, meine Wohnung">
+    </div>
+  </div>
+</main>
+
+<div class="modal-bg" id="modalBg" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <h2 id="modalTitle">الترجمة والنطق</h2>
+      <button class="close" id="closeBtn" aria-label="إغلاق">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="de" id="deText"></p>
+      <p class="ar" id="arText"></p>
+      <div class="actions">
+        <button class="debtn" id="playDe">🔊 النطق بالألمانية</button>
+        <button class="arbtn" id="playAr">🔊 النطق بالعربية</button>
+      </div>
+      <div class="note">يكفي تكليك على أي كلمة أو جملة فالصورة: الترجمة كتبان مباشرة والنطق بالألمانية كيبدا أوتوماتيكياً.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const W=1254, H=1254;
+const ITEMS=[{"de": "der Bahnhof", "ar": "محطة القطار", "x": 28, "y": 230, "w": 120, "h": 110, "speak": "der Bahnhof"}, {"de": "die Schule", "ar": "المدرسة", "x": 170, "y": 230, "w": 120, "h": 110, "speak": "die Schule"}, {"de": "der Kindergarten", "ar": "روضة الأطفال", "x": 312, "y": 230, "w": 120, "h": 110, "speak": "der Kindergarten"}, {"de": "das Krankenhaus", "ar": "المستشفى", "x": 454, "y": 230, "w": 120, "h": 110, "speak": "das Krankenhaus"}, {"de": "das Geschäft", "ar": "المتجر / المحل", "x": 28, "y": 385, "w": 120, "h": 110, "speak": "das Geschäft"}, {"de": "das Café", "ar": "المقهى", "x": 170, "y": 385, "w": 120, "h": 110, "speak": "das Café"}, {"de": "das Restaurant", "ar": "المطعم", "x": 312, "y": 385, "w": 120, "h": 110, "speak": "das Restaurant"}, {"de": "das Kino", "ar": "السينما", "x": 454, "y": 385, "w": 120, "h": 110, "speak": "das Kino"}, {"de": "die Bank", "ar": "البنك", "x": 28, "y": 540, "w": 120, "h": 110, "speak": "die Bank"}, {"de": "das Büro", "ar": "مكتب", "x": 170, "y": 540, "w": 120, "h": 110, "speak": "das Büro"}, {"de": "die Kirche", "ar": "الكنيسة", "x": 312, "y": 540, "w": 120, "h": 110, "speak": "die Kirche"}, {"de": "der Park", "ar": "الحديقة", "x": 454, "y": 540, "w": 120, "h": 110, "speak": "der Park"}, {"de": "das Wohnzimmer", "ar": "غرفة المعيشة", "x": 640, "y": 230, "w": 176, "h": 156, "speak": "das Wohnzimmer"}, {"de": "das Schlafzimmer", "ar": "غرفة النوم", "x": 832, "y": 230, "w": 176, "h": 156, "speak": "das Schlafzimmer"}, {"de": "die Küche", "ar": "المطبخ", "x": 640, "y": 428, "w": 176, "h": 156, "speak": "die Küche"}, {"de": "das Badezimmer", "ar": "الحمام", "x": 832, "y": 428, "w": 176, "h": 156, "speak": "das Badezimmer"}, {"de": "das Haus", "ar": "المنزل", "x": 1036, "y": 218, "w": 190, "h": 62, "speak": "das Haus"}, {"de": "die Wohnung", "ar": "الشقة", "x": 1036, "y": 285, "w": 190, "h": 62, "speak": "die Wohnung"}, {"de": "der Balkon", "ar": "الشرفة", "x": 1036, "y": 352, "w": 190, "h": 62, "speak": "der Balkon"}, {"de": "der Garten", "ar": "الحديقة", "x": 1036, "y": 419, "w": 190, "h": 62, "speak": "der Garten"}, {"de": "die Etage", "ar": "الطابق", "x": 1036, "y": 486, "w": 190, "h": 62, "speak": "die Etage"}, {"de": "der Aufzug", "ar": "المصعد", "x": 1036, "y": 553, "w": 190, "h": 68, "speak": "der Aufzug"}, {"de": "die S-Bahn", "ar": "قطار الضواحي", "x": 42, "y": 704, "w": 112, "h": 112, "speak": "die S-Bahn"}, {"de": "die U-Bahn", "ar": "مترو الأنفاق", "x": 178, "y": 704, "w": 112, "h": 112, "speak": "die U-Bahn"}, {"de": "der Bus", "ar": "الحافلة", "x": 315, "y": 704, "w": 112, "h": 112, "speak": "der Bus"}, {"de": "das Fahrrad", "ar": "الدراجة", "x": 42, "y": 858, "w": 112, "h": 112, "speak": "das Fahrrad"}, {"de": "das Auto", "ar": "السيارة", "x": 178, "y": 858, "w": 112, "h": 112, "speak": "das Auto"}, {"de": "zu Fuß", "ar": "على الأقدام", "x": 315, "y": 858, "w": 112, "h": 112, "speak": "zu Fuß"}, {"de": "wohnen (ich wohne)", "ar": "يعيش / يسكن", "x": 478, "y": 700, "w": 328, "h": 44, "speak": "wohnen"}, {"de": "gehen (ich gehe)", "ar": "يذهب", "x": 478, "y": 748, "w": 328, "h": 44, "speak": "gehen"}, {"de": "fahren (ich fahre)", "ar": "يسافر / يقود", "x": 478, "y": 796, "w": 328, "h": 44, "speak": "fahren"}, {"de": "einkaufen (ich kaufe ein)", "ar": "يتسوق", "x": 478, "y": 844, "w": 328, "h": 44, "speak": "einkaufen"}, {"de": "finden (ich finde)", "ar": "يجد", "x": 478, "y": 892, "w": 328, "h": 44, "speak": "finden"}, {"de": "spielen (ich spiele)", "ar": "يلعب", "x": 478, "y": 940, "w": 328, "h": 44, "speak": "spielen"}, {"de": "lernen (ich lerne)", "ar": "يتعلم", "x": 478, "y": 988, "w": 328, "h": 44, "speak": "lernen"}, {"de": "schön", "ar": "جميل", "x": 884, "y": 701, "w": 100, "h": 88, "speak": "schön"}, {"de": "groß", "ar": "كبير", "x": 1006, "y": 701, "w": 100, "h": 88, "speak": "groß"}, {"de": "klein", "ar": "صغير", "x": 1128, "y": 701, "w": 100, "h": 88, "speak": "klein"}, {"de": "ruhig", "ar": "هادئ", "x": 884, "y": 799, "w": 100, "h": 88, "speak": "ruhig"}, {"de": "laut", "ar": "صاخب", "x": 1006, "y": 799, "w": 100, "h": 88, "speak": "laut"}, {"de": "teuer", "ar": "غالي", "x": 1128, "y": 799, "w": 100, "h": 88, "speak": "teuer"}, {"de": "billig", "ar": "رخيص", "x": 884, "y": 897, "w": 100, "h": 88, "speak": "billig"}, {"de": "grün", "ar": "أخضر", "x": 1006, "y": 897, "w": 100, "h": 88, "speak": "grün"}, {"de": "modern", "ar": "حديث", "x": 1128, "y": 897, "w": 100, "h": 88, "speak": "modern"}, {"de": "Ich wohne in der Stadt.", "ar": "أنا أسكن في المدينة.", "x": 34, "y": 1051, "w": 575, "h": 40, "speak": "Ich wohne in der Stadt."}, {"de": "Ich wohne auf dem Land.", "ar": "أنا أسكن في الريف.", "x": 34, "y": 1094, "w": 575, "h": 40, "speak": "Ich wohne auf dem Land."}, {"de": "Meine Wohnung ist groß / klein.", "ar": "شقتي كبيرة / صغيرة.", "x": 34, "y": 1137, "w": 575, "h": 40, "speak": "Meine Wohnung ist groß / klein."}, {"de": "In meiner Stadt gibt es ...", "ar": "في مدينتي يوجد ...", "x": 34, "y": 1180, "w": 575, "h": 40, "speak": "In meiner Stadt gibt es ..."}, {"de": "Ich gehe gern ins Café.", "ar": "أحب الذهاب إلى المقهى.", "x": 658, "y": 1051, "w": 560, "h": 40, "speak": "Ich gehe gern ins Café."}, {"de": "Ich gehe oft ins Kino.", "ar": "أذهب غالبًا إلى السينما.", "x": 658, "y": 1094, "w": 560, "h": 40, "speak": "Ich gehe oft ins Kino."}, {"de": "Ich fahre mit der U-Bahn.", "ar": "أتنقل بالمترو.", "x": 658, "y": 1137, "w": 560, "h": 40, "speak": "Ich fahre mit der U-Bahn."}, {"de": "Der Park ist schön und ruhig.", "ar": "الحديقة جميلة وهادئة.", "x": 658, "y": 1180, "w": 560, "h": 40, "speak": "Der Park ist schön und ruhig."}];
+const wrap=document.getElementById('posterWrap');
+const bg=document.getElementById('modalBg');
+const deText=document.getElementById('deText');
+const arText=document.getElementById('arText');
+let active=null;
+function pct(n,total){return (n/total*100).toFixed(4)+'%';}
+function createHotspots(){
+  for(const item of ITEMS){
+    const b=document.createElement('button');
+    b.type='button'; b.className='hotspot';
+    b.style.left=pct(item.x,W); b.style.top=pct(item.y,H); b.style.width=pct(item.w,W); b.style.height=pct(item.h,H);
+    b.title=item.de+' — '+item.ar;
+    b.setAttribute('aria-label', item.de+' — '+item.ar);
+    b.addEventListener('click',()=>openItem(item));
+    wrap.appendChild(b);
+  }
+}
+function speak(text, lang){
+  if(!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang=lang;
+  const voices=window.speechSynthesis.getVoices();
+  const preferred=voices.find(v=>v.lang.toLowerCase().startsWith(lang.toLowerCase().slice(0,2)));
+  if(preferred) u.voice=preferred;
+  u.rate=0.92;
+  window.speechSynthesis.speak(u);
+}
+function openItem(item){
+  active=item;
+  deText.textContent=item.de;
+  arText.textContent=item.ar;
+  bg.classList.add('open');
+  bg.setAttribute('aria-hidden','false');
+  setTimeout(()=>speak(item.speak || item.de,'de-DE'),80);
+}
+function closeModal(){
+  bg.classList.remove('open');
+  bg.setAttribute('aria-hidden','true');
+  window.speechSynthesis && window.speechSynthesis.cancel();
+}
+document.getElementById('closeBtn').addEventListener('click',closeModal);
+bg.addEventListener('click',e=>{ if(e.target===bg) closeModal(); });
+document.getElementById('playDe').addEventListener('click',()=> active && speak(active.speak || active.de,'de-DE'));
+document.getElementById('playAr').addEventListener('click',()=> active && speak(active.ar,'ar-MA'));
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+createHotspots();
+if('speechSynthesis' in window) window.speechSynthesis.onvoiceschanged=()=>{};
+</script>
+</body>
+</html>

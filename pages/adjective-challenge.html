@@ -1,0 +1,2493 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#2457d6">
+<title>Meine Stadt, meine Wohnung – Interaktive Übungen</title>
+<style>
+:root{
+  --ink:#172554;--muted:#64748b;--paper:#f7f9ff;--line:#e5eaf5;
+  --blue:#2878e8;--purple:#8154d9;--pink:#e94d91;--green:#16a477;
+  --orange:#f08a25;--yellow:#f3c64e;--red:#e35b62;
+  --shadow:0 12px 35px rgba(29,54,112,.09);--radius:24px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:linear-gradient(180deg,#eaf3ff 0,#f8faff 330px,#f6f8fc 100%);color:var(--ink);font-family:Inter,system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;line-height:1.55}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+a{color:inherit;text-decoration:none}
+.topbar{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.91);backdrop-filter:blur(14px);border-bottom:1px solid #e5ebf5}
+.topbar-inner{max-width:1440px;margin:auto;padding:10px 22px;display:flex;align-items:center;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;white-space:nowrap}
+.brand-mark{width:38px;height:38px;border-radius:13px;background:linear-gradient(135deg,#1e75ed,#8b55dc);display:grid;place-items:center;color:#fff;font-size:20px;box-shadow:0 7px 16px #4b75d83d}
+.top-progress{flex:1;min-width:90px}
+.progress-meta{display:flex;justify-content:space-between;font-size:12px;color:#64748b;font-weight:700;margin-bottom:5px}
+.progress-track{height:8px;background:#e8edf7;border-radius:20px;overflow:hidden}
+.progress-fill{height:100%;width:0;background:linear-gradient(90deg,#2878e8,#a24fdb,#ed5593);border-radius:20px;transition:width .35s}
+.stat-pill{border:1px solid #e4eaf4;background:#fff;padding:8px 12px;border-radius:14px;font-weight:800;font-size:13px;white-space:nowrap}
+.reset-all{border:0;background:#fff1f2;color:#c24152;border-radius:12px;padding:9px 12px;font-weight:800}
+.hero{max-width:1440px;margin:22px auto 18px;padding:0 22px}
+.hero-card{position:relative;overflow:hidden;border-radius:30px;background:linear-gradient(115deg,#173e91 0%,#276fca 48%,#7d52d5 100%);color:#fff;padding:30px 34px;box-shadow:0 18px 45px #244e9c2b}
+.hero-card:before,.hero-card:after{content:"";position:absolute;border-radius:50%;background:#ffffff12}
+.hero-card:before{width:300px;height:300px;right:10%;top:-180px}
+.hero-card:after{width:220px;height:220px;right:-40px;bottom:-150px}
+.hero-content{position:relative;z-index:1;max-width:820px}
+.eyebrow{display:inline-flex;gap:8px;align-items:center;background:#ffffff22;border:1px solid #ffffff35;padding:6px 12px;border-radius:30px;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.hero h1{font-size:clamp(29px,4vw,48px);line-height:1.08;margin:13px 0 8px;letter-spacing:-.04em}
+.hero p{margin:0;color:#e7efff;max-width:670px;font-size:15px}
+.hero-bottom{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+.hero-chip{background:#ffffff1c;border:1px solid #ffffff30;padding:7px 11px;border-radius:12px;font-size:12px;font-weight:750}
+.layout{max-width:1440px;margin:auto;padding:0 22px 60px;display:grid;grid-template-columns:330px minmax(0,1fr);gap:20px;align-items:start}
+.sidebar{position:sticky;top:82px;background:#fff;border:1px solid var(--line);border-radius:22px;padding:15px;box-shadow:var(--shadow);max-height:calc(100vh - 100px);overflow:auto}
+.side-title{font-size:11px;color:#94a3b8;font-weight:900;letter-spacing:.12em;text-transform:uppercase;padding:5px 9px 10px}
+.nav-link{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:12px;color:#52627d;font-size:13px;font-weight:750;margin:2px 0;transition:.2s}
+.nav-link:hover{background:#f2f6ff;color:#2457d6}
+.nav-num{width:25px;height:25px;display:grid;place-items:center;border-radius:8px;background:#eef3fb;color:#49628c;font-size:11px;font-weight:900;flex:none}
+.nav-link.done .nav-num{background:#dcfce9;color:#168458}
+.main{min-width:0}
+.section-heading{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:5px 2px 14px}
+.section-heading h2{font-size:22px;margin:0;letter-spacing:-.03em}
+.section-heading p{margin:3px 0 0;color:var(--muted);font-size:13px}
+.poster-card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:14px;box-shadow:var(--shadow);margin-bottom:18px}
+.poster-card summary{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:850}
+.poster-card summary span:first-child{display:flex;align-items:center;gap:10px}
+.poster-card summary .tag{font-size:11px;background:#edf4ff;color:#2b65c4;border-radius:20px;padding:5px 9px}
+.poster-wrap{padding-top:14px;text-align:center}
+.poster-wrap img{max-width:100%;max-height:650px;object-fit:contain;border-radius:15px;border:1px solid #edf0f7}
+.exercise{position:relative;background:#fff;border:1px solid var(--line);border-radius:26px;padding:22px;margin:0 0 19px;box-shadow:var(--shadow);scroll-margin-top:88px;overflow:hidden}
+.exercise:before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--accent,var(--blue))}
+.exercise-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px}
+.exercise-title-wrap{display:flex;gap:12px;align-items:center;min-width:0}
+.exercise-icon{width:44px;height:44px;border-radius:15px;display:grid;place-items:center;background:var(--soft,#edf4ff);font-size:22px;flex:none}
+.exercise h3{margin:0;font-size:19px;letter-spacing:-.025em}
+.exercise-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.exercise-num{border:1px solid var(--line);background:#f8faff;color:#64748b;padding:6px 10px;border-radius:11px;font-size:11px;font-weight:900;white-space:nowrap}
+.instruction{padding:10px 13px;border-radius:13px;background:var(--soft,#f1f6ff);color:#40516f;font-size:13px;font-weight:700;margin:0 0 15px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.q-item{border:1px solid #e7ecf5;border-radius:15px;padding:12px;background:#fff;min-width:0;transition:.18s}
+.q-item.correct{border-color:#7bd6ad;background:#f0fff7}
+.q-item.incorrect{border-color:#f2a3a3;background:#fff5f5}
+.q-label{font-weight:800;font-size:14px;margin-bottom:8px}
+.small-ar{font-family:Tahoma,Arial,sans-serif;direction:rtl;unicode-bidi:plaintext;color:#64748b;font-size:13px}
+.option-row{display:flex;flex-wrap:wrap;gap:7px}
+.choice{border:1px solid #dfe6f2;background:#fff;border-radius:11px;padding:7px 11px;color:#40516f;font-weight:750;font-size:13px;transition:.15s}
+.choice:hover{border-color:var(--accent,var(--blue));background:var(--soft,#f3f7ff)}
+.choice.selected{background:var(--accent,var(--blue));border-color:var(--accent,var(--blue));color:#fff}
+.choice:disabled{opacity:.6;cursor:default}
+.field,select.field,textarea.field{width:100%;border:1px solid #dce4f0;border-radius:11px;padding:10px 11px;background:#fff;color:#1e293b;outline:none;min-width:0}
+.field:focus{border-color:var(--accent,var(--blue));box-shadow:0 0 0 3px color-mix(in srgb,var(--accent,var(--blue)) 15%,transparent)}
+.field[dir=rtl]{text-align:right}
+.field-wrap{display:grid;gap:7px}
+.field-label{font-size:12px;font-weight:800;color:#52627d}
+.btn-row{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin-top:16px}
+.primary-btn{border:0;background:var(--accent,var(--blue));color:#fff;padding:10px 16px;border-radius:12px;font-weight:850;box-shadow:0 5px 12px color-mix(in srgb,var(--accent,var(--blue)) 22%,transparent)}
+.secondary-btn{border:1px solid #dfe6f1;background:#fff;color:#53627a;padding:9px 13px;border-radius:12px;font-weight:800}
+.next-btn{border:0;background:#edf4ff;color:#255fc2;padding:10px 14px;border-radius:12px;font-weight:850}
+.feedback{display:none;margin-top:13px;border-radius:13px;padding:11px 13px;font-size:13px;font-weight:800}
+.feedback.show{display:block}
+.feedback.good{background:#e9fff3;color:#16734d}
+.feedback.mid{background:#fff7e6;color:#9a5a08}
+.feedback.bad{background:#fff0f0;color:#b23b45}
+.muted{color:var(--muted)}
+/* unique exercise themes */
+.theme-blue{--accent:#2681e8;--soft:#edf6ff}
+.theme-gold{--accent:#e2a51e;--soft:#fff8df}
+.theme-purple{--accent:#8a55dc;--soft:#f4efff}
+.theme-mint{--accent:#16a477;--soft:#eafaf4}
+.theme-coral{--accent:#e66c54;--soft:#fff1eb}
+.theme-navy{--accent:#334b86;--soft:#edf1fb}
+.theme-map{--accent:#18a68a;--soft:#e8fbf5;background:linear-gradient(135deg,#fff 0%,#f4fffb 100%)}
+.theme-orange{--accent:#ed8b2b;--soft:#fff3e5}
+.theme-pink{--accent:#e64e91;--soft:#fff0f7}
+.theme-audio{--accent:#6559d7;--soft:#f0efff}
+.theme-reading{--accent:#b68a43;--soft:#fff9ec}
+.theme-chat{--accent:#2497b9;--soft:#eaf9ff}
+.theme-detective{--accent:#df555c;--soft:#fff0f0}
+.theme-sort{--accent:#5471b8;--soft:#eef3ff}
+.theme-write{--accent:#2d8c74;--soft:#edfaf5}
+.theme-final{--accent:#263b77;--soft:#eaf0ff;background:linear-gradient(145deg,#fff 0%,#f3f6ff 100%)}
+.match-columns{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.match-col{display:grid;gap:8px}
+.match-btn{width:100%;min-height:43px;text-align:left;border:1px solid #e1e8f3;background:#fff;border-radius:12px;padding:9px 12px;font-weight:800;color:#354663;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.match-btn .small-ar{font-size:13px}
+.match-btn.active{outline:2px solid var(--accent);background:var(--soft)}
+.match-btn.matched{background:#eafff3;border-color:#77d6a8;color:#18734e;opacity:.78}
+.match-btn.wrong{border-color:#ed9a9a;background:#fff1f1}
+.pair-counter{font-size:12px;font-weight:850;color:var(--muted);margin:0 0 10px}
+.article-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.article-card{border-radius:16px;padding:12px;border:1px solid #f0e5bc;background:#fffdf6}
+.article-word{font-size:17px;font-weight:900;margin-bottom:9px}
+.article-word small{display:block;color:#8b7b50;font-size:11px;font-weight:650;margin-top:2px}
+.article-buttons{display:flex;gap:5px}
+.article-buttons .choice{flex:1;padding:7px 3px}
+.word-puzzle{background:#fff;border:1px dashed #efb09b;border-radius:14px;padding:12px}
+.scramble{font-size:19px;font-weight:950;letter-spacing:.15em;color:#d05c47}
+.sentence-box{background:#172c5b;color:#fff;padding:16px;border-radius:17px;margin-bottom:12px}
+.sentence-box .q-label{color:#e7edff}
+.word-bank{display:flex;flex-wrap:wrap;gap:7px}
+.word-chip{border:1px solid #ccd7ef;background:#fff;border-radius:10px;padding:7px 10px;font-weight:800;color:#30446f}
+.word-chip.used{opacity:.35;text-decoration:line-through}
+.answer-line{min-height:44px;background:#ffffff16;border:1px dashed #ffffff66;border-radius:12px;padding:8px;display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+.answer-chip{background:#dce8ff;color:#1d3974;padding:5px 9px;border-radius:8px;font-size:13px;font-weight:850}
+.map-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.map-tile{border-radius:16px;background:#fff;border:1px solid #cdeee2;padding:13px;text-align:center}
+.map-emoji{font-size:27px}
+.map-tile select{margin-top:8px}
+.adj-match{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.adj-side{display:grid;gap:8px}
+.adj-card{border-radius:14px;padding:12px;border:1px solid #f3c5d9;background:#fff;font-weight:900;text-align:center}
+.sound-row{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #e1ddff;border-radius:15px;padding:12px}
+.sound-btn{width:44px;height:44px;border:0;border-radius:14px;background:#6559d7;color:#fff;font-size:20px;flex:none}
+.reading-paper{background:#fffdf7;border:1px solid #f1e2bf;border-radius:17px;padding:18px 20px;font-family:Georgia,serif;color:#594a30;font-size:16px;line-height:1.85;box-shadow:inset 0 0 0 5px #fff9eb}
+.chat-line{display:flex;gap:10px;align-items:flex-start;margin:11px 0}
+.avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#dff5ff;flex:none}
+.bubble{background:#fff;border:1px solid #d6edf6;border-radius:4px 16px 16px 16px;padding:11px 13px;max-width:88%;font-weight:700}
+.chat-line.right{flex-direction:row-reverse}
+.chat-line.right .bubble{background:#eafaf3;border-color:#d3f0e2;border-radius:16px 4px 16px 16px}
+.lined{background:repeating-linear-gradient(#fff,#fff 31px,#dce8e2 32px);line-height:32px;min-height:150px}
+.wordbank{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}
+.wordbank span{background:#e8f5ef;color:#26725c;border-radius:9px;padding:6px 9px;font-size:12px;font-weight:850}
+.final-banner{background:#20396f;color:#fff;border-radius:17px;padding:17px;margin-bottom:14px}
+.final-banner strong{font-size:18px}
+.footer{text-align:center;color:#94a3b8;font-size:12px;padding:15px}
+@media(max-width:980px){.layout{grid-template-columns:1fr}.sidebar{position:relative;top:auto;max-height:none;display:flex;gap:5px;overflow-x:auto;padding:10px}.side-title{display:none}.nav-link{flex:none;white-space:nowrap}.nav-num{width:23px;height:23px}.hero{margin-top:14px}.hero-card{padding:24px}}
+@media(max-width:650px){
+ .topbar-inner{padding:8px 12px;gap:8px}.brand{font-size:12px}.brand-mark{width:32px;height:32px}.stat-pill{font-size:11px;padding:7px 8px}.reset-all{font-size:11px;padding:8px}.progress-meta{font-size:10px}
+ .hero{padding:0 12px}.hero-card{padding:22px 19px;border-radius:22px}.hero p{font-size:13px}
+ .layout{padding:0 12px 40px;gap:12px}.sidebar{border-radius:16px}.exercise{padding:16px;border-radius:20px}.exercise h3{font-size:17px}.exercise-icon{width:39px;height:39px}
+ .grid-2,.match-columns{grid-template-columns:1fr}.grid-3,.article-grid,.map-grid{grid-template-columns:repeat(2,1fr)}
+ .adj-match{gap:7px}.match-btn{font-size:12px}.exercise-num{font-size:10px;padding:5px 7px}
+ .section-heading h2{font-size:19px}
+}
+@media(max-width:390px){.grid-3,.article-grid,.map-grid{grid-template-columns:1fr}.stat-pill.points{display:none}.exercise-head{gap:6px}}
+
+/* Duolingo-like roadmap sidebar */
+.duolingo-sidebar{
+  background:linear-gradient(180deg,#fbfdff 0%,#f4f8ff 100%);
+  border:1px solid #e4ebf8;
+  border-radius:28px;
+  padding:16px;
+  box-shadow:0 18px 40px rgba(30,64,175,.08);
+}
+.duo-header-card{
+  background:linear-gradient(135deg,#1d4ed8 0%,#2563eb 50%,#7c3aed 100%);
+  color:#fff;
+  border-radius:24px;
+  padding:16px;
+  margin-bottom:16px;
+  box-shadow:0 16px 30px rgba(37,99,235,.25);
+}
+.duo-mini-label{
+  display:inline-block;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.22);
+}
+.duo-percentage-wrap{
+  display:flex;
+  gap:14px;
+  align-items:center;
+  margin-top:12px;
+}
+.duo-ring{
+  width:94px;height:94px;flex:none;border-radius:50%;
+  background:conic-gradient(#facc15 0 360deg,#ffffff26 360deg 360deg);
+  display:grid;place-items:center;
+  box-shadow:inset 0 0 0 3px rgba(255,255,255,.12);
+}
+.duo-ring-inner{
+  width:72px;height:72px;border-radius:50%;background:#fff;color:#1e3a8a;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-weight:900;
+}
+.duo-ring-inner span{font-size:18px;line-height:1}
+.duo-ring-inner small{font-size:10px;color:#64748b;margin-top:3px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+.duo-head-meta h3{margin:0 0 5px;font-size:20px;letter-spacing:-.03em}
+.duo-head-meta p{margin:0;color:#e5edff;font-size:12px;line-height:1.5}
+.duo-progress-line{
+  height:10px;border-radius:999px;background:rgba(255,255,255,.22);
+  margin-top:14px;overflow:hidden;border:1px solid rgba(255,255,255,.18)
+}
+.duo-progress-fill{
+  height:100%;width:0%;
+  background:linear-gradient(90deg,#facc15,#fde68a);
+  border-radius:999px;
+  transition:width .35s ease;
+}
+.duo-progress-caption{
+  display:flex;justify-content:space-between;gap:10px;
+  font-size:11px;font-weight:800;margin-top:8px;color:#eef4ff
+}
+.duo-stage{
+  position:relative;
+  background:#fff;
+  border:1px solid #e6edf8;
+  border-radius:24px;
+  padding:16px 14px 14px;
+  margin:0 0 14px;
+  box-shadow:0 10px 24px rgba(51,84,160,.07);
+}
+.duo-stage:before{
+  content:"";
+  position:absolute;left:26px;top:-14px;width:2px;height:14px;
+  background:linear-gradient(180deg,#bed6ff,#dbeafe);
+}
+.duo-stage:first-of-type:before{display:none}
+.duo-stage-top{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
+  margin-bottom:12px;
+}
+.duo-stage-kicker{
+  color:#7c8aa5;font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;
+}
+.duo-stage-title{
+  color:#1f3b73;font-size:18px;font-weight:900;letter-spacing:-.02em;margin-top:3px;
+}
+.duo-stars{
+  font-size:14px;
+  background:#fff8db;
+  border:1px solid #fde68a;
+  color:#c48a00;
+  border-radius:999px;
+  padding:6px 10px;
+  white-space:nowrap;
+  box-shadow:inset 0 -2px 0 rgba(250,204,21,.18);
+}
+.duo-stage-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.duo-stage-grid.trio .duo-node:last-child{
+  grid-column:1 / -1;
+}
+.duo-node{
+  display:flex;align-items:center;gap:10px;
+  min-height:62px;
+  border-radius:18px;
+  padding:10px 12px;
+  background:linear-gradient(180deg,#f8fbff 0%,#eef5ff 100%);
+  border:1px solid #dce9fb;
+  color:#40516f;
+  font-weight:850;
+  transition:.18s ease;
+  box-shadow:0 6px 14px rgba(59,130,246,.07);
+}
+.duo-node:hover{
+  transform:translateY(-2px);
+  border-color:#93c5fd;
+  background:linear-gradient(180deg,#ffffff 0%,#eff6ff 100%);
+  color:#1d4ed8;
+}
+.duo-node-num{
+  width:34px;height:34px;flex:none;border-radius:12px;
+  display:grid;place-items:center;
+  background:linear-gradient(180deg,#2563eb 0%,#1d4ed8 100%);
+  color:#fff;font-size:13px;font-weight:900;
+  box-shadow:0 5px 10px rgba(37,99,235,.24);
+}
+.duo-node-label{
+  font-size:13px;line-height:1.2;
+}
+.duo-node.done{
+  background:linear-gradient(180deg,#effdf6 0%,#dcfce7 100%);
+  border-color:#9ae6b4;
+  color:#166534;
+}
+.duo-node.done .duo-node-num{
+  background:linear-gradient(180deg,#22c55e 0%,#16a34a 100%);
+}
+@media(max-width:980px){
+  .duolingo-sidebar{padding:14px}
+  .duo-stage-grid,.duo-stage-grid.trio{grid-template-columns:1fr}
+  .duo-stage-grid.trio .duo-node:last-child{grid-column:auto}
+}
+@media(max-width:650px){
+  .duo-percentage-wrap{flex-direction:column;align-items:flex-start}
+  .duo-ring{width:84px;height:84px}
+  .duo-ring-inner{width:64px;height:64px}
+  .duo-stage-title{font-size:16px}
+  .duo-stage-top{flex-direction:column;align-items:flex-start}
+  .duo-stars{font-size:13px}
+}
+
+
+
+
+/* Stage sidebar + main stage circles + full-page exercise display */
+.layout{max-width:1500px;margin:auto;padding:0 22px 60px;display:grid;grid-template-columns:270px minmax(0,1fr);gap:22px;align-items:start}
+.stage-sidebar{
+  background:linear-gradient(180deg,#fbfdff 0%,#f3f7ff 100%);
+  border:1px solid #e2eaf8;border-radius:26px;padding:15px;box-shadow:0 16px 35px rgba(36,74,144,.09)
+}
+.duo-header-card{
+  border-radius:24px;background:linear-gradient(145deg,#1749a4 0%,#2563eb 58%,#7547d6 100%);
+  padding:16px;box-shadow:0 16px 32px rgba(37,99,235,.24)
+}
+.duo-ring{border-radius:50%;border:4px solid rgba(255,255,255,.24);box-shadow:0 0 0 5px rgba(255,255,255,.08),inset 0 0 0 2px rgba(255,255,255,.15)}
+.duo-ring-inner{border-radius:50%;box-shadow:0 2px 9px rgba(12,35,83,.15)}
+.stage-nav-btn{
+  width:100%;display:flex;align-items:center;gap:11px;text-align:left;
+  border:1px solid #e4ebf7;background:#fff;border-radius:18px;padding:12px 13px;
+  color:#395178;margin:0 0 10px;cursor:pointer;transition:.18s;
+  box-shadow:0 6px 16px rgba(43,73,136,.05)
+}
+.stage-nav-btn:hover{transform:translateY(-2px);border-color:#a8cbff;background:#f6faff}
+.stage-nav-btn.active{background:#edf5ff;border-color:#7fb1ff;color:#1d4ed8}
+.stage-nav-icon{
+  width:38px;height:38px;flex:none;border-radius:50%;display:grid;place-items:center;
+  background:linear-gradient(145deg,#e8f1ff,#dbeafe);font-size:20px;font-weight:900;color:#2563eb
+}
+.stage-nav-btn.active .stage-nav-icon{
+  background:linear-gradient(145deg,#60a5fa,#2563eb);color:#fff
+}
+.stage-nav-copy strong{display:block;font-size:15px;font-weight:900}
+.stage-nav-copy small{display:block;font-size:11px;color:#7a8aa5;font-weight:750}
+
+.stage-screen{
+  display:none;
+  position:relative;
+  padding:28px 24px 34px;
+  border-radius:28px;
+  border:1px solid #dfe8f6;
+  background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);
+  box-shadow:0 16px 34px rgba(33,69,135,.08);
+  margin:0 0 22px;
+}
+.stage-screen.active-stage-screen{display:block;animation:exerciseReveal .28s ease both}
+.stage-screen-head{text-align:center;margin-bottom:18px}
+.stage-screen-mini{
+  display:inline-flex;padding:6px 12px;border-radius:999px;
+  background:#eaf1ff;color:#2864c7;font-size:11px;font-weight:900;letter-spacing:.12em
+}
+.stage-screen h2{
+  margin:11px 0 5px;font-size:30px;letter-spacing:-.03em;color:#20396d
+}
+.stage-screen p{margin:0;color:#6f7e98;font-size:14px}
+.stage-stars-row{
+  text-align:center;color:#f4b530;font-size:21px;letter-spacing:4px;font-weight:900;margin-bottom:24px
+}
+.stage-stars-row .star-off{color:#d7dee9}
+.lesson-circles-row{
+  display:flex;flex-wrap:wrap;gap:26px 20px;min-height:210px;
+  align-items:flex-start
+}
+.lesson-circles-row.right{justify-content:flex-start}
+.lesson-circles-row.left{justify-content:flex-start}
+.lesson-circles-row.right .lesson-circle:nth-child(1){margin-left:0}
+.lesson-circles-row.right .lesson-circle:nth-child(2){margin-left:48px}
+.lesson-circles-row.right .lesson-circle:nth-child(3){margin-left:96px}
+.lesson-circles-row.right .lesson-circle:nth-child(4){margin-left:144px}
+.lesson-circles-row.left .lesson-circle:nth-child(1){margin-left:144px}
+.lesson-circles-row.left .lesson-circle:nth-child(2){margin-left:96px}
+.lesson-circles-row.left .lesson-circle:nth-child(3){margin-left:48px}
+.lesson-circles-row.left .lesson-circle:nth-child(4){margin-left:0}
+.lesson-circles-row.small-set.right .lesson-circle:nth-child(1){margin-left:60px}
+.lesson-circles-row.small-set.right .lesson-circle:nth-child(2){margin-left:130px}
+.lesson-circles-row.small-set.right .lesson-circle:nth-child(3){margin-left:200px}
+.lesson-circles-row.small-set.left .lesson-circle:nth-child(1){margin-left:200px}
+.lesson-circles-row.small-set.left .lesson-circle:nth-child(2){margin-left:130px}
+.lesson-circles-row.small-set.left .lesson-circle:nth-child(3){margin-left:60px}
+.lesson-circle{
+  width:150px;min-height:175px;border:0;background:transparent;padding:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  text-align:center;cursor:pointer;transition:transform .18s
+}
+.lesson-circle:hover{transform:translateY(-5px)}
+.circle-icon{
+  width:98px;height:98px;border-radius:50%;display:grid;place-items:center;
+  background:linear-gradient(145deg,#e6eefb,#f3f6fb);border:6px solid #d8dde6;
+  box-shadow:0 6px 0 #cfd6e0,0 12px 22px rgba(62,84,122,.08);
+  font-size:38px;color:#8393aa;transition:.18s
+}
+.circle-title{
+  margin-top:14px;font-size:13px;font-weight:900;color:#394251;line-height:1.25
+}
+.circle-sub{
+  margin-top:3px;font-size:12px;font-weight:800;color:#8f9aa9
+}
+.lesson-circle.active .circle-icon,
+.lesson-circle.done .circle-icon{
+  background:linear-gradient(145deg,#49a4ff,#1c74df);
+  border-color:#7cc4ff;color:#fff;box-shadow:0 6px 0 #1a64bd,0 12px 22px rgba(28,116,223,.22)
+}
+.lesson-circle.active .circle-title,
+.lesson-circle.done .circle-title{color:#214579}
+.lesson-circle.done .circle-icon{
+  background:linear-gradient(145deg,#5edc8e,#17a65b);
+  border-color:#a8eec0;box-shadow:0 6px 0 #12854a,0 12px 22px rgba(23,166,91,.18)
+}
+.lesson-circle.done .circle-sub{color:#1f8b56}
+.lesson-circle.locked .circle-icon{
+  background:linear-gradient(145deg,#eeeeef,#dddddf);border-color:#e6e6e8;color:#b3b8c1;
+  box-shadow:0 6px 0 #d6d8dc,0 12px 22px rgba(80,88,100,.05)
+}
+.lesson-circle.locked .circle-title{color:#6e7683}
+.lesson-circle.locked .circle-sub{color:#a0a7b2}
+
+.exercise{
+  display:none!important;
+  max-width:none!important;
+  width:100%;
+}
+.exercise.active-exercise{
+  display:block!important;
+  animation:exerciseReveal .28s ease both
+}
+.exercise-head{position:sticky;top:72px;background:#fff;padding-bottom:12px;z-index:5}
+.exercise-back{
+  display:inline-flex;align-items:center;gap:8px;margin:0 0 12px;
+  border:1px solid #d9e5f6;background:#f6faff;color:#225cbd;
+  border-radius:12px;padding:8px 12px;font-size:13px;font-weight:850;cursor:pointer
+}
+.exercise-back:hover{background:#edf5ff}
+.stage-screen-hidden{display:none!important}
+
+@keyframes exerciseReveal{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+@media(max-width:1100px){
+  .lesson-circles-row.right .lesson-circle:nth-child(n),
+  .lesson-circles-row.left .lesson-circle:nth-child(n),
+  .lesson-circles-row.small-set.right .lesson-circle:nth-child(n),
+  .lesson-circles-row.small-set.left .lesson-circle:nth-child(n){margin-left:0}
+  .lesson-circles-row{justify-content:center}
+}
+@media(max-width:980px){
+  .layout{grid-template-columns:1fr}
+  .stage-sidebar{position:relative;top:auto;max-height:none}
+  .exercise-head{top:0}
+}
+@media(max-width:650px){
+  .layout{padding:0 12px 40px;gap:12px}
+  .stage-screen{padding:20px 14px 24px;border-radius:22px}
+  .stage-screen h2{font-size:24px}
+  .stage-stars-row{font-size:18px;letter-spacing:2px}
+  .lesson-circle{width:128px;min-height:162px}
+  .circle-icon{width:86px;height:86px;font-size:33px;border-width:5px}
+  .circle-title{font-size:12px}
+}
+
+
+/* Vertical stage roadmap */
+.stage-sidebar{
+  display:block !important;
+  overflow:visible !important;
+}
+.stage-sidebar .stage-nav-btn{
+  display:flex;
+  width:100%;
+  margin:0 0 10px;
+}
+.lesson-circles-row,
+.lesson-circles-row.right,
+.lesson-circles-row.left{
+  display:flex;
+  flex-direction:column;
+  flex-wrap:nowrap;
+  align-items:center;
+  justify-content:flex-start;
+  gap:22px;
+  min-height:0;
+}
+.lesson-circles-row .lesson-circle,
+.lesson-circles-row.right .lesson-circle,
+.lesson-circles-row.left .lesson-circle,
+.lesson-circles-row.small-set .lesson-circle{
+  margin-left:0 !important;
+}
+@media(max-width:980px){
+  .stage-sidebar{display:block !important;overflow:visible !important}
+  .stage-sidebar .stage-nav-btn{flex:none;width:100%}
+}
+
+
+/* Fullscreen stage view */
+.stage-screen.fullscreen-stage{
+  position:fixed !important; inset:0 !important; z-index:50;
+  width:100vw; height:100vh; max-height:100vh; overflow-y:auto;
+  margin:0 !important; border-radius:0 !important; padding:32px clamp(18px,5vw,80px) 60px !important;
+  background:linear-gradient(180deg,#fff 0%,#f5f8ff 100%);
+}
+.stage-screen.fullscreen-stage .stage-screen-head{padding-top:18px}
+.stage-fullscreen-close{position:fixed;top:18px;right:22px;z-index:60;border:1px solid #d9e5f6;background:#fff;color:#225cbd;border-radius:12px;padding:9px 14px;font-weight:850;box-shadow:0 6px 16px rgba(33,69,135,.12)}
+body.stage-fullscreen-open{overflow:hidden}
+
+
+/* Clean landing page: show only the five stages */
+.layout{
+  max-width:100%;
+  margin:0 auto;
+  padding:28px 20px 50px;
+  display:block;
+}
+.main{
+  width:100%;
+  max-width:860px;
+  margin:0 auto;
+}
+.stage-home{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:14px;
+  width:min(100%,620px);
+  margin:3vh auto 0;
+  padding:8px 0;
+}
+.stage-home .stage-nav-btn{
+  width:100%;
+  min-height:82px;
+  margin:0;
+  padding:16px 20px;
+  border-radius:20px;
+}
+.stage-home .stage-nav-icon{
+  width:48px;
+  height:48px;
+  font-size:22px;
+}
+.stage-home .stage-nav-copy strong{font-size:17px}
+.stage-home .stage-nav-copy small{font-size:12px}
+.stage-screen{display:none}
+.stage-screen.active-stage-screen{display:block}
+@media(max-width:650px){
+  .layout{padding:16px 12px 32px}
+  .stage-home{margin:1vh auto 0;gap:11px}
+  .stage-home .stage-nav-btn{min-height:74px;padding:13px 15px}
+  .stage-home .stage-nav-icon{width:42px;height:42px;font-size:20px}
+}
+
+
+/* Stage accordion: exercise tiles appear horizontally below the selected stage */
+.stage-home{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:13px;
+  width:min(100%, 900px);
+  margin:3vh auto 0;
+  padding:8px 0 30px;
+}
+.stage-item{
+  width:100%;
+  border-radius:22px;
+}
+.stage-home .stage-nav-btn{
+  width:100%;
+  min-height:76px;
+  margin:0;
+  padding:13px 18px;
+  border:1px solid #e1e9f7;
+  border-radius:20px;
+  background:rgba(255,255,255,.96);
+  box-shadow:0 7px 20px rgba(43,73,136,.055);
+  transition:background .2s ease,border-color .2s ease,box-shadow .2s ease,border-radius .2s ease;
+}
+.stage-home .stage-nav-btn:hover{
+  transform:translateY(-1px);
+  border-color:#b7d0fb;
+  background:#fff;
+}
+.stage-home .stage-item.is-open .stage-nav-btn{
+  border-color:#8dbbff;
+  border-radius:20px 20px 13px 13px;
+  background:linear-gradient(100deg,#f6faff,#fff);
+  box-shadow:0 5px 15px rgba(37,99,235,.07);
+}
+.stage-home .stage-nav-icon{
+  width:44px;height:44px;font-size:20px;
+}
+.stage-home .stage-nav-copy strong{font-size:16px}
+.stage-home .stage-nav-copy small{font-size:11px}
+.stage-screen{
+  display:none;
+  width:100%;
+  position:relative;
+  margin:0;
+  padding:17px 18px 19px;
+  border:1px solid #dce8fa;
+  border-top:0;
+  border-radius:0 0 20px 20px;
+  background:linear-gradient(180deg,#fff 0%,#f9fbff 100%);
+  box-shadow:0 10px 22px rgba(43,73,136,.055);
+  animation:exerciseReveal .22s ease both;
+}
+.stage-screen.active-stage-screen{display:block}
+.stage-screen .stage-screen-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:6px 12px;
+  margin:0 0 10px;
+  text-align:left;
+}
+.stage-screen .stage-screen-mini{
+  display:none;
+}
+.stage-screen h2{
+  margin:0;
+  font-size:15px;
+  letter-spacing:0;
+  color:#40577d;
+}
+.stage-screen p{
+  margin:0;
+  font-size:11px;
+  color:#8492a8;
+}
+.stage-screen .stage-stars-row{
+  text-align:right;
+  font-size:14px;
+  letter-spacing:2px;
+  margin:0 0 12px;
+}
+.lesson-circles-row,
+.lesson-circles-row.right,
+.lesson-circles-row.left,
+.lesson-circles-row.small-set{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  align-items:stretch;
+  justify-content:stretch;
+  gap:11px;
+  min-height:0;
+}
+.lesson-circles-row .lesson-circle,
+.lesson-circles-row.right .lesson-circle,
+.lesson-circles-row.left .lesson-circle,
+.lesson-circles-row.small-set .lesson-circle{
+  width:100%;
+  min-width:0;
+  min-height:132px;
+  margin:0 !important;
+  padding:12px 9px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid #e2eaf6;
+  border-radius:17px;
+  background:#fff;
+  box-shadow:0 5px 14px rgba(51,84,160,.055);
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+}
+.lesson-circles-row .lesson-circle:hover{
+  transform:translateY(-3px);
+  border-color:#a8caff;
+  box-shadow:0 9px 18px rgba(37,99,235,.10);
+}
+.lesson-circles-row .circle-icon{
+  width:54px;height:54px;
+  border-width:4px;
+  font-size:25px;
+  box-shadow:0 4px 0 #d3dce9,0 7px 13px rgba(62,84,122,.07);
+}
+.lesson-circles-row .circle-title{
+  margin-top:9px;
+  min-height:30px;
+  font-size:12px;
+  line-height:1.25;
+  color:#3f5273;
+}
+.lesson-circles-row .circle-sub{
+  margin-top:4px;
+  font-size:10px;
+}
+.lesson-circles-row .lesson-circle.done{
+  border-color:#a6e7c2;
+  background:#f5fff9;
+}
+.lesson-circles-row .lesson-circle.done .circle-sub{
+  color:#168653;
+}
+@media(max-width:720px){
+  .stage-home{width:100%;gap:11px;margin:1vh auto 0}
+  .stage-home .stage-nav-btn{min-height:70px;padding:12px 14px}
+  .stage-screen{padding:14px 12px 15px}
+  .lesson-circles-row,
+  .lesson-circles-row.right,
+  .lesson-circles-row.left,
+  .lesson-circles-row.small-set{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:9px;
+  }
+  .lesson-circles-row .lesson-circle,
+  .lesson-circles-row.right .lesson-circle,
+  .lesson-circles-row.left .lesson-circle,
+  .lesson-circles-row.small-set .lesson-circle{
+    min-height:120px;
+  }
+}
+@media(max-width:380px){
+  .lesson-circles-row,
+  .lesson-circles-row.right,
+  .lesson-circles-row.left,
+  .lesson-circles-row.small-set{
+    grid-template-columns:1fr 1fr;
+  }
+  .lesson-circles-row .circle-icon{width:48px;height:48px}
+  .lesson-circles-row .circle-title{font-size:11px}
+}
+
+
+/* Professional matching exercise — Übung 1 */
+#u1 .instruction{
+  border:1px solid #dce9ff;
+  background:linear-gradient(135deg,#f3f8ff,#f8f6ff);
+  color:#36527d;
+  padding:13px 16px;
+  border-radius:15px;
+}
+#u1 .match-progress-card{
+  margin:0 0 16px;
+  padding:15px 17px;
+  border:1px solid #e3ebf8;
+  border-radius:18px;
+  background:linear-gradient(135deg,#fbfdff 0%,#f3f7ff 100%);
+  box-shadow:0 7px 18px rgba(42,75,135,.05);
+}
+#u1 .match-progress-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:12px;
+  margin-bottom:11px;
+}
+#u1 .match-progress-copy{display:grid;gap:3px}
+#u1 .match-progress-kicker{
+  color:#8293ad;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.13em;
+}
+#u1 .match-progress-copy strong{
+  color:#2b426a;
+  font-size:14px;
+  font-weight:900;
+}
+#u1 .match-progress-status{
+  color:#7184a3;
+  font-size:11px;
+  font-weight:800;
+  text-align:right;
+}
+#u1 .match-progress-track{
+  height:9px;
+  overflow:hidden;
+  border-radius:20px;
+  background:#e4ebf6;
+  box-shadow:inset 0 1px 2px rgba(36,61,105,.07);
+}
+#u1 .match-progress-track span{
+  display:block;
+  width:0%;
+  height:100%;
+  border-radius:20px;
+  background:linear-gradient(90deg,#347ff0,#5b9df4,#8a69df);
+  transition:width .35s ease;
+}
+#u1 .match-columns.match-columns-pro{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  align-items:start;
+  gap:14px;
+}
+#u1 .match-panel{
+  min-width:0;
+  padding:12px;
+  border:1px solid #e4ebf6;
+  border-radius:19px;
+  background:#f9fbff;
+}
+#u1 .match-panel-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:2px 2px 11px;
+  margin-bottom:10px;
+  border-bottom:1px solid #e8eef8;
+}
+#u1 .match-panel-head > div{display:grid;gap:2px}
+#u1 .match-panel-eyebrow{
+  color:#93a1b7;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.13em;
+}
+#u1 .match-panel-head h4{
+  margin:0;
+  color:#304a73;
+  font-size:16px;
+  font-weight:900;
+}
+#u1 .match-panel-count{
+  flex:none;
+  padding:5px 8px;
+  border-radius:999px;
+  color:#55709a;
+  background:#edf3ff;
+  font-size:10px;
+  font-weight:850;
+}
+#u1 .match-col{display:grid;gap:7px}
+#u1 .match-btn.match-btn-pro{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  width:100%;
+  min-height:47px;
+  padding:8px 10px;
+  border:1px solid #e0e8f4;
+  border-radius:13px;
+  background:#fff;
+  color:#344b70;
+  text-align:left;
+  font-size:12.5px;
+  font-weight:850;
+  line-height:1.25;
+  box-shadow:0 2px 5px rgba(39,67,117,.025);
+  transition:background .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+#u1 .match-btn.match-btn-pro:hover:not(.matched){
+  transform:translateY(-1px);
+  border-color:#a9c9fb;
+  background:#fafdff;
+  box-shadow:0 5px 12px rgba(47,111,206,.08);
+}
+#u1 .match-btn-pro .match-label{flex:1;min-width:0}
+#u1 .match-btn-pro .match-symbol{
+  display:grid;
+  place-items:center;
+  flex:none;
+  width:29px;
+  height:29px;
+  border-radius:10px;
+  background:#f0f5ff;
+  font-size:16px;
+}
+#u1 .match-btn-pro .small-ar{
+  font-family:Tahoma,Arial,sans-serif;
+  font-size:14px;
+  font-weight:850;
+}
+#u1 .match-btn-pro[dir="rtl"]{text-align:right}
+#u1 .match-btn.match-btn-pro.active{
+  outline:none;
+  border-color:#4e91f4;
+  background:linear-gradient(135deg,#edf5ff,#f5f8ff);
+  color:#205bb4;
+  box-shadow:0 0 0 3px rgba(65,137,235,.13);
+}
+#u1 .match-btn-pro.active .match-symbol{background:#dceaff}
+#u1 .match-btn.match-btn-pro.matched{
+  border-color:#9cddba;
+  background:linear-gradient(135deg,#effdf5,#e7f9ef);
+  color:#18734d;
+  opacity:1;
+  box-shadow:none;
+  cursor:default;
+}
+#u1 .match-btn-pro.matched .match-symbol{display:none}
+#u1 .match-btn-pro.matched::after{
+  content:"✓";
+  display:grid;
+  place-items:center;
+  flex:none;
+  width:25px;
+  height:25px;
+  border-radius:50%;
+  background:#d2f4df;
+  color:#16804e;
+  font-size:14px;
+  font-weight:950;
+}
+#u1 .match-btn.match-btn-pro.wrong{
+  border-color:#ee9a9a;
+  background:#fff1f1;
+  color:#b43c49;
+  animation:matchNudge .24s ease;
+}
+#u1 .match-btn-pro:focus-visible{
+  outline:3px solid rgba(48,126,231,.28);
+  outline-offset:2px;
+}
+#u1 .btn-row{justify-content:space-between}
+@keyframes matchNudge{
+  0%,100%{transform:translateX(0)}
+  30%{transform:translateX(-3px)}
+  70%{transform:translateX(3px)}
+}
+@media(max-width:650px){
+  #u1 .match-columns.match-columns-pro{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  #u1 .match-panel{padding:8px;border-radius:15px}
+  #u1 .match-panel-head{align-items:flex-start;flex-direction:column;gap:5px;padding-bottom:8px}
+  #u1 .match-panel-head h4{font-size:14px}
+  #u1 .match-panel-count{font-size:9px;padding:4px 7px}
+  #u1 .match-btn.match-btn-pro{min-height:43px;padding:7px 7px;font-size:11px;gap:5px}
+  #u1 .match-btn-pro .match-symbol{width:24px;height:24px;border-radius:8px;font-size:14px}
+  #u1 .match-btn-pro .small-ar{font-size:12px}
+  #u1 .match-progress-card{padding:12px}
+  #u1 .match-progress-top{align-items:flex-start;flex-direction:column;gap:5px}
+  #u1 .match-progress-status{text-align:left}
+}
+@media(max-width:360px){
+  #u1 .match-columns.match-columns-pro{gap:6px}
+  #u1 .match-panel{padding:6px}
+  #u1 .match-btn.match-btn-pro{font-size:10px;padding:6px 5px}
+  #u1 .match-btn-pro .match-symbol{width:21px;height:21px;font-size:12px}
+  #u1 .match-btn-pro .small-ar{font-size:11px}
+}
+
+
+/* Smooth feedback reveal; checking never navigates away from the exercise */
+.exercise .feedback.show{
+  animation: feedbackReveal .24s ease-out both;
+}
+@keyframes feedbackReveal{
+  from{opacity:0;transform:translateY(6px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+
+/* Übung 3 — polished translation quiz */
+#u3 .instruction{
+  border:1px solid #e7defb;
+  background:linear-gradient(135deg,#f8f5ff 0%,#f2f6ff 100%);
+  color:#554779;
+  padding:13px 16px;
+  border-radius:15px;
+}
+#u3 .quiz-overview{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:18px;
+  margin:0 0 16px;
+  padding:15px 17px;
+  border:1px solid #e7e2f5;
+  border-radius:18px;
+  background:linear-gradient(120deg,#fcfbff 0%,#f5f7ff 100%);
+  box-shadow:0 7px 18px rgba(79,62,132,.05);
+}
+#u3 .quiz-overview-copy{display:grid;gap:3px;min-width:0}
+#u3 .quiz-overview-kicker{
+  color:#9a8bbd;
+  font-size:9px;
+  font-weight:950;
+  letter-spacing:.15em;
+}
+#u3 .quiz-overview-copy strong{
+  color:#3c3860;
+  font-size:14px;
+  font-weight:900;
+}
+#u3 .quiz-overview-copy small{
+  color:#8993a8;
+  font-size:11px;
+  font-weight:650;
+}
+#u3 .quiz-progress{width:min(220px,38%);display:grid;gap:7px}
+#u3 .quiz-progress > span{
+  color:#71658e;
+  text-align:right;
+  font-size:11px;
+  font-weight:850;
+}
+#u3 .quiz-progress-track{
+  height:8px;
+  overflow:hidden;
+  border-radius:20px;
+  background:#e8e5f1;
+}
+#u3 .quiz-progress-track span{
+  display:block;
+  width:0%;
+  height:100%;
+  border-radius:20px;
+  background:linear-gradient(90deg,#8a65dc,#5c91e8);
+  transition:width .3s ease;
+}
+#u3 .quiz-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:13px;
+}
+#u3 .quiz-question{
+  display:flex;
+  flex-direction:column;
+  gap:13px;
+  min-width:0;
+  margin:0;
+  padding:15px;
+  border:1px solid #e5e9f3;
+  border-radius:18px;
+  background:linear-gradient(180deg,#fff 0%,#fcfcff 100%);
+  box-shadow:0 5px 14px rgba(51,65,110,.045);
+  transition:border-color .2s ease,background .2s ease,box-shadow .2s ease;
+}
+#u3 .quiz-question-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding-bottom:10px;
+  border-bottom:1px solid #edf0f6;
+}
+#u3 .quiz-number{
+  display:grid;
+  place-items:center;
+  flex:none;
+  width:30px;
+  height:30px;
+  border-radius:10px;
+  background:#f0ebfc;
+  color:#7958c5;
+  font-size:11px;
+  font-weight:950;
+}
+#u3 .quiz-question .q-label{
+  margin:0;
+  color:#405579;
+  font-size:15px;
+  font-weight:900;
+  text-align:right;
+}
+#u3 .quiz-options{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+#u3 .quiz-option{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+  min-height:43px;
+  padding:9px 10px;
+  border:1px solid #e2e7f1;
+  border-radius:12px;
+  background:#fff;
+  color:#405273;
+  font-size:12px;
+  font-weight:800;
+  line-height:1.3;
+  cursor:pointer;
+  transition:border-color .16s ease,background .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+#u3 .quiz-option:hover{
+  border-color:#b9a6e9;
+  background:#fbf9ff;
+  transform:translateY(-1px);
+}
+#u3 .quiz-option input{
+  width:16px;
+  height:16px;
+  flex:none;
+  margin:0;
+  accent-color:#805bd1;
+  cursor:pointer;
+}
+#u3 .quiz-option:has(input:checked){
+  border-color:#9879df;
+  background:#f4efff;
+  color:#5b4098;
+  box-shadow:0 0 0 2px rgba(137,103,211,.09);
+}
+#u3 .quiz-question.correct{
+  border-color:#9bdab8;
+  background:linear-gradient(180deg,#fbfffc 0%,#f1fcf5 100%);
+}
+#u3 .quiz-question.incorrect{
+  border-color:#efb0b0;
+  background:linear-gradient(180deg,#fff 0%,#fff8f8 100%);
+}
+#u3 .quiz-option.option-correct{
+  border-color:#8bd3a8;
+  background:#eafaf0;
+  color:#176c46;
+}
+#u3 .quiz-option.option-wrong{
+  border-color:#e99a9a;
+  background:#fff0f0;
+  color:#ad3945;
+}
+#u3 .quiz-question.correct .quiz-number{
+  background:#d9f5e4;
+  color:#16804d;
+}
+#u3 .quiz-question.incorrect .quiz-number{
+  background:#ffe2e2;
+  color:#b3454c;
+}
+#u3 .btn-row{justify-content:flex-start}
+@media(max-width:760px){
+  #u3 .quiz-grid{grid-template-columns:1fr;gap:10px}
+}
+@media(max-width:520px){
+  #u3 .quiz-overview{align-items:stretch;flex-direction:column;gap:12px;padding:13px}
+  #u3 .quiz-progress{width:100%}
+  #u3 .quiz-progress > span{text-align:left}
+  #u3 .quiz-question{padding:13px;border-radius:16px}
+  #u3 .quiz-options{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  #u3 .quiz-option{min-height:42px;padding:8px;font-size:11.5px}
+}
+@media(max-width:360px){
+  #u3 .quiz-options{grid-template-columns:1fr}
+}
+
+
+@media(max-width:520px){
+  #u3 .exercise-head{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    align-items:center;
+    gap:10px;
+  }
+  #u3 .exercise-head .exercise-back{
+    grid-column:1 / -1;
+    justify-self:start;
+    margin:0;
+  }
+  #u3 .exercise-head .exercise-title-wrap{
+    grid-column:1;
+    grid-row:2;
+    min-width:0;
+    gap:9px;
+  }
+  #u3 .exercise-head .exercise-title-wrap h3{
+    font-size:17px;
+    overflow-wrap:anywhere;
+  }
+  #u3 .exercise-head .exercise-num{
+    grid-column:2;
+    grid-row:2;
+    align-self:start;
+  }
+}
+
+
+/* Übung 9 — clean adjective-opposites challenge without pictorial hints */
+#u9 .instruction{
+  border:1px solid #e3e9f5;
+  background:linear-gradient(135deg,#f7f9fd,#f4f6fb);
+  color:#465675;
+  padding:13px 16px;
+  border-radius:15px;
+}
+#u9 .opposites-head{align-items:flex-start}
+#u9 .opposites-title{align-items:flex-start;gap:0}
+#u9 .opposites-kicker{
+  display:block;
+  margin-bottom:4px;
+  color:#8a96aa;
+  font-size:9px;
+  font-weight:950;
+  letter-spacing:.14em;
+}
+#u9 .opposites-title h3{color:#2e405f}
+#u9 .opposites-progress-card{
+  margin:0 0 16px;
+  padding:15px 17px;
+  border:1px solid #e3e9f3;
+  border-radius:18px;
+  background:linear-gradient(135deg,#fbfcff 0%,#f4f7fc 100%);
+  box-shadow:0 7px 18px rgba(41,61,99,.045);
+}
+#u9 .opposites-progress-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:12px;
+  margin-bottom:11px;
+}
+#u9 .opposites-progress-copy{display:grid;gap:3px}
+#u9 .opposites-progress-kicker{
+  color:#8a98ad;
+  font-size:9px;
+  font-weight:950;
+  letter-spacing:.14em;
+}
+#u9 .opposites-progress-copy strong{
+  color:#344765;
+  font-size:14px;
+  font-weight:900;
+}
+#u9 .opposites-progress-status{
+  color:#78869d;
+  font-size:11px;
+  font-weight:800;
+  text-align:right;
+}
+#u9 .opposites-progress-track{
+  height:8px;
+  overflow:hidden;
+  border-radius:20px;
+  background:#e6ebf3;
+}
+#u9 .opposites-progress-track span{
+  display:block;
+  width:0%;
+  height:100%;
+  border-radius:20px;
+  background:linear-gradient(90deg,#6485c8,#7c91b9);
+  transition:width .3s ease;
+}
+#u9 .opposites-board{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+#u9 .opposites-column{
+  min-width:0;
+  padding:12px;
+  border:1px solid #e5eaf2;
+  border-radius:18px;
+  background:#f9fbfe;
+}
+#u9 .opposites-column-head{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:2px 2px 12px;
+  margin-bottom:9px;
+  border-bottom:1px solid #e8edf4;
+}
+#u9 .opposites-column-index{
+  display:grid;
+  place-items:center;
+  width:31px;
+  height:31px;
+  flex:none;
+  border:1px solid #dce4f0;
+  border-radius:10px;
+  background:#fff;
+  color:#586c8c;
+  font-size:12px;
+  font-weight:950;
+}
+#u9 .opposites-column-kicker{
+  display:block;
+  color:#98a3b5;
+  font-size:9px;
+  font-weight:950;
+  letter-spacing:.13em;
+}
+#u9 .opposites-column-head h4{
+  margin:2px 0 0;
+  color:#344967;
+  font-size:14px;
+  font-weight:900;
+}
+#u9 .opposites-word{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  min-height:52px;
+  padding:10px 12px;
+  border:1px solid #dfe6f0;
+  border-radius:13px;
+  background:#fff;
+  color:#354968;
+  font-size:14px;
+  font-weight:850;
+  text-align:left;
+  box-shadow:0 2px 5px rgba(35,55,89,.025);
+  transition:background .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+#u9 .opposites-word:hover:not(.matched){
+  transform:translateY(-1px);
+  border-color:#aebfd8;
+  background:#fcfdff;
+  box-shadow:0 5px 12px rgba(48,70,107,.07);
+}
+#u9 .opposites-word-text{display:block;min-width:0;width:100%}
+#u9 .opposites-word.active{
+  outline:none;
+  border-color:#648bc8;
+  background:#eef4fd;
+  color:#2c5796;
+  box-shadow:0 0 0 3px rgba(91,132,193,.13);
+}
+#u9 .opposites-word.active .opposites-word-mark{
+  background:#dce8f8;
+  color:#456da8;
+}
+#u9 .opposites-word.matched{
+  border-color:#9bd7b6;
+  background:#effaf3;
+  color:#27704e;
+  opacity:1;
+  box-shadow:none;
+  cursor:default;
+}
+#u9 .opposites-word.matched .opposites-word-mark{
+  background:#d9f1e2;
+  color:#27704e;
+}
+#u9 .opposites-word.wrong{
+  border-color:#e5a0a0;
+  background:#fff2f2;
+  color:#ad4249;
+  animation:oppositesNudge .22s ease;
+}
+#u9 .opposites-actions{justify-content:space-between}
+#u9 .opposites-actions .secondary-btn,
+#u9 .opposites-actions .next-btn{min-width:130px}
+@keyframes oppositesNudge{
+  0%,100%{transform:translateX(0)}
+  30%{transform:translateX(-3px)}
+  70%{transform:translateX(3px)}
+}
+@media(max-width:560px){
+  #u9 .opposites-board{gap:8px}
+  #u9 .opposites-column{padding:8px;border-radius:15px}
+  #u9 .opposites-column-head{gap:7px;padding-bottom:9px}
+  #u9 .opposites-column-index{width:27px;height:27px;border-radius:8px}
+  #u9 .opposites-column-head h4{font-size:12px}
+  #u9 .opposites-word{min-height:47px;padding:8px;font-size:12px;gap:5px}
+    #u9 .opposites-progress-card{padding:12px}
+  #u9 .opposites-progress-top{align-items:flex-start;flex-direction:column;gap:5px}
+  #u9 .opposites-progress-status{text-align:left}
+  #u9 .opposites-actions .secondary-btn,
+  #u9 .opposites-actions .next-btn{min-width:0;flex:1}
+}
+@media(max-width:350px){
+  #u9 .opposites-word{font-size:11px;padding:7px 6px}
+  }
+
+</style>
+</head>
+<body>
+<div class="layout">
+  
+
+
+<main class="main">
+    <section class="stage-home" id="stageHome" aria-label="Stages">
+  <div class="stage-item" data-stage-item="stage1">
+    <button class="stage-nav-btn" type="button" data-show-stage="stage1" aria-expanded="false">
+        <span class="stage-nav-icon">①</span>
+        <span class="stage-nav-copy"><strong>Stage 1</strong><small>الأساسيات</small></span>
+      </button>
+    <div class="stage-screen" id="stage-screen-stage1" data-stage-screen="stage1">
+      <div class="stage-screen-head">
+        <div class="stage-screen-mini">STAGE 1</div>
+        <h2>الأساسيات</h2>
+        <p>4 تمارين · البداية ديال الدرس</p>
+      </div>
+      <div class="stage-stars-row" data-stage-stars-panel="stage1">★ ★ ★ ★ ★</div>
+      <div class="lesson-circles-row right">
+        <button class="lesson-circle active" type="button" data-open-exercise="u1">
+          <span class="circle-icon">🖼️</span><span class="circle-title">Wörter verbinden</span><span class="circle-sub">ابدأ</span>
+        </button>
+        <button class="lesson-circle" type="button" data-open-exercise="u2">
+          <span class="circle-icon">🔤</span><span class="circle-title">Artikel-Detektiv</span><span class="circle-sub">ابدأ</span>
+        </button>
+        <button class="lesson-circle" type="button" data-open-exercise="u3">
+          <span class="circle-icon">🌍</span><span class="circle-title">Übersetzungsquiz</span><span class="circle-sub">ابدأ</span>
+        </button>
+        <button class="lesson-circle" type="button" data-open-exercise="u4">
+          <span class="circle-icon">🧩</span><span class="circle-title">Lückensätze</span><span class="circle-sub">ابدأ</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="stage-item" data-stage-item="stage2">
+    <button class="stage-nav-btn" type="button" data-show-stage="stage2" aria-expanded="false">
+        <span class="stage-nav-icon">②</span>
+        <span class="stage-nav-copy"><strong>Stage 2</strong><small>بناء الجمل</small></span>
+      </button>
+    <div class="stage-screen" id="stage-screen-stage2" data-stage-screen="stage2">
+      <div class="stage-screen-head">
+        <div class="stage-screen-mini">STAGE 2</div>
+        <h2>بناء الجمل</h2>
+        <p>4 تمارين · الترتيب والقواعد</p>
+      </div>
+      <div class="stage-stars-row" data-stage-stars-panel="stage2">★ ★ ★ ★ ★</div>
+      <div class="lesson-circles-row left">
+        <button class="lesson-circle" type="button" data-open-exercise="u5">
+          <span class="circle-icon">🔠</span><span class="circle-title">Buchstabensalat</span><span class="circle-sub">ابدأ</span>
+        </button>
+        <button class="lesson-circle" type="button" data-open-exercise="u6">
+          <span class="circle-icon">🧱</span><span class="circle-title">Satzbau</span><span class="circle-sub">ابدأ</span>
+        </button>
+        <button class="lesson-circle" type="button" data-open-exercise="u7">
+          <span class="circle-icon">📍</span><span class="circle-title">Präpositionen</span><span class="circle-sub">ابدأ</span>
+        </button>
+        <button class="lesson-circle" type="button" data-open-exercise="u8">
+          <span class="circle-icon">🏃</span><span class="circle-title">Verben</span><span class="circle-sub">ابدأ</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="stage-item" data-stage-item="stage3">
+    <button class="stage-nav-btn" type="button" data-show-stage="stage3" aria-expanded="false">
+        <span class="stage-nav-icon">③</span>
+        <span class="stage-nav-copy"><strong>Stage 3</strong><small>الفهم والتواصل</small></span>
+      </button>
+    <div class="stage-screen" id="stage-screen-stage3" data-stage-screen="stage3">
+      <div class="stage-screen-head">
+        <div class="stage-screen-mini">STAGE 3</div>
+        <h2>الفهم والتواصل</h2>
+        <p>3 تمارين · كلمات وفهم</p>
+      </div>
+      <div class="stage-stars-row" data-stage-stars-panel="stage3">★ ★ ★ ★ ★</div>
+      <div class="lesson-circles-row right small-set">
+        <button class="lesson-circle" type="button" data-open-exercise="u9">
+          <span class="circle-icon">↔️</span><span class="circle-title">Adjektive</span><span class="circle-sub">ابدأ</span>
+        </button>
+        <button class="lesson-circle" type="button" data-open-exercise="u10">
+          <span class="circle-icon">🔊</span><span class="circle-title">Hördetektiv</span><span class="circle-sub">ابدأ</span>
+        </button>
+        <button class="lesson-circle" type="button" data-open-exercise="u11">
+          <span class="circle-icon">📖</span><span class="circle-title">Lesen</span><span class="circle-sub">ابدأ</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="stage-item" data-stage-item="stage4">
+    <button class="stage-nav-btn" type="button" data-show-stage="stage4" aria-expanded="false">
+        <span class="stage-nav-icon">④</span>
+        <span class="stage-nav-copy"><strong>Stage 4</strong><small>التدريب العملي</small></span>
+      </button>
+    <div class="stage-screen" id="stage-screen-stage4" data-stage-screen="stage4">
+      <div class="stage-screen-head">
+        <div class="stage-screen-mini">STAGE 4</div>
+        <h2>التدريب العملي</h2>
+        <p>3 تمارين · حوار وتصحيح</p>
+      </div>
+      <div class="stage-stars-row" data-stage-stars-panel="stage4">★ ★ ★ ★ ★</div>
+      <div class="lesson-circles-row left small-set">
+        <button class="lesson-circle" type="button" data-open-exercise="u12">
+          <span class="circle-icon">💬</span><span class="circle-title">Dialog</span><span class="circle-sub">ابدأ</span>
+        </button>
+        <button class="lesson-circle" type="button" data-open-exercise="u13">
+          <span class="circle-icon">🚨</span><span class="circle-title">Fehler finden</span><span class="circle-sub">ابدأ</span>
+        </button>
+        <button class="lesson-circle" type="button" data-open-exercise="u14">
+          <span class="circle-icon">🗂️</span><span class="circle-title">Kategorien</span><span class="circle-sub">ابدأ</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="stage-item" data-stage-item="stage5">
+    <button class="stage-nav-btn" type="button" data-show-stage="stage5" aria-expanded="false">
+        <span class="stage-nav-icon">⑤</span>
+        <span class="stage-nav-copy"><strong>Stage 5</strong><small>الإنتاج والتقييم</small></span>
+      </button>
+    <div class="stage-screen" id="stage-screen-stage5" data-stage-screen="stage5">
+      <div class="stage-screen-head">
+        <div class="stage-screen-mini">STAGE 5</div>
+        <h2>الإنتاج والتقييم</h2>
+        <p>3 تمارين · ترجمة وكتابة واختبار</p>
+      </div>
+      <div class="stage-stars-row" data-stage-stars-panel="stage5">★ ★ ★ ★ ★</div>
+      <div class="lesson-circles-row right small-set">
+        <button class="lesson-circle" type="button" data-open-exercise="u15">
+          <span class="circle-icon">🌐</span><span class="circle-title">Übersetzen</span><span class="circle-sub">ابدأ</span>
+        </button>
+        <button class="lesson-circle" type="button" data-open-exercise="u16">
+          <span class="circle-icon">✍️</span><span class="circle-title">Schreiben</span><span class="circle-sub">ابدأ</span>
+        </button>
+        <button class="lesson-circle" type="button" data-open-exercise="u17">
+          <span class="circle-icon">🏆</span><span class="circle-title">Abschlusstest</span><span class="circle-sub">ابدأ</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ÜBUNG 1 -->
+    <section class="exercise theme-blue" id="u1">
+      <div class="exercise-head">
+        <button class="exercise-back" type="button" data-back-to-stage>رجوع للمرحلة</button>
+        <div class="exercise-title-wrap">
+          <div class="exercise-icon">🔗</div>
+          <div>
+            <h3>Wörter verbinden</h3>
+            <div class="exercise-sub">Verbinde jedes deutsche Wort mit der passenden arabischen Bedeutung.</div>
+          </div>
+        </div>
+        <span class="exercise-num">ÜBUNG 1</span>
+      </div>
+
+      <p class="instruction">Wähle zuerst ein deutsches Wort und danach die passende arabische Übersetzung.</p>
+
+      <div class="match-progress-card">
+        <div class="match-progress-top">
+          <div class="match-progress-copy">
+            <span class="match-progress-kicker">DEIN FORTSCHRITT</span>
+            <strong id="matchCount1">0 / 10 Paare gefunden</strong>
+          </div>
+          <span class="match-progress-status" id="matchProgressStatus1">Wähle ein Wort zum Starten</span>
+        </div>
+        <div class="match-progress-track" role="progressbar" aria-label="Gefundene Wortpaare" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0">
+          <span id="matchProgressFill1"></span>
+        </div>
+      </div>
+
+      <div class="match-columns match-columns-pro">
+        <div class="match-panel">
+          <div class="match-panel-head">
+            <div>
+              <span class="match-panel-eyebrow">SPRACHE 01</span>
+              <h4>Deutsch</h4>
+            </div>
+            <span class="match-panel-count">10 Wörter</span>
+          </div>
+          <div class="match-col">
+            <button type="button" class="match-btn match-btn-pro" data-match="m1" data-side="left" data-key="bahnhof" aria-pressed="false"><span class="match-label">der Bahnhof</span><span class="match-symbol" aria-hidden="true">🚉</span></button>
+            <button type="button" class="match-btn match-btn-pro" data-match="m1" data-side="left" data-key="schule" aria-pressed="false"><span class="match-label">die Schule</span><span class="match-symbol" aria-hidden="true">🏫</span></button>
+            <button type="button" class="match-btn match-btn-pro" data-match="m1" data-side="left" data-key="kindergarten" aria-pressed="false"><span class="match-label">der Kindergarten</span><span class="match-symbol" aria-hidden="true">🛝</span></button>
+            <button type="button" class="match-btn match-btn-pro" data-match="m1" data-side="left" data-key="krankenhaus" aria-pressed="false"><span class="match-label">das Krankenhaus</span><span class="match-symbol" aria-hidden="true">🏥</span></button>
+            <button type="button" class="match-btn match-btn-pro" data-match="m1" data-side="left" data-key="geschaeft" aria-pressed="false"><span class="match-label">das Geschäft</span><span class="match-symbol" aria-hidden="true">🏪</span></button>
+            <button type="button" class="match-btn match-btn-pro" data-match="m1" data-side="left" data-key="cafe" aria-pressed="false"><span class="match-label">das Café</span><span class="match-symbol" aria-hidden="true">☕</span></button>
+            <button type="button" class="match-btn match-btn-pro" data-match="m1" data-side="left" data-key="restaurant" aria-pressed="false"><span class="match-label">das Restaurant</span><span class="match-symbol" aria-hidden="true">🍽️</span></button>
+            <button type="button" class="match-btn match-btn-pro" data-match="m1" data-side="left" data-key="kino" aria-pressed="false"><span class="match-label">das Kino</span><span class="match-symbol" aria-hidden="true">🎬</span></button>
+            <button type="button" class="match-btn match-btn-pro" data-match="m1" data-side="left" data-key="bank" aria-pressed="false"><span class="match-label">die Bank</span><span class="match-symbol" aria-hidden="true">🏦</span></button>
+            <button type="button" class="match-btn match-btn-pro" data-match="m1" data-side="left" data-key="park" aria-pressed="false"><span class="match-label">der Park</span><span class="match-symbol" aria-hidden="true">🌳</span></button>
+          </div>
+        </div>
+
+        <div class="match-panel">
+          <div class="match-panel-head">
+            <div>
+              <span class="match-panel-eyebrow">SPRACHE 02</span>
+              <h4 dir="rtl">العربية</h4>
+            </div>
+            <span class="match-panel-count">10 كلمات</span>
+          </div>
+          <div class="match-col">
+            <button type="button" class="match-btn match-btn-pro" dir="rtl" data-match="m1" data-side="right" data-key="park" aria-pressed="false"><span class="match-label small-ar">البارك</span></button>
+            <button type="button" class="match-btn match-btn-pro" dir="rtl" data-match="m1" data-side="right" data-key="kino" aria-pressed="false"><span class="match-label small-ar">السينما</span></button>
+            <button type="button" class="match-btn match-btn-pro" dir="rtl" data-match="m1" data-side="right" data-key="bahnhof" aria-pressed="false"><span class="match-label small-ar">الگار</span></button>
+            <button type="button" class="match-btn match-btn-pro" dir="rtl" data-match="m1" data-side="right" data-key="cafe" aria-pressed="false"><span class="match-label small-ar">قهوة</span></button>
+            <button type="button" class="match-btn match-btn-pro" dir="rtl" data-match="m1" data-side="right" data-key="krankenhaus" aria-pressed="false"><span class="match-label small-ar">السبيطار</span></button>
+            <button type="button" class="match-btn match-btn-pro" dir="rtl" data-match="m1" data-side="right" data-key="bank" aria-pressed="false"><span class="match-label small-ar">البنك</span></button>
+            <button type="button" class="match-btn match-btn-pro" dir="rtl" data-match="m1" data-side="right" data-key="schule" aria-pressed="false"><span class="match-label small-ar">المدرسة</span></button>
+            <button type="button" class="match-btn match-btn-pro" dir="rtl" data-match="m1" data-side="right" data-key="restaurant" aria-pressed="false"><span class="match-label small-ar">ريسطوران</span></button>
+            <button type="button" class="match-btn match-btn-pro" dir="rtl" data-match="m1" data-side="right" data-key="kindergarten" aria-pressed="false"><span class="match-label small-ar">الروض</span></button>
+            <button type="button" class="match-btn match-btn-pro" dir="rtl" data-match="m1" data-side="right" data-key="geschaeft" aria-pressed="false"><span class="match-label small-ar">الحانوت</span></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="feedback" id="fb-u1" aria-live="polite"></div>
+      <div class="btn-row">
+        <button class="secondary-btn" onclick="resetMatch('m1','u1')">↻ Neu starten</button>
+        <button class="next-btn" onclick="goNext('u1')">Weiter zu Übung 2 →</button>
+      </div>
+    </section>
+
+    <!-- ÜBUNG 2 -->
+    <section class="exercise theme-gold" id="u2">
+      <div class="exercise-head">
+      <button class="exercise-back" type="button" data-back-to-stage>رجوع للمرحلة</button><div class="exercise-title-wrap"><div class="exercise-icon">🕵️</div><div><h3>Artikel-Detektiv</h3><div class="exercise-sub">Welcher Artikel passt? der, die oder das?</div></div></div><span class="exercise-num">ÜBUNG 2</span></div>
+      <p class="instruction">Wähle für jedes Nomen den richtigen Artikel. Achte auf das grammatische Geschlecht.</p>
+      <div class="article-grid">
+        <div class="article-card q-item" data-field="a1"><div class="article-word">___ Bahnhof<small>الگار</small></div><div class="article-buttons"><button class="choice" onclick="setRadio('u2','a1','der',this)">der</button><button class="choice" onclick="setRadio('u2','a1','die',this)">die</button><button class="choice" onclick="setRadio('u2','a1','das',this)">das</button><input type="hidden" name="a1"></div></div>
+        <div class="article-card q-item" data-field="a2"><div class="article-word">___ Schule<small>المدرسة</small></div><div class="article-buttons"><button class="choice" onclick="setRadio('u2','a2','der',this)">der</button><button class="choice" onclick="setRadio('u2','a2','die',this)">die</button><button class="choice" onclick="setRadio('u2','a2','das',this)">das</button><input type="hidden" name="a2"></div></div>
+        <div class="article-card q-item" data-field="a3"><div class="article-word">___ Krankenhaus<small>السبيطار</small></div><div class="article-buttons"><button class="choice" onclick="setRadio('u2','a3','der',this)">der</button><button class="choice" onclick="setRadio('u2','a3','die',this)">die</button><button class="choice" onclick="setRadio('u2','a3','das',this)">das</button><input type="hidden" name="a3"></div></div>
+        <div class="article-card q-item" data-field="a4"><div class="article-word">___ Café<small>قهوة</small></div><div class="article-buttons"><button class="choice" onclick="setRadio('u2','a4','der',this)">der</button><button class="choice" onclick="setRadio('u2','a4','die',this)">die</button><button class="choice" onclick="setRadio('u2','a4','das',this)">das</button><input type="hidden" name="a4"></div></div>
+        <div class="article-card q-item" data-field="a5"><div class="article-word">___ Restaurant<small>ريسطوران</small></div><div class="article-buttons"><button class="choice" onclick="setRadio('u2','a5','der',this)">der</button><button class="choice" onclick="setRadio('u2','a5','die',this)">die</button><button class="choice" onclick="setRadio('u2','a5','das',this)">das</button><input type="hidden" name="a5"></div></div>
+        <div class="article-card q-item" data-field="a6"><div class="article-word">___ Kino<small>السينما</small></div><div class="article-buttons"><button class="choice" onclick="setRadio('u2','a6','der',this)">der</button><button class="choice" onclick="setRadio('u2','a6','die',this)">die</button><button class="choice" onclick="setRadio('u2','a6','das',this)">das</button><input type="hidden" name="a6"></div></div>
+        <div class="article-card q-item" data-field="a7"><div class="article-word">___ Bank<small>البنك</small></div><div class="article-buttons"><button class="choice" onclick="setRadio('u2','a7','der',this)">der</button><button class="choice" onclick="setRadio('u2','a7','die',this)">die</button><button class="choice" onclick="setRadio('u2','a7','das',this)">das</button><input type="hidden" name="a7"></div></div>
+        <div class="article-card q-item" data-field="a8"><div class="article-word">___ Büro<small>البيرو</small></div><div class="article-buttons"><button class="choice" onclick="setRadio('u2','a8','der',this)">der</button><button class="choice" onclick="setRadio('u2','a8','die',this)">die</button><button class="choice" onclick="setRadio('u2','a8','das',this)">das</button><input type="hidden" name="a8"></div></div>
+        <div class="article-card q-item" data-field="a9"><div class="article-word">___ Park<small>البارك</small></div><div class="article-buttons"><button class="choice" onclick="setRadio('u2','a9','der',this)">der</button><button class="choice" onclick="setRadio('u2','a9','die',this)">die</button><button class="choice" onclick="setRadio('u2','a9','das',this)">das</button><input type="hidden" name="a9"></div></div>
+        <div class="article-card q-item" data-field="a10"><div class="article-word">___ Küche<small>الكوزينة</small></div><div class="article-buttons"><button class="choice" onclick="setRadio('u2','a10','der',this)">der</button><button class="choice" onclick="setRadio('u2','a10','die',this)">die</button><button class="choice" onclick="setRadio('u2','a10','das',this)">das</button><input type="hidden" name="a10"></div></div>
+        <div class="article-card q-item" data-field="a11"><div class="article-word">___ Wohnzimmer<small>الصالون</small></div><div class="article-buttons"><button class="choice" onclick="setRadio('u2','a11','der',this)">der</button><button class="choice" onclick="setRadio('u2','a11','die',this)">die</button><button class="choice" onclick="setRadio('u2','a11','das',this)">das</button><input type="hidden" name="a11"></div></div>
+        <div class="article-card q-item" data-field="a12"><div class="article-word">___ Balkon<small>البالكون</small></div><div class="article-buttons"><button class="choice" onclick="setRadio('u2','a12','der',this)">der</button><button class="choice" onclick="setRadio('u2','a12','die',this)">die</button><button class="choice" onclick="setRadio('u2','a12','das',this)">das</button><input type="hidden" name="a12"></div></div>
+      </div>
+      <div class="feedback" id="fb-u2"></div>
+      <div class="btn-row"><button class="primary-btn" onclick="checkExercise('u2')">✓ Antworten prüfen</button><button class="secondary-btn" onclick="resetFields('u2')">↻ Wiederholen</button><button class="next-btn" onclick="goNext('u2')">Weiter →</button></div>
+    </section>
+
+    <!-- ÜBUNG 3 -->
+    <section class="exercise theme-purple" id="u3">
+      <div class="exercise-head">
+        <button class="exercise-back" type="button" data-back-to-stage>رجوع للمرحلة</button>
+        <div class="exercise-title-wrap">
+          <div class="exercise-icon">🌍</div>
+          <div>
+            <h3>Übersetzungsquiz</h3>
+            <div class="exercise-sub">Finde das passende deutsche Wort.</div>
+          </div>
+        </div>
+        <span class="exercise-num">ÜBUNG 3</span>
+      </div>
+
+      <p class="instruction">Lies die arabische Bedeutung und wähle das richtige Wort auf Deutsch.</p>
+
+      <div class="quiz-overview">
+        <div class="quiz-overview-copy">
+          <span class="quiz-overview-kicker">DEIN QUIZ</span>
+          <strong>Wähle die passende Übersetzung</strong>
+          <small>8 Fragen · Eine richtige Antwort pro Frage</small>
+        </div>
+        <div class="quiz-progress">
+          <span id="u3AnsweredText">0 / 8 beantwortet</span>
+          <div class="quiz-progress-track" role="progressbar" aria-label="Beantwortete Fragen" aria-valuemin="0" aria-valuemax="8" aria-valuenow="0">
+            <span id="u3AnsweredFill"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="quiz-grid">
+        <div class="q-item quiz-question" data-field="t1">
+          <div class="quiz-question-head">
+            <span class="quiz-number">01</span>
+            <div class="q-label small-ar" dir="rtl">بيت النعاس</div>
+          </div>
+          <div class="option-row quiz-options">
+            <label class="quiz-option" for="u3-t1-1"><input id="u3-t1-1" type="radio" name="t1" value="das Wohnzimmer"><span>das Wohnzimmer</span></label><label class="quiz-option" for="u3-t1-2"><input id="u3-t1-2" type="radio" name="t1" value="das Schlafzimmer"><span>das Schlafzimmer</span></label><label class="quiz-option" for="u3-t1-3"><input id="u3-t1-3" type="radio" name="t1" value="das Kinderzimmer"><span>das Kinderzimmer</span></label>
+          </div>
+        </div><div class="q-item quiz-question" data-field="t2">
+          <div class="quiz-question-head">
+            <span class="quiz-number">02</span>
+            <div class="q-label small-ar" dir="rtl">البيكالة</div>
+          </div>
+          <div class="option-row quiz-options">
+            <label class="quiz-option" for="u3-t2-1"><input id="u3-t2-1" type="radio" name="t2" value="das Auto"><span>das Auto</span></label><label class="quiz-option" for="u3-t2-2"><input id="u3-t2-2" type="radio" name="t2" value="das Fahrrad"><span>das Fahrrad</span></label><label class="quiz-option" for="u3-t2-3"><input id="u3-t2-3" type="radio" name="t2" value="der Bus"><span>der Bus</span></label>
+          </div>
+        </div><div class="q-item quiz-question" data-field="t3">
+          <div class="quiz-question-head">
+            <span class="quiz-number">03</span>
+            <div class="q-label small-ar" dir="rtl">البلاكار</div>
+          </div>
+          <div class="option-row quiz-options">
+            <label class="quiz-option" for="u3-t3-1"><input id="u3-t3-1" type="radio" name="t3" value="der Schrank"><span>der Schrank</span></label><label class="quiz-option" for="u3-t3-2"><input id="u3-t3-2" type="radio" name="t3" value="der Stuhl"><span>der Stuhl</span></label><label class="quiz-option" for="u3-t3-3"><input id="u3-t3-3" type="radio" name="t3" value="das Regal"><span>das Regal</span></label>
+          </div>
+        </div><div class="q-item quiz-question" data-field="t4">
+          <div class="quiz-question-head">
+            <span class="quiz-number">04</span>
+            <div class="q-label small-ar" dir="rtl">لامبة</div>
+          </div>
+          <div class="option-row quiz-options">
+            <label class="quiz-option" for="u3-t4-1"><input id="u3-t4-1" type="radio" name="t4" value="die Lampe"><span>die Lampe</span></label><label class="quiz-option" for="u3-t4-2"><input id="u3-t4-2" type="radio" name="t4" value="das Bett"><span>das Bett</span></label><label class="quiz-option" for="u3-t4-3"><input id="u3-t4-3" type="radio" name="t4" value="der Tisch"><span>der Tisch</span></label>
+          </div>
+        </div><div class="q-item quiz-question" data-field="t5">
+          <div class="quiz-question-head">
+            <span class="quiz-number">05</span>
+            <div class="q-label small-ar" dir="rtl">الطرام</div>
+          </div>
+          <div class="option-row quiz-options">
+            <label class="quiz-option" for="u3-t5-1"><input id="u3-t5-1" type="radio" name="t5" value="die S-Bahn"><span>die S-Bahn</span></label><label class="quiz-option" for="u3-t5-2"><input id="u3-t5-2" type="radio" name="t5" value="die Straßenbahn"><span>die Straßenbahn</span></label><label class="quiz-option" for="u3-t5-3"><input id="u3-t5-3" type="radio" name="t5" value="die U-Bahn"><span>die U-Bahn</span></label>
+          </div>
+        </div><div class="q-item quiz-question" data-field="t6">
+          <div class="quiz-question-head">
+            <span class="quiz-number">06</span>
+            <div class="q-label small-ar" dir="rtl">بيت الدراري</div>
+          </div>
+          <div class="option-row quiz-options">
+            <label class="quiz-option" for="u3-t6-1"><input id="u3-t6-1" type="radio" name="t6" value="das Bad"><span>das Bad</span></label><label class="quiz-option" for="u3-t6-2"><input id="u3-t6-2" type="radio" name="t6" value="das Kinderzimmer"><span>das Kinderzimmer</span></label><label class="quiz-option" for="u3-t6-3"><input id="u3-t6-3" type="radio" name="t6" value="die Küche"><span>die Küche</span></label>
+          </div>
+        </div><div class="q-item quiz-question" data-field="t7">
+          <div class="quiz-question-head">
+            <span class="quiz-number">07</span>
+            <div class="q-label small-ar" dir="rtl">إيتاجير</div>
+          </div>
+          <div class="option-row quiz-options">
+            <label class="quiz-option" for="u3-t7-1"><input id="u3-t7-1" type="radio" name="t7" value="das Regal"><span>das Regal</span></label><label class="quiz-option" for="u3-t7-2"><input id="u3-t7-2" type="radio" name="t7" value="der Sessel"><span>der Sessel</span></label><label class="quiz-option" for="u3-t7-3"><input id="u3-t7-3" type="radio" name="t7" value="das Sofa"><span>das Sofa</span></label>
+          </div>
+        </div><div class="q-item quiz-question" data-field="t8">
+          <div class="quiz-question-head">
+            <span class="quiz-number">08</span>
+            <div class="q-label small-ar" dir="rtl">الطوبيس</div>
+          </div>
+          <div class="option-row quiz-options">
+            <label class="quiz-option" for="u3-t8-1"><input id="u3-t8-1" type="radio" name="t8" value="das Auto"><span>das Auto</span></label><label class="quiz-option" for="u3-t8-2"><input id="u3-t8-2" type="radio" name="t8" value="der Bus"><span>der Bus</span></label><label class="quiz-option" for="u3-t8-3"><input id="u3-t8-3" type="radio" name="t8" value="das Fahrrad"><span>das Fahrrad</span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="feedback" id="fb-u3" aria-live="polite"></div>
+      <div class="btn-row">
+        <button class="primary-btn" onclick="checkExercise('u3')">✓ Prüfen</button>
+        <button class="secondary-btn" onclick="resetFields('u3')">↻ Neu versuchen</button>
+        <button class="next-btn" onclick="goNext('u3')">Weiter →</button>
+      </div>
+    </section>
+
+    <!-- ÜBUNG 4 -->
+    <section class="exercise theme-mint" id="u4">
+      <div class="exercise-head">
+      <button class="exercise-back" type="button" data-back-to-stage>رجوع للمرحلة</button><div class="exercise-title-wrap"><div class="exercise-icon">🧩</div><div><h3>Lückensätze</h3><div class="exercise-sub">Ergänze die Sätze mit dem passenden Wort oder Ausdruck.</div></div></div><span class="exercise-num">ÜBUNG 4</span></div>
+      <p class="instruction">Wähle die richtige Ergänzung aus der Liste. Lies den ganzen Satz nach deiner Auswahl.</p>
+      <div class="grid-2">
+        <div class="q-item" data-field="l1"><div class="q-label">1. Ich wohne ___ Stadt.</div><select class="field" name="l1"><option value="">Bitte wählen …</option><option>in der</option><option>im</option><option>ins</option></select></div>
+        <div class="q-item" data-field="l2"><div class="q-label">2. Wir treffen uns ___ Park.</div><select class="field" name="l2"><option value="">Bitte wählen …</option><option>in der</option><option>im</option><option>ins</option></select></div>
+        <div class="q-item" data-field="l3"><div class="q-label">3. Sie trinkt Kaffee ___ Café.</div><select class="field" name="l3"><option value="">Bitte wählen …</option><option>im</option><option>in der</option><option>ins</option></select></div>
+        <div class="q-item" data-field="l4"><div class="q-label">4. Die Kinder lernen ___ Schule.</div><select class="field" name="l4"><option value="">Bitte wählen …</option><option>im</option><option>in der</option><option>ins</option></select></div>
+        <div class="q-item" data-field="l5"><div class="q-label">5. Heute gehen wir ___ Kino.</div><select class="field" name="l5"><option value="">Bitte wählen …</option><option>im</option><option>in der</option><option>ins</option></select></div>
+        <div class="q-item" data-field="l6"><div class="q-label">6. Mein Vater isst ___ Restaurant.</div><select class="field" name="l6"><option value="">Bitte wählen …</option><option>im</option><option>ins</option><option>in der</option></select></div>
+        <div class="q-item" data-field="l7"><div class="q-label">7. Wir sitzen ___ Wohnzimmer.</div><select class="field" name="l7"><option value="">Bitte wählen …</option><option>im</option><option>in der</option><option>ins</option></select></div>
+        <div class="q-item" data-field="l8"><div class="q-label">8. Die Kinder spielen ___ Kinderzimmer.</div><select class="field" name="l8"><option value="">Bitte wählen …</option><option>in der</option><option>im</option><option>ins</option></select></div>
+      </div>
+      <div class="feedback" id="fb-u4"></div>
+      <div class="btn-row"><button class="primary-btn" onclick="checkExercise('u4')">✓ Lösungen kontrollieren</button><button class="secondary-btn" onclick="resetFields('u4')">↻ Leeren</button><button class="next-btn" onclick="goNext('u4')">Weiter →</button></div>
+    </section>
+
+    <!-- ÜBUNG 5 -->
+    <section class="exercise theme-coral" id="u5">
+      <div class="exercise-head">
+      <button class="exercise-back" type="button" data-back-to-stage>رجوع للمرحلة</button><div class="exercise-title-wrap"><div class="exercise-icon">🔤</div><div><h3>Buchstabensalat</h3><div class="exercise-sub">Bringe die Buchstaben in die richtige Reihenfolge.</div></div></div><span class="exercise-num">ÜBUNG 5</span></div>
+      <p class="instruction">Schreibe das gesuchte deutsche Wort richtig. Der erste Buchstabe muss groß sein.</p>
+      <div class="grid-2">
+        <div class="word-puzzle q-item" data-field="w1"><div class="scramble">h a n h o f B</div><div class="small-ar">الگار</div><input class="field" name="w1" placeholder="Dein Wort …"></div>
+        <div class="word-puzzle q-item" data-field="w2"><div class="scramble">l u e S c h</div><div class="small-ar">المدرسة</div><input class="field" name="w2" placeholder="Dein Wort …"></div>
+        <div class="word-puzzle q-item" data-field="w3"><div class="scramble">h c ü K e</div><div class="small-ar">الكوزينة</div><input class="field" name="w3" placeholder="Dein Wort …"></div>
+        <div class="word-puzzle q-item" data-field="w4"><div class="scramble">l a B k o n</div><div class="small-ar">البالكون</div><input class="field" name="w4" placeholder="Dein Wort …"></div>
+        <div class="word-puzzle q-item" data-field="w5"><div class="scramble">r P a k</div><div class="small-ar">البارك</div><input class="field" name="w5" placeholder="Dein Wort …"></div>
+        <div class="word-puzzle q-item" data-field="w6"><div class="scramble">t B e t</div><div class="small-ar">الناموسية</div><input class="field" name="w6" placeholder="Dein Wort …"></div>
+        <div class="word-puzzle q-item" data-field="w7"><div class="scramble">a L m p e</div><div class="small-ar">لامبة</div><input class="field" name="w7" placeholder="Dein Wort …"></div>
+        <div class="word-puzzle q-item" data-field="w8"><div class="scramble">a F h r r a d</div><div class="small-ar">البيكالة</div><input class="field" name="w8" placeholder="Dein Wort …"></div>
+      </div>
+      <div class="feedback" id="fb-u5"></div>
+      <div class="btn-row"><button class="primary-btn" onclick="checkExercise('u5')">✓ Wörter prüfen</button><button class="secondary-btn" onclick="resetFields('u5')">↻ Neu starten</button><button class="next-btn" onclick="goNext('u5')">Weiter →</button></div>
+    </section>
+
+    <!-- ÜBUNG 6 -->
+    <section class="exercise theme-navy" id="u6">
+      <div class="exercise-head">
+      <button class="exercise-back" type="button" data-back-to-stage>رجوع للمرحلة</button><div class="exercise-title-wrap"><div class="exercise-icon">🧱</div><div><h3>Satzbau-Werkstatt</h3><div class="exercise-sub">Ordne die Wörter zu einem richtigen Satz.</div></div></div><span class="exercise-num">ÜBUNG 6</span></div>
+      <p class="instruction">Klicke die Wortkarten in der richtigen Reihenfolge an. Wenn du dich vertippst, klicke das Wort in der Antwortzeile erneut.</p>
+      <div id="orderTasks">
+        <div class="sentence-box" data-order="s1">
+          <div class="q-label">1. Ich wohne in der Stadt.</div>
+          <div class="word-bank"><button class="word-chip" data-order-word="s1">der</button><button class="word-chip" data-order-word="s1">wohne</button><button class="word-chip" data-order-word="s1">Ich</button><button class="word-chip" data-order-word="s1">Stadt.</button><button class="word-chip" data-order-word="s1">in</button></div>
+          <div class="answer-line" id="line-s1"></div><button class="secondary-btn" data-order-check="s1" data-answer="Ich wohne in der Stadt.">Satz prüfen</button>
+        </div>
+        <div class="sentence-box" data-order="s2">
+          <div class="q-label">2. In meiner Stadt gibt es einen Park.</div>
+          <div class="word-bank"><button class="word-chip" data-order-word="s2">einen</button><button class="word-chip" data-order-word="s2">gibt</button><button class="word-chip" data-order-word="s2">In</button><button class="word-chip" data-order-word="s2">Park.</button><button class="word-chip" data-order-word="s2">meiner</button><button class="word-chip" data-order-word="s2">es</button><button class="word-chip" data-order-word="s2">Stadt</button></div>
+          <div class="answer-line" id="line-s2"></div><button class="secondary-btn" data-order-check="s2" data-answer="In meiner Stadt gibt es einen Park.">Satz prüfen</button>
+        </div>
+        <div class="sentence-box" data-order="s3">
+          <div class="q-label">3. Ich fahre mit der U-Bahn.</div>
+          <div class="word-bank"><button class="word-chip" data-order-word="s3">U-Bahn.</button><button class="word-chip" data-order-word="s3">mit</button><button class="word-chip" data-order-word="s3">fahre</button><button class="word-chip" data-order-word="s3">Ich</button><button class="word-chip" data-order-word="s3">der</button></div>
+          <div class="answer-line" id="line-s3"></div><button class="secondary-btn" data-order-check="s3" data-answer="Ich fahre mit der U-Bahn.">Satz prüfen</button>
+        </div>
+        <div class="sentence-box" data-order="s4">
+          <div class="q-label">4. Am Wochenende gehe ich ins Kino.</div>
+          <div class="word-bank"><button class="word-chip" data-order-word="s4">ins</button><button class="word-chip" data-order-word="s4">gehe</button><button class="word-chip" data-order-word="s4">Kino.</button><button class="word-chip" data-order-word="s4">Am</button><button class="word-chip" data-order-word="s4">ich</button><button class="word-chip" data-order-word="s4">Wochenende</button></div>
+          <div class="answer-line" id="line-s4"></div><button class="secondary-btn" data-order-check="s4" data-answer="Am Wochenende gehe ich ins Kino.">Satz prüfen</button>
+        </div>
+        <div class="sentence-box" data-order="s5">
+          <div class="q-label">5. Die Wohnung ist schön und ruhig.</div>
+          <div class="word-bank"><button class="word-chip" data-order-word="s5">ruhig.</button><button class="word-chip" data-order-word="s5">Die</button><button class="word-chip" data-order-word="s5">schön</button><button class="word-chip" data-order-word="s5">Wohnung</button><button class="word-chip" data-order-word="s5">und</button><button class="word-chip" data-order-word="s5">ist</button></div>
+          <div class="answer-line" id="line-s5"></div><button class="secondary-btn" data-order-check="s5" data-answer="Die Wohnung ist schön und ruhig.">Satz prüfen</button>
+        </div>
+      </div>
+      <div class="feedback" id="fb-u6"></div>
+      <div class="btn-row"><button class="secondary-btn" onclick="resetOrder()">↻ Alle Sätze zurücksetzen</button><button class="next-btn" onclick="goNext('u6')">Weiter →</button></div>
+    </section>
+
+    <!-- ÜBUNG 7 -->
+    <section class="exercise theme-map" id="u7">
+      <div class="exercise-head">
+      <button class="exercise-back" type="button" data-back-to-stage>رجوع للمرحلة</button><div class="exercise-title-wrap"><div class="exercise-icon">📍</div><div><h3>Wo bist du? – Präpositionen</h3><div class="exercise-sub">in der, im oder ins?</div></div></div><span class="exercise-num">ÜBUNG 7</span></div>
+      <p class="instruction">Wähle die passende Form. Tipp: „im“ = in dem, „ins“ = in das.</p>
+      <div class="map-grid">
+        <div class="map-tile q-item" data-field="p1"><div class="map-emoji">🏙️</div><b>Ich wohne ___ Stadt.</b><select class="field" name="p1"><option value="">…</option><option>in der</option><option>im</option><option>ins</option></select></div>
+        <div class="map-tile q-item" data-field="p2"><div class="map-emoji">🌳</div><b>Wir sind ___ Park.</b><select class="field" name="p2"><option value="">…</option><option>in der</option><option>im</option><option>ins</option></select></div>
+        <div class="map-tile q-item" data-field="p3"><div class="map-emoji">☕</div><b>Sie sitzt ___ Café.</b><select class="field" name="p3"><option value="">…</option><option>in der</option><option>im</option><option>ins</option></select></div>
+        <div class="map-tile q-item" data-field="p4"><div class="map-emoji">🏫</div><b>Die Kinder sind ___ Schule.</b><select class="field" name="p4"><option value="">…</option><option>im</option><option>in der</option><option>ins</option></select></div>
+        <div class="map-tile q-item" data-field="p5"><div class="map-emoji">🎬</div><b>Wir gehen ___ Kino.</b><select class="field" name="p5"><option value="">…</option><option>im</option><option>ins</option><option>in der</option></select></div>
+        <div class="map-tile q-item" data-field="p6"><div class="map-emoji">🍽️</div><b>Er isst ___ Restaurant.</b><select class="field" name="p6"><option value="">…</option><option>im</option><option>ins</option><option>in der</option></select></div>
+      </div>
+      <div class="feedback" id="fb-u7"></div>
+      <div class="btn-row"><button class="primary-btn" onclick="checkExercise('u7')">✓ Prüfen</button><button class="secondary-btn" onclick="resetFields('u7')">↻ Zurücksetzen</button><button class="next-btn" onclick="goNext('u7')">Weiter →</button></div>
+    </section>
+
+    <!-- ÜBUNG 8 -->
+    <section class="exercise theme-orange" id="u8">
+      <div class="exercise-head">
+      <button class="exercise-back" type="button" data-back-to-stage>رجوع للمرحلة</button><div class="exercise-title-wrap"><div class="exercise-icon">🏃</div><div><h3>Verben im Alltag</h3><div class="exercise-sub">Setze das Verb in die richtige Form.</div></div></div><span class="exercise-num">ÜBUNG 8</span></div>
+      <p class="instruction">Wähle die richtige Verbform. Achte auf ich, du, er/sie und wir.</p>
+      <div class="grid-2">
+        <div class="q-item" data-field="v1"><div class="q-label">1. Ich ___ in Berlin.</div><select class="field" name="v1"><option value="">…</option><option>wohne</option><option>wohnst</option><option>wohnt</option></select></div>
+        <div class="q-item" data-field="v2"><div class="q-label">2. Du ___ gern Kaffee.</div><select class="field" name="v2"><option value="">…</option><option>trinke</option><option>trinkst</option><option>trinkt</option></select></div>
+        <div class="q-item" data-field="v3"><div class="q-label">3. Er ___ mit dem Bus.</div><select class="field" name="v3"><option value="">…</option><option>fahre</option><option>fährst</option><option>fährt</option></select></div>
+        <div class="q-item" data-field="v4"><div class="q-label">4. Wir ___ am Wochenende ins Kino.</div><select class="field" name="v4"><option value="">…</option><option>gehe</option><option>geht</option><option>gehen</option></select></div>
+        <div class="q-item" data-field="v5"><div class="q-label">5. Sie (Plural) ___ ein Buch.</div><select class="field" name="v5"><option value="">…</option><option>liest</option><option>lesen</option><option>lese</option></select></div>
+        <div class="q-item" data-field="v6"><div class="q-label">6. Ihr ___ Pizza.</div><select class="field" name="v6"><option value="">…</option><option>esse</option><option>esst</option><option>essen</option></select></div>
+        <div class="q-item" data-field="v7"><div class="q-label">7. Meine Freunde ___ einen Film.</div><select class="field" name="v7"><option value="">…</option><option>sehen</option><option>sieht</option><option>sehe</option></select></div>
+        <div class="q-item" data-field="v8"><div class="q-label">8. Du ___ zur Schule.</div><select class="field" name="v8"><option value="">…</option><option>gehe</option><option>gehst</option><option>geht</option></select></div>
+      </div>
+      <div class="feedback" id="fb-u8"></div>
+      <div class="btn-row"><button class="primary-btn" onclick="checkExercise('u8')">✓ Verben kontrollieren</button><button class="secondary-btn" onclick="resetFields('u8')">↻ Noch einmal</button><button class="next-btn" onclick="goNext('u8')">Weiter →</button></div>
+    </section>
+
+    <!-- ÜBUNG 9 -->
+    <section class="exercise theme-pink" id="u9">
+      <div class="exercise-head opposites-head">
+        <button class="exercise-back" type="button" data-back-to-stage>رجوع للمرحلة</button>
+        <div class="exercise-title-wrap opposites-title">
+          <div>
+            <span class="opposites-kicker">WORTSCHATZ-CHALLENGE · 4 PAARE</span>
+            <h3>Adjektive-Duell</h3>
+            <div class="exercise-sub">Finde zu jedem Adjektiv das passende Gegenteil.</div>
+          </div>
+        </div>
+        <span class="exercise-num">ÜBUNG 9</span>
+      </div>
+
+      <p class="instruction">Wähle zuerst ein Wort in der linken Spalte. Klicke danach auf sein Gegenteil rechts.</p>
+
+      <div class="opposites-progress-card">
+        <div class="opposites-progress-top">
+          <div class="opposites-progress-copy">
+            <span class="opposites-progress-kicker">DEIN FORTSCHRITT</span>
+            <strong id="matchCount9">0 / 4 Gegenteile gefunden</strong>
+          </div>
+          <span class="opposites-progress-status" id="matchStatus9">Wähle ein Adjektiv zum Starten</span>
+        </div>
+        <div class="opposites-progress-track" role="progressbar" aria-label="Gefundene Gegenteile" aria-valuemin="0" aria-valuemax="4" aria-valuenow="0">
+          <span id="matchProgressFill9"></span>
+        </div>
+      </div>
+
+      <div class="adj-match opposites-board">
+        <div class="adj-side opposites-column">
+          <div class="opposites-column-head">
+            <span class="opposites-column-index">A</span>
+            <div>
+              <span class="opposites-column-kicker">SPALTE A</span>
+              <h4>Adjektive</h4>
+            </div>
+          </div>
+          <button class="match-btn opposites-word" type="button" data-match="m9" data-side="left" data-key="schoen" aria-pressed="false"><span class="opposites-word-text">schön</span></button>
+          <button class="match-btn opposites-word" type="button" data-match="m9" data-side="left" data-key="teuer" aria-pressed="false"><span class="opposites-word-text">teuer</span></button>
+          <button class="match-btn opposites-word" type="button" data-match="m9" data-side="left" data-key="gross" aria-pressed="false"><span class="opposites-word-text">groß</span></button>
+          <button class="match-btn opposites-word" type="button" data-match="m9" data-side="left" data-key="laut" aria-pressed="false"><span class="opposites-word-text">laut</span></button>
+        </div>
+
+        <div class="adj-side opposites-column">
+          <div class="opposites-column-head">
+            <span class="opposites-column-index">B</span>
+            <div>
+              <span class="opposites-column-kicker">SPALTE B</span>
+              <h4>Gegenteile</h4>
+            </div>
+          </div>
+          <button class="match-btn opposites-word" type="button" data-match="m9" data-side="right" data-key="ruhig" aria-pressed="false"><span class="opposites-word-text">ruhig</span></button>
+          <button class="match-btn opposites-word" type="button" data-match="m9" data-side="right" data-key="klein" aria-pressed="false"><span class="opposites-word-text">klein</span></button>
+          <button class="match-btn opposites-word" type="button" data-match="m9" data-side="right" data-key="billig" aria-pressed="false"><span class="opposites-word-text">billig</span></button>
+          <button class="match-btn opposites-word" type="button" data-match="m9" data-side="right" data-key="unschön" aria-pressed="false"><span class="opposites-word-text">unschön</span></button>
+        </div>
+      </div>
+
+      <div class="feedback" id="fb-u9" aria-live="polite"></div>
+      <div class="btn-row opposites-actions">
+        <button class="secondary-btn" type="button" onclick="resetMatch('m9','u9')">Neu starten</button>
+        <button class="next-btn" type="button" onclick="goNext('u9')">Weiter</button>
+      </div>
+    </section>
+
+    <!-- ÜBUNG 10 -->
+    <section class="exercise theme-audio" id="u10">
+      <div class="exercise-head">
+      <button class="exercise-back" type="button" data-back-to-stage>رجوع للمرحلة</button><div class="exercise-title-wrap"><div class="exercise-icon">🔊</div><div><h3>Hördetektiv</h3><div class="exercise-sub">Höre den deutschen Satz und wähle die passende Bedeutung.</div></div></div><span class="exercise-num">ÜBUNG 10</span></div>
+      <p class="instruction">Klicke auf den Lautsprecher. Der Browser liest den Satz auf Deutsch vor. Danach wählst du die richtige arabische Bedeutung.</p>
+      <div class="grid-2">
+        <div class="q-item" data-field="h1"><div class="sound-row"><button class="sound-btn" data-speak="Ich wohne in der Stadt." aria-label="Satz anhören">▶</button><div><b>Hörtext 1</b><div class="muted" style="font-size:12px">Satz anhören</div></div></div><div class="option-row" style="margin-top:10px"><label><input type="radio" name="h1" value="ساكن فالمدينة"> ساكن فالمدينة</label><label><input type="radio" name="h1" value="كنمشي للمدرسة"> كنمشي للمدرسة</label></div></div>
+        <div class="q-item" data-field="h2"><div class="sound-row"><button class="sound-btn" data-speak="Ich fahre mit der U-Bahn." aria-label="Satz anhören">▶</button><div><b>Hörtext 2</b><div class="muted" style="font-size:12px">Satz anhören</div></div></div><div class="option-row" style="margin-top:10px"><label><input type="radio" name="h2" value="كنركب الميترو"> كنركب الميترو</label><label><input type="radio" name="h2" value="كنركب البيكالة"> كنركب البيكالة</label></div></div>
+        <div class="q-item" data-field="h3"><div class="sound-row"><button class="sound-btn" data-speak="Im Park ist es ruhig." aria-label="Satz anhören">▶</button><div><b>Hörtext 3</b><div class="muted" style="font-size:12px">Satz anhören</div></div></div><div class="option-row" style="margin-top:10px"><label><input type="radio" name="h3" value="فالبارك هاني"> فالبارك هاني</label><label><input type="radio" name="h3" value="فالبارك فيه الصداع"> فالبارك فيه الصداع</label></div></div>
+        <div class="q-item" data-field="h4"><div class="sound-row"><button class="sound-btn" data-speak="Die Wohnung hat einen Balkon." aria-label="Satz anhören">▶</button><div><b>Hörtext 4</b><div class="muted" style="font-size:12px">Satz anhören</div></div></div><div class="option-row" style="margin-top:10px"><label><input type="radio" name="h4" value="الدار فيها بالكون"> الدار فيها بالكون</label><label><input type="radio" name="h4" value="الدار فيها كوزينة"> الدار فيها كوزينة</label></div></div>
+        <div class="q-item" data-field="h5"><div class="sound-row"><button class="sound-btn" data-speak="Am Wochenende gehe ich ins Kino." aria-label="Satz anhören">▶</button><div><b>Hörtext 5</b><div class="muted" style="font-size:12px">Satz anhören</div></div></div><div class="option-row" style="margin-top:10px"><label><input type="radio" name="h5" value="فالويكاند كنمشي للسينما"> فالويكاند كنمشي للسينما</label><label><input type="radio" name="h5" value="فالويكاند كنمشي للريسطوران"> فالويكاند كنمشي للريسطوران</label></div></div>
+      </div>
+      <div class="feedback" id="fb-u10"></div>
+      <div class="btn-row"><button class="primary-btn" onclick="checkExercise('u10')">✓ Antworten prüfen</button><button class="secondary-btn" onclick="resetFields('u10')">↻ Wiederholen</button><button class="next-btn" onclick="goNext('u10')">Weiter →</button></div>
+    </section>
+
+    <!-- ÜBUNG 11 -->
+    <section class="exercise theme-reading" id="u11">
+      <div class="exercise-head">
+      <button class="exercise-back" type="button" data-back-to-stage>رجوع للمرحلة</button><div class="exercise-title-wrap"><div class="exercise-icon">📖</div><div><h3>Lesen und verstehen</h3><div class="exercise-sub">Lies den Text und beantworte die Fragen.</div></div></div><span class="exercise-num">ÜBUNG 11</span></div>
+      <div class="reading-paper">
+        <b>Meine Wohnung und meine Stadt</b><br>
+        Hallo! Ich heiße Lina und wohne in einer großen Stadt. Meine Wohnung ist klein, aber schön. Sie hat ein Wohnzimmer, eine Küche, ein Schlafzimmer und einen Balkon. In meiner Straße gibt es ein Café, ein Geschäft und einen Park. Am Wochenende gehe ich mit meiner Freundin ins Kino. Wir fahren mit der Straßenbahn. Danach essen wir im Restaurant. Die Stadt ist manchmal laut, aber sehr lebendig.
+      </div>
+      <p class="instruction" style="margin-top:14px">Wähle die richtige Antwort zum Text.</p>
+      <div class="grid-2">
+        <div class="q-item" data-field="r1"><div class="q-label">1. Wie ist Linas Wohnung?</div><label><input type="radio" name="r1" value="klein"> Klein</label><label><input type="radio" name="r1" value="sehr groß"> Sehr groß</label><label><input type="radio" name="r1" value="teuer"> Teuer</label></div>
+        <div class="q-item" data-field="r2"><div class="q-label">2. Was hat die Wohnung?</div><label><input type="radio" name="r2" value="einen Balkon"> Einen Balkon</label><label><input type="radio" name="r2" value="einen Garten"> Einen Garten</label><label><input type="radio" name="r2" value="ein Kino"> Ein Kino</label></div>
+        <div class="q-item" data-field="r3"><div class="q-label">3. Was gibt es in ihrer Straße?</div><label><input type="radio" name="r3" value="ein Café, ein Geschäft und einen Park"> Ein Café, ein Geschäft und einen Park</label><label><input type="radio" name="r3" value="eine Schule und ein Krankenhaus"> Eine Schule und ein Krankenhaus</label></div>
+        <div class="q-item" data-field="r4"><div class="q-label">4. Wie fahren Lina und ihre Freundin?</div><label><input type="radio" name="r4" value="mit dem Auto"> Mit dem Auto</label><label><input type="radio" name="r4" value="mit der Straßenbahn"> Mit der Straßenbahn</label><label><input type="radio" name="r4" value="mit dem Fahrrad"> Mit dem Fahrrad</label></div>
+        <div class="q-item" data-field="r5"><div class="q-label">5. Wie ist die Stadt manchmal?</div><label><input type="radio" name="r5" value="laut"> Laut</label><label><input type="radio" name="r5" value="langweilig"> Langweilig</label><label><input type="radio" name="r5" value="klein"> Klein</label></div>
+      </div>
+      <div class="feedback" id="fb-u11"></div>
+      <div class="btn-row"><button class="primary-btn" onclick="checkExercise('u11')">✓ Textfragen prüfen</button><button class="secondary-btn" onclick="resetFields('u11')">↻ Noch einmal lesen</button><button class="next-btn" onclick="goNext('u11')">Weiter →</button></div>
+    </section>
+
+    <!-- ÜBUNG 12 -->
+    <section class="exercise theme-chat" id="u12">
+      <div class="exercise-head">
+      <button class="exercise-back" type="button" data-back-to-stage>رجوع للمرحلة</button><div class="exercise-title-wrap"><div class="exercise-icon">💬</div><div><h3>Dialog ergänzen</h3><div class="exercise-sub">Vervollständige das Gespräch zwischen zwei Freunden.</div></div></div><span class="exercise-num">ÜBUNG 12</span></div>
+      <p class="instruction">Wähle für jede Lücke die passende Ergänzung.</p>
+      <div class="chat-line"><div class="avatar">👦</div><div class="bubble">Wo wohnst du?</div></div>
+      <div class="chat-line right"><div class="avatar">👩</div><div class="bubble">Ich wohne <select class="field" name="d1" style="display:inline-block;width:auto;min-width:105px"><option value="">…</option><option>in</option><option>im</option><option>ins</option></select> Berlin.</div></div>
+      <div class="chat-line"><div class="avatar">👦</div><div class="bubble">Was gibt es in deiner Stadt?</div></div>
+      <div class="chat-line right"><div class="avatar">👩</div><div class="bubble">Es gibt viele Geschäfte, <select class="field" name="d2" style="display:inline-block;width:auto;min-width:105px"><option value="">…</option><option>ein</option><option>eine</option><option>einen</option></select> Kino und einen Park.</div></div>
+      <div class="chat-line"><div class="avatar">👦</div><div class="bubble">Wie fährst du ins Zentrum?</div></div>
+      <div class="chat-line right"><div class="avatar">👩</div><div class="bubble">Ich fahre mit <select class="field" name="d3" style="display:inline-block;width:auto;min-width:105px"><option value="">…</option><option>der</option><option>die</option><option>das</option></select> U-Bahn.</div></div>
+      <div class="chat-line"><div class="avatar">👦</div><div class="bubble">Was machst du am Wochenende?</div></div>
+      <div class="chat-line right"><div class="avatar">👩</div><div class="bubble">Ich gehe <select class="field" name="d4" style="display:inline-block;width:auto;min-width:105px"><option value="">…</option><option>ins</option><option>im</option><option>in der</option></select> Café.</div></div>
+      <div class="chat-line"><div class="avatar">👦</div><div class="bubble">Wie ist deine Wohnung?</div></div>
+      <div class="chat-line right"><div class="avatar">👩</div><div class="bubble">Sie ist klein, aber <select class="field" name="d5" style="display:inline-block;width:auto;min-width:105px"><option value="">…</option><option>schön</option><option>teuer</option><option>laut</option></select>.</div></div>
+      <div class="feedback" id="fb-u12"></div>
+      <div class="btn-row"><button class="primary-btn" onclick="checkExercise('u12')">✓ Dialog prüfen</button><button class="secondary-btn" onclick="resetFields('u12')">↻ Dialog zurücksetzen</button><button class="next-btn" onclick="goNext('u12')">Weiter →</button></div>
+    </section>
+
+    <!-- ÜBUNG 13 -->
+    <section class="exercise theme-detective" id="u13">
+      <div class="exercise-head">
+      <button class="exercise-back" type="button" data-back-to-stage>رجوع للمرحلة</button><div class="exercise-title-wrap"><div class="exercise-icon">🚨</div><div><h3>Fehler-Polizei</h3><div class="exercise-sub">In jedem Satz gibt es einen Fehler. Korrigiere den ganzen Satz.</div></div></div><span class="exercise-num">ÜBUNG 13</span></div>
+      <p class="instruction">Schreibe den Satz vollständig und richtig. Achte auf Artikel und Verbformen.</p>
+      <div class="grid-2">
+        <div class="q-item" data-field="e1"><div class="q-label">❌ Ich wohne in die Stadt.</div><input class="field" name="e1" placeholder="Richtiger Satz …"></div>
+        <div class="q-item" data-field="e2"><div class="q-label">❌ Ich fahre mit die U-Bahn.</div><input class="field" name="e2" placeholder="Richtiger Satz …"></div>
+        <div class="q-item" data-field="e3"><div class="q-label">❌ Der Küche ist groß.</div><input class="field" name="e3" placeholder="Richtiger Satz …"></div>
+        <div class="q-item" data-field="e4"><div class="q-label">❌ Das Park ist schön.</div><input class="field" name="e4" placeholder="Richtiger Satz …"></div>
+        <div class="q-item" data-field="e5"><div class="q-label">❌ Ich gehen ins Kino.</div><input class="field" name="e5" placeholder="Richtiger Satz …"></div>
+      </div>
+      <div class="feedback" id="fb-u13"></div>
+      <div class="btn-row"><button class="primary-btn" onclick="checkExercise('u13')">✓ Korrekturen prüfen</button><button class="secondary-btn" onclick="resetFields('u13')">↻ Noch einmal</button><button class="next-btn" onclick="goNext('u13')">Weiter →</button></div>
+    </section>
+
+    <!-- ÜBUNG 14 -->
+    <section class="exercise theme-sort" id="u14">
+      <div class="exercise-head">
+      <button class="exercise-back" type="button" data-back-to-stage>رجوع للمرحلة</button><div class="exercise-title-wrap"><div class="exercise-icon">🗂️</div><div><h3>Wörter sortieren</h3><div class="exercise-sub">Ordne jedes Wort der richtigen Kategorie zu.</div></div></div><span class="exercise-num">ÜBUNG 14</span></div>
+      <p class="instruction">Wähle die passende Kategorie: Stadt, Verkehr, Räume, Möbel, Verben oder Adjektive.</p>
+      <div class="grid-2">
+        <div class="q-item" data-field="srt1"><b>🚉 der Bahnhof</b><select class="field" name="srt1"><option value="">Kategorie …</option><option>Stadt</option><option>Verkehr</option><option>Räume</option><option>Möbel</option><option>Verben</option><option>Adjektive</option></select></div>
+        <div class="q-item" data-field="srt2"><b>🚇 die U-Bahn</b><select class="field" name="srt2"><option value="">Kategorie …</option><option>Stadt</option><option>Verkehr</option><option>Räume</option><option>Möbel</option><option>Verben</option><option>Adjektive</option></select></div>
+        <div class="q-item" data-field="srt3"><b>🛋️ das Wohnzimmer</b><select class="field" name="srt3"><option value="">Kategorie …</option><option>Stadt</option><option>Verkehr</option><option>Räume</option><option>Möbel</option><option>Verben</option><option>Adjektive</option></select></div>
+        <div class="q-item" data-field="srt4"><b>🗄️ der Schrank</b><select class="field" name="srt4"><option value="">Kategorie …</option><option>Stadt</option><option>Verkehr</option><option>Räume</option><option>Möbel</option><option>Verben</option><option>Adjektive</option></select></div>
+        <div class="q-item" data-field="srt5"><b>🛒 einkaufen</b><select class="field" name="srt5"><option value="">Kategorie …</option><option>Stadt</option><option>Verkehr</option><option>Räume</option><option>Möbel</option><option>Verben</option><option>Adjektive</option></select></div>
+        <div class="q-item" data-field="srt6"><b>🤫 ruhig</b><select class="field" name="srt6"><option value="">Kategorie …</option><option>Stadt</option><option>Verkehr</option><option>Räume</option><option>Möbel</option><option>Verben</option><option>Adjektive</option></select></div>
+        <div class="q-item" data-field="srt7"><b>🌳 der Park</b><select class="field" name="srt7"><option value="">Kategorie …</option><option>Stadt</option><option>Verkehr</option><option>Räume</option><option>Möbel</option><option>Verben</option><option>Adjektive</option></select></div>
+        <div class="q-item" data-field="srt8"><b>🚲 das Fahrrad</b><select class="field" name="srt8"><option value="">Kategorie …</option><option>Stadt</option><option>Verkehr</option><option>Räume</option><option>Möbel</option><option>Verben</option><option>Adjektive</option></select></div>
+        <div class="q-item" data-field="srt9"><b>🍳 die Küche</b><select class="field" name="srt9"><option value="">Kategorie …</option><option>Stadt</option><option>Verkehr</option><option>Räume</option><option>Möbel</option><option>Verben</option><option>Adjektive</option></select></div>
+        <div class="q-item" data-field="srt10"><b>🛋️ das Sofa</b><select class="field" name="srt10"><option value="">Kategorie …</option><option>Stadt</option><option>Verkehr</option><option>Räume</option><option>Möbel</option><option>Verben</option><option>Adjektive</option></select></div>
+        <div class="q-item" data-field="srt11"><b>📖 lesen</b><select class="field" name="srt11"><option value="">Kategorie …</option><option>Stadt</option><option>Verkehr</option><option>Räume</option><option>Möbel</option><option>Verben</option><option>Adjektive</option></select></div>
+        <div class="q-item" data-field="srt12"><b>💰 teuer</b><select class="field" name="srt12"><option value="">Kategorie …</option><option>Stadt</option><option>Verkehr</option><option>Räume</option><option>Möbel</option><option>Verben</option><option>Adjektive</option></select></div>
+      </div>
+      <div class="feedback" id="fb-u14"></div>
+      <div class="btn-row"><button class="primary-btn" onclick="checkExercise('u14')">✓ Sortierung prüfen</button><button class="secondary-btn" onclick="resetFields('u14')">↻ Alles zurücksetzen</button><button class="next-btn" onclick="goNext('u14')">Weiter →</button></div>
+    </section>
+
+    <!-- ÜBUNG 15 -->
+    <section class="exercise theme-purple" id="u15">
+      <div class="exercise-head">
+      <button class="exercise-back" type="button" data-back-to-stage>رجوع للمرحلة</button><div class="exercise-title-wrap"><div class="exercise-icon">🌐</div><div><h3>Übersetzungswerkstatt</h3><div class="exercise-sub">Übersetze die arabischen Sätze ins Deutsche.</div></div></div><span class="exercise-num">ÜBUNG 15</span></div>
+      <p class="instruction">Schreibe den deutschen Satz. Großschreibung und Satzzeichen werden bei der Korrektur berücksichtigt, aber kleine Tippfehler bitte vermeiden.</p>
+      <div class="grid-2">
+        <div class="q-item" data-field="tr1"><div class="q-label small-ar">أنا ساكن فالمدينة.</div><input class="field" name="tr1" placeholder="Ich …"></div>
+        <div class="q-item" data-field="tr2"><div class="q-label small-ar">كنمشي للسينما.</div><input class="field" name="tr2" placeholder="Ich …"></div>
+        <div class="q-item" data-field="tr3"><div class="q-label small-ar">كنشري من الحانوت.</div><input class="field" name="tr3" placeholder="Ich …"></div>
+        <div class="q-item" data-field="tr4"><div class="q-label small-ar">كنركب الميترو.</div><input class="field" name="tr4" placeholder="Ich …"></div>
+        <div class="q-item" data-field="tr5"><div class="q-label small-ar">الدار زوينة وهادية.</div><input class="field" name="tr5" placeholder="Die Wohnung …"></div>
+      </div>
+      <div class="feedback" id="fb-u15"></div>
+      <div class="btn-row"><button class="primary-btn" onclick="checkExercise('u15')">✓ Übersetzungen prüfen</button><button class="secondary-btn" onclick="resetFields('u15')">↻ Neu schreiben</button><button class="next-btn" onclick="goNext('u15')">Weiter →</button></div>
+    </section>
+
+    <!-- ÜBUNG 16 -->
+    <section class="exercise theme-write" id="u16">
+      <div class="exercise-head">
+      <button class="exercise-back" type="button" data-back-to-stage>رجوع للمرحلة</button><div class="exercise-title-wrap"><div class="exercise-icon">✍️</div><div><h3>Schreibwerkstatt – Meine Stadt</h3><div class="exercise-sub">Schreibe einen kurzen Text über deine Stadt oder Wohnung.</div></div></div><span class="exercise-num">ÜBUNG 16</span></div>
+      <p class="instruction">Schreibe 4–6 Sätze. Verwende möglichst viele Wörter aus der Wortliste.</p>
+      <div class="wordbank"><span>Ich wohne …</span><span>In meiner Stadt gibt es …</span><span>der Park</span><span>das Kino</span><span>die Schule</span><span>mit dem Bus</span><span>schön</span><span>ruhig</span><span>groß / klein</span></div>
+      <textarea class="field lined" id="writingTask" placeholder="Ich wohne in …&#10;In meiner Stadt gibt es …&#10;Meine Wohnung ist …" rows="6"></textarea>
+      <div class="btn-row"><button class="primary-btn" onclick="checkWriting()">✓ Meinen Text auswerten</button><button class="secondary-btn" onclick="document.getElementById('writingTask').value='';document.getElementById('fb-u16').className='feedback';">↻ Leeren</button><button class="next-btn" onclick="goNext('u16')">Weiter →</button></div>
+      <div class="feedback" id="fb-u16"></div>
+      <details style="margin-top:13px"><summary style="cursor:pointer;font-weight:850;color:#26725c">💡 Beispieltext anzeigen</summary><p class="muted">Ich wohne in einer schönen Stadt. In meiner Stadt gibt es einen Park, ein Kino und viele Geschäfte. Ich fahre oft mit dem Bus. Meine Wohnung ist klein, aber sehr ruhig. Am Wochenende gehe ich gern ins Café.</p></details>
+    </section>
+
+    <!-- ÜBUNG 17 -->
+    <section class="exercise theme-final" id="u17">
+      <div class="exercise-head">
+      <button class="exercise-back" type="button" data-back-to-stage>رجوع للمرحلة</button><div class="exercise-title-wrap"><div class="exercise-icon">🏆</div><div><h3>Abschlusstest</h3><div class="exercise-sub">Zeige, was du gelernt hast!</div></div></div><span class="exercise-num">ÜBUNG 17</span></div>
+      <div class="final-banner"><strong>🎯 Die letzte Runde!</strong><br><span style="color:#dbe7ff;font-size:13px">12 gemischte Fragen aus Wortschatz, Artikeln, Verben und Grammatik.</span></div>
+      <div class="grid-2">
+        <div class="q-item" data-field="f1"><div class="q-label">1. ___ Schlafzimmer</div><label><input type="radio" name="f1" value="das"> das</label> <label><input type="radio" name="f1" value="der"> der</label> <label><input type="radio" name="f1" value="die"> die</label></div>
+        <div class="q-item" data-field="f2"><div class="q-label">2. Was bedeutet „billig“?</div><label><input type="radio" name="f2" value="رخيص"> رخيص</label> <label><input type="radio" name="f2" value="غالي"> غالي</label></div>
+        <div class="q-item" data-field="f3"><div class="q-label">3. Ich ___ in einer Stadt.</div><label><input type="radio" name="f3" value="wohne"> wohne</label> <label><input type="radio" name="f3" value="wohnst"> wohnst</label> <label><input type="radio" name="f3" value="wohnt"> wohnt</label></div>
+        <div class="q-item" data-field="f4"><div class="q-label">4. Wir gehen ___ Kino.</div><label><input type="radio" name="f4" value="ins"> ins</label> <label><input type="radio" name="f4" value="im"> im</label> <label><input type="radio" name="f4" value="in der"> in der</label></div>
+        <div class="q-item" data-field="f5"><div class="q-label">5. „die Lampe“ bedeutet …</div><label><input type="radio" name="f5" value="لامبة"> لامبة</label> <label><input type="radio" name="f5" value="الناموسية"> الناموسية</label></div>
+        <div class="q-item" data-field="f6"><div class="q-label">6. Er ___ mit dem Fahrrad.</div><label><input type="radio" name="f6" value="fährt"> fährt</label> <label><input type="radio" name="f6" value="fahre"> fahre</label> <label><input type="radio" name="f6" value="fahren"> fahren</label></div>
+        <div class="q-item" data-field="f7"><div class="q-label">7. Das Gegenteil von „groß“ ist …</div><label><input type="radio" name="f7" value="klein"> klein</label> <label><input type="radio" name="f7" value="laut"> laut</label> <label><input type="radio" name="f7" value="schön"> schön</label></div>
+        <div class="q-item" data-field="f8"><div class="q-label">8. Wo kann man Filme sehen?</div><label><input type="radio" name="f8" value="im Kino"> im Kino</label> <label><input type="radio" name="f8" value="im Bad"> im Bad</label></div>
+        <div class="q-item" data-field="f9"><div class="q-label">9. „der Sessel“ bedeutet …</div><label><input type="radio" name="f9" value="فوتوي"> فوتوي</label> <label><input type="radio" name="f9" value="الطابلة"> الطابلة</label></div>
+        <div class="q-item" data-field="f10"><div class="q-label">10. Ich trinke Kaffee ___ Café.</div><label><input type="radio" name="f10" value="im"> im</label> <label><input type="radio" name="f10" value="ins"> ins</label></div>
+        <div class="q-item" data-field="f11"><div class="q-label">11. Was ist ein Verkehrsmittel?</div><label><input type="radio" name="f11" value="die Straßenbahn"> die Straßenbahn</label> <label><input type="radio" name="f11" value="das Regal"> das Regal</label></div>
+        <div class="q-item" data-field="f12"><div class="q-label">12. Die Wohnung ist schön und ___.</div><label><input type="radio" name="f12" value="ruhig"> ruhig</label> <label><input type="radio" name="f12" value="einkaufen"> einkaufen</label></div>
+      </div>
+      <div class="feedback" id="fb-u17"></div>
+      <div class="btn-row"><button class="primary-btn" onclick="checkExercise('u17')">🏆 Abschlusstest auswerten</button><button class="secondary-btn" onclick="resetFields('u17')">↻ Test wiederholen</button></div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+const definitions = {
+u2:[
+{name:'a1',answer:'der'},{name:'a2',answer:'die'},{name:'a3',answer:'das'},{name:'a4',answer:'das'},
+{name:'a5',answer:'das'},{name:'a6',answer:'das'},{name:'a7',answer:'die'},{name:'a8',answer:'das'},
+{name:'a9',answer:'der'},{name:'a10',answer:'die'},{name:'a11',answer:'das'},{name:'a12',answer:'der'}
+],
+u3:[
+{name:'t1',answer:'das Schlafzimmer',type:'radio'},{name:'t2',answer:'das Fahrrad',type:'radio'},
+{name:'t3',answer:'der Schrank',type:'radio'},{name:'t4',answer:'die Lampe',type:'radio'},
+{name:'t5',answer:'die Straßenbahn',type:'radio'},{name:'t6',answer:'das Kinderzimmer',type:'radio'},
+{name:'t7',answer:'das Regal',type:'radio'},{name:'t8',answer:'der Bus',type:'radio'}
+],
+u4:[
+{name:'l1',answer:'in der'},{name:'l2',answer:'im'},{name:'l3',answer:'im'},{name:'l4',answer:'in der'},
+{name:'l5',answer:'ins'},{name:'l6',answer:'im'},{name:'l7',answer:'im'},{name:'l8',answer:'im'}
+],
+u5:[
+{name:'w1',answer:'Bahnhof',type:'text'},{name:'w2',answer:'Schule',type:'text'},{name:'w3',answer:'Küche',type:'text'},
+{name:'w4',answer:'Balkon',type:'text'},{name:'w5',answer:'Park',type:'text'},{name:'w6',answer:'Bett',type:'text'},
+{name:'w7',answer:'Lampe',type:'text'},{name:'w8',answer:'Fahrrad',type:'text'}
+],
+u7:[
+{name:'p1',answer:'in der'},{name:'p2',answer:'im'},{name:'p3',answer:'im'},{name:'p4',answer:'in der'},{name:'p5',answer:'ins'},{name:'p6',answer:'im'}
+],
+u8:[
+{name:'v1',answer:'wohne'},{name:'v2',answer:'trinkst'},{name:'v3',answer:'fährt'},{name:'v4',answer:'gehen'},
+{name:'v5',answer:'lesen'},{name:'v6',answer:'esst'},{name:'v7',answer:'sehen'},{name:'v8',answer:'gehst'}
+],
+u10:[
+{name:'h1',answer:'ساكن فالمدينة',type:'radio'},{name:'h2',answer:'كنركب الميترو',type:'radio'},
+{name:'h3',answer:'فالبارك هاني',type:'radio'},{name:'h4',answer:'الدار فيها بالكون',type:'radio'},
+{name:'h5',answer:'فالويكاند كنمشي للسينما',type:'radio'}
+],
+u11:[
+{name:'r1',answer:'klein',type:'radio'},{name:'r2',answer:'einen Balkon',type:'radio'},
+{name:'r3',answer:'ein Café, ein Geschäft und einen Park',type:'radio'},
+{name:'r4',answer:'mit der Straßenbahn',type:'radio'},{name:'r5',answer:'laut',type:'radio'}
+],
+u12:[
+{name:'d1',answer:'in'},{name:'d2',answer:'ein'},{name:'d3',answer:'der'},{name:'d4',answer:'ins'},{name:'d5',answer:'schön'}
+],
+u13:[
+{name:'e1',answer:'Ich wohne in der Stadt.',type:'text'},
+{name:'e2',answer:'Ich fahre mit der U-Bahn.',type:'text'},
+{name:'e3',answer:'Die Küche ist groß.',type:'text'},
+{name:'e4',answer:'Der Park ist schön.',type:'text'},
+{name:'e5',answer:'Ich gehe ins Kino.',type:'text'}
+],
+u14:[
+{name:'srt1',answer:'Stadt'},{name:'srt2',answer:'Verkehr'},{name:'srt3',answer:'Räume'},{name:'srt4',answer:'Möbel'},
+{name:'srt5',answer:'Verben'},{name:'srt6',answer:'Adjektive'},{name:'srt7',answer:'Stadt'},{name:'srt8',answer:'Verkehr'},
+{name:'srt9',answer:'Räume'},{name:'srt10',answer:'Möbel'},{name:'srt11',answer:'Verben'},{name:'srt12',answer:'Adjektive'}
+],
+u15:[
+{name:'tr1',answer:'Ich wohne in der Stadt.',type:'text'},
+{name:'tr2',answer:'Ich gehe ins Kino.',type:'text'},
+{name:'tr3',answer:'Ich kaufe im Geschäft ein.',type:'text'},
+{name:'tr4',answer:'Ich fahre mit der U-Bahn.',type:'text'},
+{name:'tr5',answer:'Die Wohnung ist schön und ruhig.',type:'text'}
+],
+u17:[
+{name:'f1',answer:'das',type:'radio'},{name:'f2',answer:'رخيص',type:'radio'},{name:'f3',answer:'wohne',type:'radio'},
+{name:'f4',answer:'ins',type:'radio'},{name:'f5',answer:'لامبة',type:'radio'},{name:'f6',answer:'fährt',type:'radio'},
+{name:'f7',answer:'klein',type:'radio'},{name:'f8',answer:'im Kino',type:'radio'},{name:'f9',answer:'فوتوي',type:'radio'},
+{name:'f10',answer:'im',type:'radio'},{name:'f11',answer:'die Straßenbahn',type:'radio'},{name:'f12',answer:'ruhig',type:'radio'}
+]
+};
+const exerciseIds=['u1','u2','u3','u4','u5','u6','u7','u8','u9','u10','u11','u12','u13','u14','u15','u16','u17'];
+let saved={};
+try{saved=JSON.parse(localStorage.getItem('stadt_worksheet_v1')||'{}')}catch(e){saved={}}
+let completed=saved.completed||{};
+let scoreMap=saved.scoreMap||{};
+const matchState={m1:{left:null,done:new Set()},m9:{left:null,done:new Set()}};
+const matchAnswers={m1:{bahnhof:'bahnhof',schule:'schule',kindergarten:'kindergarten',krankenhaus:'krankenhaus',geschaeft:'geschaeft',cafe:'cafe',restaurant:'restaurant',kino:'kino',bank:'bank',park:'park'},m9:{schoen:'unschön',teuer:'billig',gross:'klein',laut:'ruhig'}};
+const orderState={s1:[],s2:[],s3:[],s4:[],s5:[]};
+const orderDone=new Set();
+function persist(){localStorage.setItem('stadt_worksheet_v1',JSON.stringify({completed,scoreMap}))}
+function updateDashboard(){
+  const done=exerciseIds.filter(id=>completed[id]).length;
+  const score=Object.values(scoreMap).reduce((a,b)=>a+(Number(b)||0),0);
+  const progressText=document.getElementById('progressText');
+  const progressFill=document.getElementById('progressFill');
+  const scoreText=document.getElementById('scoreText');
+  if(progressText) progressText.textContent=done+' / '+exerciseIds.length+' Übungen';
+  if(progressFill) progressFill.style.width=(done/exerciseIds.length*100)+'%';
+  if(scoreText) scoreText.textContent=score;
+
+  const duoPercent=Math.round((done/exerciseIds.length)*100);
+  const percentNode=document.getElementById('duoPercentValue');
+  const duoBar=document.getElementById('duoProgressFill');
+  const duoText=document.getElementById('duoProgressText');
+  if(percentNode) percentNode.textContent=duoPercent+'%';
+  if(duoBar) duoBar.style.width=duoPercent+'%';
+  if(duoText) duoText.textContent=done+' / '+exerciseIds.length+' تمارين';
+  const ring=document.querySelector('.duo-ring');
+  if(ring) ring.style.background='conic-gradient(#facc15 0 '+(duoPercent*3.6)+'deg,#ffffff26 '+(duoPercent*3.6)+'deg 360deg)';
+
+  const stageMap={
+    stage1:['u1','u2','u3','u4'],
+    stage2:['u5','u6','u7','u8'],
+    stage3:['u9','u10','u11'],
+    stage4:['u12','u13','u14'],
+    stage5:['u15','u16','u17']
+  };
+  Object.entries(stageMap).forEach(([stage,ids])=>{
+    const completedInStage=ids.filter(id=>completed[id]).length;
+    const stars=Math.round((completedInStage/ids.length)*5);
+    document.querySelectorAll('[data-stage-stars-panel="'+stage+'"]').forEach(starBox=>{
+      if(starBox) starBox.innerHTML=Array.from({length:5},(_,i)=>'<span class="'+(i<stars?'':'star-off')+'">★</span>').join(' ');
+    });
+  });
+
+  document.querySelectorAll('.lesson-circle').forEach(btn=>{
+    const id=btn.getAttribute('data-open-exercise');
+    const isDone=!!completed[id];
+    btn.classList.toggle('done',isDone);
+    const sub=btn.querySelector('.circle-sub');
+    if(sub)sub.textContent=isDone?'مكتمل':'ابدأ';
+  });
+
+  exerciseIds.forEach(id=>{
+    const badge=document.querySelector('#'+id+' .exercise-num');
+    if(badge) badge.textContent=completed[id] ? '✓ ERLEDIGT' : ('ÜBUNG ' + id.slice(1));
+  });
+}
+function normalize(s){return String(s||'').trim().toLowerCase().replace(/[.!?،,;:]/g,'').replace(/\s+/g,' ');}
+function finish(id,correct,total){
+  // Keep the learner inside the current exercise after checking.
+  // The previous automatic showStage() call caused the exercise to close
+  // and the interface to jump back to the stage list.
+  completed[id]=true;
+  scoreMap[id]=Math.max(Number(scoreMap[id]||0),correct);
+  persist();
+  updateDashboard();
+
+  const fb=document.getElementById('fb-'+id);
+  if(fb){
+    fb.className='feedback show '+(correct===total?'good':correct>=Math.ceil(total*.6)?'mid':'bad');
+    const prefix=id==='u9'
+      ? (correct===total?'Sehr gut! ':correct>=Math.ceil(total*.6)?'Gut gemacht! ':'Weiter üben! ')
+      : (correct===total?'🎉 Sehr gut! ':correct>=Math.ceil(total*.6)?'👍 Gut gemacht! ':'💪 Weiter üben! ');
+    fb.textContent=prefix+correct+' von '+total+' richtig. '+(correct===total?'Alles richtig!':'Du kannst die Übung zurücksetzen und noch einmal versuchen.');
+  }
+}
+function updateU3Progress(){
+  const section=document.getElementById('u3');
+  if(!section)return;
+  const answered=new Set(Array.from(section.querySelectorAll('input[type="radio"]:checked')).map(input=>input.name)).size;
+  const total=8;
+  const text=document.getElementById('u3AnsweredText');
+  const fill=document.getElementById('u3AnsweredFill');
+  const track=document.querySelector('#u3 .quiz-progress-track');
+  if(text)text.textContent=answered+' / '+total+' beantwortet';
+  if(fill)fill.style.width=(answered/total*100)+'%';
+  if(track)track.setAttribute('aria-valuenow',String(answered));
+}
+document.addEventListener('change',event=>{
+  if(event.target.matches('#u3 input[type="radio"]'))updateU3Progress();
+});
+
+function checkExercise(id){
+  const defs=definitions[id]||[];let correct=0;
+  defs.forEach(d=>{
+    const section=document.getElementById(id);
+    let el=section.querySelector('[name="'+d.name+'"]');
+    let val='';
+    if(d.type==='radio'){const checked=section.querySelector('input[name="'+d.name+'"]:checked');val=checked?checked.value:'';}
+    else val=el?el.value:'';
+    const accepted=d.accept||[d.answer];
+    const ok=accepted.some(a=>normalize(a)===normalize(val));
+    if(ok)correct++;
+    const item=section.querySelector('[data-field="'+d.name+'"]');
+    if(item){
+      item.classList.toggle('correct',ok);
+      item.classList.toggle('incorrect',!ok);
+      if(id==='u3'){
+        item.querySelectorAll('.quiz-option').forEach(label=>label.classList.remove('option-correct','option-wrong'));
+        const correctInput=Array.from(item.querySelectorAll('input[type="radio"]')).find(input=>accepted.some(a=>normalize(a)===normalize(input.value)));
+        if(correctInput)correctInput.closest('.quiz-option').classList.add('option-correct');
+        const selectedInput=item.querySelector('input[type="radio"]:checked');
+        if(selectedInput && !ok)selectedInput.closest('.quiz-option').classList.add('option-wrong');
+      }
+    }
+  });
+  finish(id,correct,defs.length);
+}
+function setRadio(section,name,value,btn){
+  const wrap=btn.closest('.article-card');
+  wrap.querySelectorAll('.choice').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.querySelector('#'+section+' input[name="'+name+'"]').value=value;
+}
+function resetFields(id){
+  const section=document.getElementById(id);
+  section.querySelectorAll('input').forEach(el=>{if(el.type==='radio')el.checked=false;else if(el.type==='hidden')el.value='';else el.value='';});
+  section.querySelectorAll('select').forEach(el=>el.selectedIndex=0);
+  section.querySelectorAll('.q-item').forEach(el=>el.classList.remove('correct','incorrect'));
+  section.querySelectorAll('.choice').forEach(el=>el.classList.remove('selected'));
+  section.querySelectorAll('.quiz-option').forEach(el=>el.classList.remove('option-correct','option-wrong'));
+  const fb=document.getElementById('fb-'+id);if(fb)fb.className='feedback';
+  if(id==='u3')updateU3Progress();
+}
+function resetMatch(group,id){
+  matchState[group].left=null;matchState[group].done.clear();
+  document.querySelectorAll('[data-match="'+group+'"]').forEach(b=>{
+    b.classList.remove('active','matched','wrong');
+    b.setAttribute('aria-pressed','false');
+  });
+  const count=document.getElementById(group==='m1'?'matchCount1':'matchCount9');
+  if(count)count.textContent='0 / '+(group==='m1'?10:4)+(group==='m1'?' Paare gefunden':' Gegenteile gefunden');
+  if(group==='m1'){
+    const fill=document.getElementById('matchProgressFill1');
+    const status=document.getElementById('matchProgressStatus1');
+    const track=document.querySelector('#u1 .match-progress-track');
+    if(fill)fill.style.width='0%';
+    if(status)status.textContent='Wähle ein Wort zum Starten';
+    if(track)track.setAttribute('aria-valuenow','0');
+  }
+  if(group==='m9'){
+    const fill=document.getElementById('matchProgressFill9');
+    const status=document.getElementById('matchStatus9');
+    const track=document.querySelector('#u9 .opposites-progress-track');
+    if(fill)fill.style.width='0%';
+    if(status)status.textContent='Wähle ein Adjektiv zum Starten';
+    if(track)track.setAttribute('aria-valuenow','0');
+  }
+  const fb=document.getElementById('fb-'+id);if(fb)fb.className='feedback';
+}
+function handleMatch(btn){
+  const group=btn.dataset.match,side=btn.dataset.side,key=btn.dataset.key,state=matchState[group];
+  if(btn.classList.contains('matched'))return;
+  if(side==='left'){
+    document.querySelectorAll('[data-match="'+group+'"][data-side="left"]').forEach(b=>{
+      b.classList.remove('active');b.setAttribute('aria-pressed','false');
+    });
+    state.left=key;btn.classList.add('active');btn.setAttribute('aria-pressed','true');
+    if(group==='m9'){
+      const status=document.getElementById('matchStatus9');
+      if(status)status.textContent='Wähle jetzt das Gegenteil rechts';
+    }
+    return;
+  }
+  if(!state.left){
+    const fb=document.getElementById('fb-'+(group==='m1'?'u1':'u9'));
+    if(fb){fb.className='feedback show mid';fb.textContent='Wähle zuerst ein Wort auf der linken Seite.';}
+    return;
+  }
+  const expected=matchAnswers[group][state.left];
+  if(expected===key){
+    const leftBtn=document.querySelector('[data-match="'+group+'"][data-side="left"][data-key="'+state.left+'"]');
+    leftBtn.classList.remove('active');leftBtn.classList.add('matched');leftBtn.setAttribute('aria-pressed','false');
+    btn.classList.add('matched');btn.setAttribute('aria-pressed','false');state.done.add(state.left);
+    const total=group==='m1'?10:4,done=state.done.size;
+    const count=document.getElementById(group==='m1'?'matchCount1':'matchCount9');
+    if(count)count.textContent=done+' / '+total+(group==='m1'?' Paare gefunden':' Gegenteile gefunden');
+    const id=group==='m1'?'u1':'u9';
+    if(group==='m9'){
+      const fill=document.getElementById('matchProgressFill9');
+      const status=document.getElementById('matchStatus9');
+      const track=document.querySelector('#u9 .opposites-progress-track');
+      if(fill)fill.style.width=(done/total*100)+'%';
+      if(status)status.textContent=done===total?'Alle Gegenteile gefunden!':(total-done)+' Paare noch offen';
+      if(track)track.setAttribute('aria-valuenow',String(done));
+    }
+    if(group==='m1'){
+      const fill=document.getElementById('matchProgressFill1');
+      const status=document.getElementById('matchProgressStatus1');
+      const track=document.querySelector('#u1 .match-progress-track');
+      if(fill)fill.style.width=(done/total*100)+'%';
+      if(status)status.textContent=done===total?'Alle Paare gefunden!':(total-done)+' Paare noch offen';
+      if(track)track.setAttribute('aria-valuenow',String(done));
+    }
+    const fb=document.getElementById('fb-'+id);
+    if(done<total && fb){fb.className='feedback show good';fb.textContent='Sehr gut! Das Wortpaar ist richtig.';}
+    if(done===total)finish(id,total,total);
+  }else{
+    btn.classList.add('wrong');setTimeout(()=>btn.classList.remove('wrong'),500);
+    const fb=document.getElementById('fb-'+(group==='m1'?'u1':'u9'));
+    if(fb){fb.className='feedback show mid';fb.textContent='Das ist noch nicht das passende Gegenteil. Versuche es erneut.';}
+    if(group==='m9'){
+      const status=document.getElementById('matchStatus9');
+      if(status)status.textContent='Noch nicht richtig – versuche es erneut';
+    }
+    document.querySelectorAll('[data-match="'+group+'"][data-side="left"]').forEach(b=>{
+      b.classList.remove('active');b.setAttribute('aria-pressed','false');
+    });
+  }
+  state.left=null;
+}
+function chooseOrderWord(btn){
+  const id=btn.dataset.orderWord,word=btn.textContent.trim(),arr=orderState[id];
+  const index=arr.findIndex(x=>x.btn===btn);
+  if(index>=0){arr.splice(index,1);btn.classList.remove('used');}
+  else{arr.push({word,btn});btn.classList.add('used');}
+  renderOrder(id);
+}
+function renderOrder(id){
+  const line=document.getElementById('line-'+id);line.innerHTML='';
+  orderState[id].forEach(item=>{const chip=document.createElement('span');chip.className='answer-chip';chip.textContent=item.word;chip.title='Klicken, um das Wort zu entfernen';chip.style.cursor='pointer';chip.onclick=()=>{const i=orderState[id].findIndex(x=>x.btn===item.btn);if(i>=0)orderState[id].splice(i,1);item.btn.classList.remove('used');renderOrder(id);};line.appendChild(chip);});
+}
+function checkOrder(btn){
+  const id=btn.dataset.orderCheck,answer=btn.dataset.answer;
+  const actual=orderState[id].map(x=>x.word).join(' ');
+  const ok=normalize(actual)===normalize(answer);
+  if(ok){orderDone.add(id);btn.textContent='✓ Richtig';btn.disabled=true;btn.style.background='#dff9eb';btn.style.color='#176c49';}
+  else{const fb=document.getElementById('fb-u6');fb.className='feedback show mid';fb.textContent='Noch nicht ganz. Prüfe die Reihenfolge und versuche es erneut.';}
+  if(orderDone.size===5)finish('u6',5,5);
+}
+function resetOrder(){
+  Object.keys(orderState).forEach(id=>{orderState[id]=[];document.querySelectorAll('[data-order-word="'+id+'"]').forEach(b=>b.classList.remove('used'));renderOrder(id);});
+  orderDone.clear();document.querySelectorAll('[data-order-check]').forEach(b=>{b.disabled=false;b.textContent='Satz prüfen';b.style.background='';b.style.color='';});
+  document.getElementById('fb-u6').className='feedback';
+}
+function checkWriting(){
+  const text=document.getElementById('writingTask').value.trim().toLowerCase();
+  const checks=[
+    ['wohne',/wohn(e|st|t|en)/.test(text)],
+    ['gibt es',text.includes('gibt es')],
+    ['Ort',/(park|kino|café|cafe|schule|geschäft|geschaeft|restaurant)/.test(text)],
+    ['Verkehrsmittel',/(bus|u-bahn|s-bahn|straßenbahn|strassenbahn|fahrrad|auto)/.test(text)],
+    ['Adjektiv',/(schön|schoen|ruhig|groß|gross|klein|laut|teuer|billig)/.test(text)]
+  ];
+  const correct=checks.filter(x=>x[1]).length;
+  finish('u16',correct,5);
+  const fb=document.getElementById('fb-u16');
+  fb.textContent=(correct>=4?'🌟 Sehr schön! ': '✍️ Guter Anfang! ')+correct+'/5 Kriterien gefunden: '+checks.map(x=>(x[1]?'✓ ':'○ ')+x[0]).join(' · ')+'. Schreibe am besten 4–6 vollständige Sätze.';
+}
+
+function closeStageFullscreen(returnHome=true){
+  document.body.classList.remove('stage-fullscreen-open');
+  document.querySelectorAll('.stage-screen').forEach(screen=>screen.classList.remove('fullscreen-stage'));
+  const close=document.querySelector('.stage-fullscreen-close'); if(close) close.remove();
+  if(returnHome){
+    document.querySelectorAll('.stage-screen').forEach(screen=>screen.classList.remove('active-stage-screen'));
+    document.querySelectorAll('.exercise').forEach(el=>el.classList.remove('active-exercise'));
+    document.querySelectorAll('.stage-home .stage-nav-btn').forEach(btn=>btn.classList.remove('active'));
+    const home=document.getElementById('stageHome'); if(home) home.style.display='';
+  }
+}
+function showStage(stageId,scroll=true){
+  closeStageFullscreen(false);
+  const home=document.getElementById('stageHome');
+  if(home) home.style.display='';
+  document.querySelectorAll('.stage-screen').forEach(screen=>{
+    screen.classList.toggle('active-stage-screen',screen.dataset.stageScreen===stageId);
+  });
+  document.querySelectorAll('.stage-item').forEach(item=>{
+    item.classList.toggle('is-open',item.dataset.stageItem===stageId);
+  });
+  document.querySelectorAll('.stage-nav-btn').forEach(btn=>{
+    const active=btn.dataset.showStage===stageId;
+    btn.classList.toggle('active',active);
+    btn.setAttribute('aria-expanded',active?'true':'false');
+  });
+  document.querySelectorAll('.exercise').forEach(el=>el.classList.remove('active-exercise'));
+  const heading=document.querySelector('.section-heading');
+  if(heading) heading.style.display='';
+  if(scroll){
+    const item=document.querySelector('[data-stage-item="'+stageId+'"]');
+    if(item) setTimeout(()=>item.scrollIntoView({behavior:'smooth',block:'nearest'}),40);
+  }
+}
+function openExercise(id,shouldScroll=true){
+  closeStageFullscreen(false);
+  const home=document.getElementById('stageHome'); if(home) home.style.display='none';
+  const section=document.getElementById(id);
+  if(!section)return;
+  const stageByExercise={
+    u1:'stage1',u2:'stage1',u3:'stage1',u4:'stage1',
+    u5:'stage2',u6:'stage2',u7:'stage2',u8:'stage2',
+    u9:'stage3',u10:'stage3',u11:'stage3',
+    u12:'stage4',u13:'stage4',u14:'stage4',
+    u15:'stage5',u16:'stage5',u17:'stage5'
+  };
+  const stageId=stageByExercise[id];
+  document.querySelectorAll('.stage-screen').forEach(screen=>screen.classList.remove('active-stage-screen'));
+  document.querySelectorAll('.exercise').forEach(el=>el.classList.remove('active-exercise'));
+  section.classList.add('active-exercise');
+  document.querySelectorAll('.stage-nav-btn').forEach(btn=>{
+    btn.classList.toggle('active',btn.dataset.showStage===stageId);
+  });
+  document.querySelectorAll('.lesson-circle').forEach(btn=>{
+    btn.classList.toggle('active',btn.dataset.openExercise===id);
+  });
+  const heading=document.querySelector('.section-heading');
+  if(heading)heading.style.display='none';
+  if(shouldScroll){
+    setTimeout(()=>section.scrollIntoView({behavior:'smooth',block:'start'}),60);
+  }
+}
+function goNext(id){
+  const index=exerciseIds.indexOf(id),next=exerciseIds[index+1];
+  if(next)openExercise(next,true);
+  else document.getElementById(id).scrollIntoView({behavior:'smooth',block:'start'});
+}
+function goBackToCurrentStage(){
+  const activeLesson=document.querySelector('.lesson-circle.active');
+  const stageByExercise={
+    u1:'stage1',u2:'stage1',u3:'stage1',u4:'stage1',
+    u5:'stage2',u6:'stage2',u7:'stage2',u8:'stage2',
+    u9:'stage3',u10:'stage3',u11:'stage3',
+    u12:'stage4',u13:'stage4',u14:'stage4',
+    u15:'stage5',u16:'stage5',u17:'stage5'
+  };
+  let stageId='stage1';
+  if(activeLesson && activeLesson.dataset.openExercise){
+    stageId=stageByExercise[activeLesson.dataset.openExercise] || 'stage1';
+  }
+  showStage(stageId,true);
+}
+
+function resetAll(){
+  if(!confirm('Möchtest du alle gespeicherten Ergebnisse und den Fortschritt löschen?'))return;
+  localStorage.removeItem('stadt_worksheet_v1');completed={};scoreMap={};
+  resetMatch('m1','u1');resetMatch('m9','u9');resetOrder();
+  ['u2','u3','u4','u5','u7','u8','u10','u11','u12','u13','u14','u15','u17'].forEach(resetFields);
+  document.getElementById('writingTask').value='';document.getElementById('fb-u16').className='feedback';
+  updateDashboard();
+}
+document.addEventListener('click',e=>{
+  const stageButton=e.target.closest('[data-show-stage]');
+  if(stageButton){showStage(stageButton.dataset.showStage,true);return;}
+  const stageToggle=e.target.closest('[data-stage-toggle]');
+  if(stageToggle){return;}
+  const lessonCircle=e.target.closest('.lesson-circle[data-open-exercise]');
+  if(lessonCircle){openExercise(lessonCircle.dataset.openExercise,true);return;}
+  const exerciseNode=e.target.closest('[data-open-exercise]');
+  if(exerciseNode && !exerciseNode.classList.contains('lesson-circle')){openExercise(exerciseNode.dataset.openExercise,true);return;}
+  const backBtn=e.target.closest('[data-back-to-stage]');
+  if(backBtn){goBackToCurrentStage();return;}
+  const match=e.target.closest('[data-match]');if(match){handleMatch(match);return;}
+  const speakBtn=e.target.closest('[data-speak]');if(speakBtn){speakGerman(speakBtn.dataset.speak);return;}
+  const orderWord=e.target.closest('[data-order-word]');if(orderWord){chooseOrderWord(orderWord);return;}
+  const orderCheck=e.target.closest('[data-order-check]');if(orderCheck){checkOrder(orderCheck);return;}
+});
+function speakGerman(text){
+  if(!('speechSynthesis' in window)){alert('Die Audiofunktion wird von diesem Browser leider nicht unterstützt.');return;}
+  window.speechSynthesis.cancel();
+  const utterance=new SpeechSynthesisUtterance(text);utterance.lang='de-DE';utterance.rate=.88;
+  const voices=window.speechSynthesis.getVoices();const german=voices.find(v=>v.lang&&v.lang.toLowerCase().startsWith('de'));
+  if(german)utterance.voice=german;window.speechSynthesis.speak(utterance);
+}
+updateDashboard();
+</script>
+</body>
+</html>

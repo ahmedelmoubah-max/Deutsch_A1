@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meine Freizeit – Audio-Lesetraining</title>
+<style>
+:root {
+  --ink: #202a35;
+  --muted: #687482;
+  --paper: #ffffff;
+  --page: #f3f5f7;
+  --line: #e5e9ee;
+  --yellow: #ffe45c;
+  --yellow-soft: #fff9d8;
+  --blue: #315b78;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  line-height: 1.8;
+}
+.wrap { width: min(920px, calc(100% - 28px)); margin: 28px auto 56px; }
+header {
+  padding: 26px 28px 22px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 18px 18px 0 0;
+}
+.eyebrow {
+  color: var(--blue); font-size: 12px; font-weight: 800;
+  letter-spacing: .12em; text-transform: uppercase;
+}
+h1 { margin: 5px 0 4px; font-size: clamp(25px, 4vw, 34px); line-height: 1.25; }
+.sub { color: var(--muted); font-size: 14px; margin: 0; }
+.player {
+  position: sticky; top: 0; z-index: 5;
+  padding: 17px 22px 16px;
+  background: rgba(255,255,255,.97);
+  border: 1px solid var(--line);
+  border-top: 0;
+  box-shadow: 0 8px 22px rgba(31,48,65,.06);
+}
+audio { display: block; width: 100%; height: 42px; }
+.tools {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 10px; margin-top: 12px;
+}
+.hint { color: var(--muted); font-size: 13px; }
+.speeds { display: flex; gap: 6px; }
+.speeds button {
+  border: 1px solid var(--line); background: #fff; color: var(--ink);
+  padding: 6px 11px; border-radius: 20px; cursor: pointer; font-weight: 700;
+}
+.speeds button.active { background: var(--blue); color: white; border-color: var(--blue); }
+main {
+  padding: 26px clamp(18px, 4vw, 34px) 34px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-top: 0;
+  border-radius: 0 0 18px 18px;
+}
+.chapter { margin: 0 0 30px; }
+.chapter h2 {
+  font-size: 15px; color: var(--blue); letter-spacing: .02em;
+  margin: 0 0 12px; padding-bottom: 7px; border-bottom: 1px solid var(--line);
+}
+.sentence {
+  margin: 0 0 13px; padding: 4px 8px;
+  border-radius: 8px; font-size: clamp(17px, 2.2vw, 19px);
+  transition: background .15s ease;
+}
+.sentence.sentence-active { background: #fffdf0; }
+.word {
+  border-radius: 4px; cursor: pointer; padding: 1px 1px;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+.word:hover { background: #f0f3f6; }
+.word.active {
+  background: var(--yellow);
+  color: #15191d;
+  box-shadow: 0 0 0 2px var(--yellow);
+  font-weight: 750;
+}
+.word:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+footer {
+  text-align: center; color: var(--muted); font-size: 12px; padding: 18px 0 0;
+}
+.translation {
+  position: fixed;
+  z-index: 50;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(520px, calc(100vw - 32px));
+  padding: 20px 22px 22px;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #ffffff 0%, #fff9dc 100%);
+  border: 1px solid #eadb91;
+  box-shadow: 0 18px 55px rgba(20, 35, 50, .24);
+  direction: rtl;
+  text-align: center;
+}
+.translation[hidden] { display: none; }
+.translation-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid #eee3b5;
+}
+.translation-label {
+  color: #806a12;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+.translation-text {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 9px 13px;
+  font-size: 20px;
+  line-height: 1.7;
+}
+.translation-text .german-word {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-weight: 800;
+  color: #263746;
+}
+.translation-text .arabic-meaning {
+  direction: rtl;
+  unicode-bidi: isolate;
+  font-weight: 650;
+  color: #252b32;
+}
+.translation-close {
+  border: 0;
+  background: #f5edc9;
+  color: #66550d;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+@media (max-width: 600px) {
+  .wrap { width: calc(100% - 16px); margin-top: 8px; }
+  header { padding: 21px 18px 17px; }
+  .player { padding: 13px 14px; }
+  main { padding: 20px 12px 26px; }
+  .sentence { padding: 4px 5px; line-height: 1.95; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Deutsch · Hör- und Lesetraining</div>
+    <h1>Meine Freizeit und meine Hobbys</h1>
+    <p class="sub">Lina erzählt über ihre Freizeit, ihre Freunde und ihre Hobbys.</p>
+  </header>
+
+  <div class="player">
+    <audio id="audio" controls preload="metadata">
+      <source src="../../assets/audio/podcast-5-1.mp3" type="audio/mpeg">
+      Dein Browser unterstützt das Audioelement nicht.
+    </audio>
+    <div class="tools">
+      <div class="hint">شغّلي الصوت وتبعي الكلمات المظللة بالأصفر. اضغطي على أي كلمة للانتقال إليها.</div>
+      <div class="speeds" aria-label="Wiedergabegeschwindigkeit">
+        <button type="button" data-rate="0.75">0,75×</button>
+        <button type="button" data-rate="1" class="active">1×</button>
+        <button type="button" data-rate="1.25">1,25×</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="translation" class="translation" hidden aria-live="polite">
+    <div class="translation-heading">
+      <span class="translation-label">معنى الكلمة</span>
+      <button type="button" id="translation-close" class="translation-close" aria-label="إخفاء الترجمة">×</button>
+    </div>
+    <div id="translation-text" class="translation-text"></div>
+  </div>
+
+  <main id="transcript">
+    <section class="chapter"><h2>Unter der Woche und am Wochenende</h2>
+<p class="sentence" data-sentence="0" data-start="0.25" data-end="4.0"><span class="word" data-start="0.25" data-end="0.438" tabindex="0" role="button" aria-label="Zum Wort Mein springen">Mein</span> <span class="word" data-start="0.438" data-end="0.812" tabindex="0" role="button" aria-label="Zum Wort Name springen">Name</span> <span class="word" data-start="0.812" data-end="1.0" tabindex="0" role="button" aria-label="Zum Wort ist springen">ist</span> <span class="word" data-start="1.0" data-end="1.375" tabindex="0" role="button" aria-label="Zum Wort Lina springen">Lina</span> <span class="word" data-start="1.375" data-end="1.562" tabindex="0" role="button" aria-label="Zum Wort und springen">und</span> <span class="word" data-start="1.562" data-end="1.75" tabindex="0" role="button" aria-label="Zum Wort ich springen">ich</span> <span class="word" data-start="1.75" data-end="2.125" tabindex="0" role="button" aria-label="Zum Wort möchte springen">möchte</span> <span class="word" data-start="2.125" data-end="2.5" tabindex="0" role="button" aria-label="Zum Wort heute springen">heute</span> <span class="word" data-start="2.5" data-end="2.875" tabindex="0" role="button" aria-label="Zum Wort über springen">über</span> <span class="word" data-start="2.875" data-end="3.25" tabindex="0" role="button" aria-label="Zum Wort meine springen">meine</span> <span class="word" data-start="3.25" data-end="3.625" tabindex="0" role="button" aria-label="Zum Wort Freizeit springen">Freizeit</span> <span class="word" data-start="3.625" data-end="4.0" tabindex="0" role="button" aria-label="Zum Wort sprechen. springen">sprechen.</span></p>
+<p class="sentence" data-sentence="1" data-start="5.0" data-end="9.2"><span class="word" data-start="5.0" data-end="5.191" tabindex="0" role="button" aria-label="Zum Wort Ich springen">Ich</span> <span class="word" data-start="5.191" data-end="5.382" tabindex="0" role="button" aria-label="Zum Wort bin springen">bin</span> <span class="word" data-start="5.382" data-end="5.764" tabindex="0" role="button" aria-label="Zum Wort zwanzig springen">zwanzig</span> <span class="word" data-start="5.764" data-end="6.145" tabindex="0" role="button" aria-label="Zum Wort Jahre springen">Jahre</span> <span class="word" data-start="6.145" data-end="6.336" tabindex="0" role="button" aria-label="Zum Wort alt springen">alt</span> <span class="word" data-start="6.336" data-end="6.527" tabindex="0" role="button" aria-label="Zum Wort und springen">und</span> <span class="word" data-start="6.527" data-end="6.909" tabindex="0" role="button" aria-label="Zum Wort wohne springen">wohne</span> <span class="word" data-start="6.909" data-end="7.1" tabindex="0" role="button" aria-label="Zum Wort mit springen">mit</span> <span class="word" data-start="7.1" data-end="7.482" tabindex="0" role="button" aria-label="Zum Wort meiner springen">meiner</span> <span class="word" data-start="7.482" data-end="8.055" tabindex="0" role="button" aria-label="Zum Wort Familie springen">Familie</span> <span class="word" data-start="8.055" data-end="8.245" tabindex="0" role="button" aria-label="Zum Wort in springen">in</span> <span class="word" data-start="8.245" data-end="8.627" tabindex="0" role="button" aria-label="Zum Wort einer springen">einer</span> <span class="word" data-start="8.627" data-end="9.009" tabindex="0" role="button" aria-label="Zum Wort kleinen springen">kleinen</span> <span class="word" data-start="9.009" data-end="9.2" tabindex="0" role="button" aria-label="Zum Wort Stadt. springen">Stadt.</span></p>
+<p class="sentence" data-sentence="2" data-start="10.15" data-end="12.8"><span class="word" data-start="10.15" data-end="10.371" tabindex="0" role="button" aria-label="Zum Wort Von springen">Von</span> <span class="word" data-start="10.371" data-end="10.812" tabindex="0" role="button" aria-label="Zum Wort Montag springen">Montag</span> <span class="word" data-start="10.812" data-end="11.033" tabindex="0" role="button" aria-label="Zum Wort bis springen">bis</span> <span class="word" data-start="11.033" data-end="11.475" tabindex="0" role="button" aria-label="Zum Wort Freitag springen">Freitag</span> <span class="word" data-start="11.475" data-end="11.917" tabindex="0" role="button" aria-label="Zum Wort habe springen">habe</span> <span class="word" data-start="11.917" data-end="12.137" tabindex="0" role="button" aria-label="Zum Wort ich springen">ich</span> <span class="word" data-start="12.137" data-end="12.358" tabindex="0" role="button" aria-label="Zum Wort viel springen">viel</span> <span class="word" data-start="12.358" data-end="12.579" tabindex="0" role="button" aria-label="Zum Wort zu springen">zu</span> <span class="word" data-start="12.579" data-end="12.8" tabindex="0" role="button" aria-label="Zum Wort tun. springen">tun.</span></p>
+<p class="sentence" data-sentence="3" data-start="13.8" data-end="20.35"><span class="word" data-start="13.8" data-end="13.982" tabindex="0" role="button" aria-label="Zum Wort Am springen">Am</span> <span class="word" data-start="13.982" data-end="14.346" tabindex="0" role="button" aria-label="Zum Wort Morgen springen">Morgen</span> <span class="word" data-start="14.346" data-end="14.71" tabindex="0" role="button" aria-label="Zum Wort gehe springen">gehe</span> <span class="word" data-start="14.71" data-end="14.892" tabindex="0" role="button" aria-label="Zum Wort ich springen">ich</span> <span class="word" data-start="14.892" data-end="15.074" tabindex="0" role="button" aria-label="Zum Wort zum springen">zum</span> <span class="word" data-start="15.074" data-end="15.619" tabindex="0" role="button" aria-label="Zum Wort Unterricht, springen">Unterricht,</span> <span class="word" data-start="15.619" data-end="15.801" tabindex="0" role="button" aria-label="Zum Wort am springen">am</span> <span class="word" data-start="15.801" data-end="16.347" tabindex="0" role="button" aria-label="Zum Wort Nachmittag springen">Nachmittag</span> <span class="word" data-start="16.347" data-end="16.711" tabindex="0" role="button" aria-label="Zum Wort mache springen">mache</span> <span class="word" data-start="16.711" data-end="16.893" tabindex="0" role="button" aria-label="Zum Wort ich springen">ich</span> <span class="word" data-start="16.893" data-end="17.257" tabindex="0" role="button" aria-label="Zum Wort meine springen">meine</span> <span class="word" data-start="17.257" data-end="17.985" tabindex="0" role="button" aria-label="Zum Wort Hausaufgaben springen">Hausaufgaben</span> <span class="word" data-start="17.985" data-end="18.167" tabindex="0" role="button" aria-label="Zum Wort und springen">und</span> <span class="word" data-start="18.167" data-end="18.349" tabindex="0" role="button" aria-label="Zum Wort am springen">am</span> <span class="word" data-start="18.349" data-end="18.712" tabindex="0" role="button" aria-label="Zum Wort Abend springen">Abend</span> <span class="word" data-start="18.712" data-end="19.076" tabindex="0" role="button" aria-label="Zum Wort helfe springen">helfe</span> <span class="word" data-start="19.076" data-end="19.258" tabindex="0" role="button" aria-label="Zum Wort ich springen">ich</span> <span class="word" data-start="19.258" data-end="19.622" tabindex="0" role="button" aria-label="Zum Wort manchmal springen">manchmal</span> <span class="word" data-start="19.622" data-end="19.986" tabindex="0" role="button" aria-label="Zum Wort meiner springen">meiner</span> <span class="word" data-start="19.986" data-end="20.35" tabindex="0" role="button" aria-label="Zum Wort Mutter. springen">Mutter.</span></p>
+<p class="sentence" data-sentence="4" data-start="21.3" data-end="24.55"><span class="word" data-start="21.3" data-end="21.682" tabindex="0" role="button" aria-label="Zum Wort Trotzdem springen">Trotzdem</span> <span class="word" data-start="21.682" data-end="22.065" tabindex="0" role="button" aria-label="Zum Wort habe springen">habe</span> <span class="word" data-start="22.065" data-end="22.256" tabindex="0" role="button" aria-label="Zum Wort ich springen">ich</span> <span class="word" data-start="22.256" data-end="22.638" tabindex="0" role="button" aria-label="Zum Wort jeden springen">jeden</span> <span class="word" data-start="22.638" data-end="22.829" tabindex="0" role="button" aria-label="Zum Wort Tag springen">Tag</span> <span class="word" data-start="22.829" data-end="23.021" tabindex="0" role="button" aria-label="Zum Wort ein springen">ein</span> <span class="word" data-start="23.021" data-end="23.403" tabindex="0" role="button" aria-label="Zum Wort bisschen springen">bisschen</span> <span class="word" data-start="23.403" data-end="23.594" tabindex="0" role="button" aria-label="Zum Wort Zeit springen">Zeit</span> <span class="word" data-start="23.594" data-end="23.785" tabindex="0" role="button" aria-label="Zum Wort für springen">für</span> <span class="word" data-start="23.785" data-end="24.168" tabindex="0" role="button" aria-label="Zum Wort meine springen">meine</span> <span class="word" data-start="24.168" data-end="24.55" tabindex="0" role="button" aria-label="Zum Wort Hobbys. springen">Hobbys.</span></p>
+<p class="sentence" data-sentence="5" data-start="25.5" data-end="31.15"><span class="word" data-start="25.5" data-end="25.952" tabindex="0" role="button" aria-label="Zum Wort Freizeit springen">Freizeit</span> <span class="word" data-start="25.952" data-end="26.178" tabindex="0" role="button" aria-label="Zum Wort ist springen">ist</span> <span class="word" data-start="26.178" data-end="26.404" tabindex="0" role="button" aria-label="Zum Wort für springen">für</span> <span class="word" data-start="26.404" data-end="26.63" tabindex="0" role="button" aria-label="Zum Wort mich springen">mich</span> <span class="word" data-start="26.63" data-end="26.856" tabindex="0" role="button" aria-label="Zum Wort sehr springen">sehr</span> <span class="word" data-start="26.856" data-end="27.308" tabindex="0" role="button" aria-label="Zum Wort wichtig, springen">wichtig,</span> <span class="word" data-start="27.308" data-end="27.534" tabindex="0" role="button" aria-label="Zum Wort denn springen">denn</span> <span class="word" data-start="27.534" data-end="27.76" tabindex="0" role="button" aria-label="Zum Wort ich springen">ich</span> <span class="word" data-start="27.76" data-end="27.986" tabindex="0" role="button" aria-label="Zum Wort kann springen">kann</span> <span class="word" data-start="27.986" data-end="28.212" tabindex="0" role="button" aria-label="Zum Wort mich springen">mich</span> <span class="word" data-start="28.212" data-end="28.89" tabindex="0" role="button" aria-label="Zum Wort entspannen, springen">entspannen,</span> <span class="word" data-start="28.89" data-end="29.342" tabindex="0" role="button" aria-label="Zum Wort Freunde springen">Freunde</span> <span class="word" data-start="29.342" data-end="29.794" tabindex="0" role="button" aria-label="Zum Wort treffen springen">treffen</span> <span class="word" data-start="29.794" data-end="30.02" tabindex="0" role="button" aria-label="Zum Wort und springen">und</span> <span class="word" data-start="30.02" data-end="30.246" tabindex="0" role="button" aria-label="Zum Wort neue springen">neue</span> <span class="word" data-start="30.246" data-end="30.698" tabindex="0" role="button" aria-label="Zum Wort Dinge springen">Dinge</span> <span class="word" data-start="30.698" data-end="31.15" tabindex="0" role="button" aria-label="Zum Wort machen. springen">machen.</span></p>
+<p class="sentence" data-sentence="6" data-start="32.6" data-end="34.3"><span class="word" data-start="32.6" data-end="32.77" tabindex="0" role="button" aria-label="Zum Wort Am springen">Am</span> <span class="word" data-start="32.77" data-end="33.45" tabindex="0" role="button" aria-label="Zum Wort Wochenende springen">Wochenende</span> <span class="word" data-start="33.45" data-end="33.79" tabindex="0" role="button" aria-label="Zum Wort habe springen">habe</span> <span class="word" data-start="33.79" data-end="33.96" tabindex="0" role="button" aria-label="Zum Wort ich springen">ich</span> <span class="word" data-start="33.96" data-end="34.13" tabindex="0" role="button" aria-label="Zum Wort mehr springen">mehr</span> <span class="word" data-start="34.13" data-end="34.3" tabindex="0" role="button" aria-label="Zum Wort Zeit. springen">Zeit.</span></p>
+<p class="sentence" data-sentence="7" data-start="35.3" data-end="40.0"><span class="word" data-start="35.3" data-end="35.481" tabindex="0" role="button" aria-label="Zum Wort Dann springen">Dann</span> <span class="word" data-start="35.481" data-end="35.842" tabindex="0" role="button" aria-label="Zum Wort möchte springen">möchte</span> <span class="word" data-start="35.842" data-end="36.023" tabindex="0" role="button" aria-label="Zum Wort ich springen">ich</span> <span class="word" data-start="36.023" data-end="36.204" tabindex="0" role="button" aria-label="Zum Wort nicht springen">nicht</span> <span class="word" data-start="36.204" data-end="36.385" tabindex="0" role="button" aria-label="Zum Wort nur springen">nur</span> <span class="word" data-start="36.385" data-end="36.565" tabindex="0" role="button" aria-label="Zum Wort zu springen">zu</span> <span class="word" data-start="36.565" data-end="36.927" tabindex="0" role="button" aria-label="Zum Wort Hause springen">Hause</span> <span class="word" data-start="36.927" data-end="37.288" tabindex="0" role="button" aria-label="Zum Wort bleiben, springen">bleiben,</span> <span class="word" data-start="37.288" data-end="37.65" tabindex="0" role="button" aria-label="Zum Wort sondern springen">sondern</span> <span class="word" data-start="37.65" data-end="37.831" tabindex="0" role="button" aria-label="Zum Wort auch springen">auch</span> <span class="word" data-start="37.831" data-end="38.192" tabindex="0" role="button" aria-label="Zum Wort etwas springen">etwas</span> <span class="word" data-start="38.192" data-end="38.373" tabindex="0" role="button" aria-label="Zum Wort mit springen">mit</span> <span class="word" data-start="38.373" data-end="38.915" tabindex="0" role="button" aria-label="Zum Wort anderen springen">anderen</span> <span class="word" data-start="38.915" data-end="39.277" tabindex="0" role="button" aria-label="Zum Wort Menschen springen">Menschen</span> <span class="word" data-start="39.277" data-end="40.0" tabindex="0" role="button" aria-label="Zum Wort unternehmen. springen">unternehmen.</span></p>
+</section>
+<section class="chapter"><h2>Am Samstag</h2>
+<p class="sentence" data-sentence="8" data-start="41.0" data-end="43.95"><span class="word" data-start="41.0" data-end="41.197" tabindex="0" role="button" aria-label="Zum Wort Am springen">Am</span> <span class="word" data-start="41.197" data-end="41.59" tabindex="0" role="button" aria-label="Zum Wort Samstag springen">Samstag</span> <span class="word" data-start="41.59" data-end="41.983" tabindex="0" role="button" aria-label="Zum Wort stehe springen">stehe</span> <span class="word" data-start="41.983" data-end="42.18" tabindex="0" role="button" aria-label="Zum Wort ich springen">ich</span> <span class="word" data-start="42.18" data-end="43.163" tabindex="0" role="button" aria-label="Zum Wort normalerweise springen">normalerweise</span> <span class="word" data-start="43.163" data-end="43.36" tabindex="0" role="button" aria-label="Zum Wort nicht springen">nicht</span> <span class="word" data-start="43.36" data-end="43.557" tabindex="0" role="button" aria-label="Zum Wort sehr springen">sehr</span> <span class="word" data-start="43.557" data-end="43.753" tabindex="0" role="button" aria-label="Zum Wort früh springen">früh</span> <span class="word" data-start="43.753" data-end="43.95" tabindex="0" role="button" aria-label="Zum Wort auf. springen">auf.</span></p>
+<p class="sentence" data-sentence="9" data-start="44.9" data-end="48.55"><span class="word" data-start="44.9" data-end="45.103" tabindex="0" role="button" aria-label="Zum Wort Ich springen">Ich</span> <span class="word" data-start="45.103" data-end="45.508" tabindex="0" role="button" aria-label="Zum Wort möchte springen">möchte</span> <span class="word" data-start="45.508" data-end="45.711" tabindex="0" role="button" aria-label="Zum Wort zuerst springen">zuerst</span> <span class="word" data-start="45.711" data-end="46.319" tabindex="0" role="button" aria-label="Zum Wort ausschlafen springen">ausschlafen</span> <span class="word" data-start="46.319" data-end="46.522" tabindex="0" role="button" aria-label="Zum Wort und springen">und</span> <span class="word" data-start="46.522" data-end="46.725" tabindex="0" role="button" aria-label="Zum Wort dann springen">dann</span> <span class="word" data-start="46.725" data-end="46.928" tabindex="0" role="button" aria-label="Zum Wort mit springen">mit</span> <span class="word" data-start="46.928" data-end="47.333" tabindex="0" role="button" aria-label="Zum Wort meiner springen">meiner</span> <span class="word" data-start="47.333" data-end="47.942" tabindex="0" role="button" aria-label="Zum Wort Familie springen">Familie</span> <span class="word" data-start="47.942" data-end="48.55" tabindex="0" role="button" aria-label="Zum Wort frühstücken. springen">frühstücken.</span></p>
+<p class="sentence" data-sentence="10" data-start="49.6" data-end="53.35"><span class="word" data-start="49.6" data-end="49.975" tabindex="0" role="button" aria-label="Zum Wort Meine springen">Meine</span> <span class="word" data-start="49.975" data-end="50.35" tabindex="0" role="button" aria-label="Zum Wort Mutter springen">Mutter</span> <span class="word" data-start="50.35" data-end="50.538" tabindex="0" role="button" aria-label="Zum Wort macht springen">macht</span> <span class="word" data-start="50.538" data-end="50.913" tabindex="0" role="button" aria-label="Zum Wort Kaffee springen">Kaffee</span> <span class="word" data-start="50.913" data-end="51.1" tabindex="0" role="button" aria-label="Zum Wort und springen">und</span> <span class="word" data-start="51.1" data-end="51.288" tabindex="0" role="button" aria-label="Zum Wort mein springen">mein</span> <span class="word" data-start="51.288" data-end="51.663" tabindex="0" role="button" aria-label="Zum Wort Vater springen">Vater</span> <span class="word" data-start="51.663" data-end="51.85" tabindex="0" role="button" aria-label="Zum Wort liest springen">liest</span> <span class="word" data-start="51.85" data-end="52.038" tabindex="0" role="button" aria-label="Zum Wort die springen">die</span> <span class="word" data-start="52.038" data-end="52.6" tabindex="0" role="button" aria-label="Zum Wort Nachrichten springen">Nachrichten</span> <span class="word" data-start="52.6" data-end="52.788" tabindex="0" role="button" aria-label="Zum Wort im springen">im</span> <span class="word" data-start="52.788" data-end="53.35" tabindex="0" role="button" aria-label="Zum Wort Internet. springen">Internet.</span></p>
+<p class="sentence" data-sentence="11" data-start="54.25" data-end="57.4"><span class="word" data-start="54.25" data-end="54.67" tabindex="0" role="button" aria-label="Zum Wort Meine springen">Meine</span> <span class="word" data-start="54.67" data-end="55.09" tabindex="0" role="button" aria-label="Zum Wort Schwester springen">Schwester</span> <span class="word" data-start="55.09" data-end="55.3" tabindex="0" role="button" aria-label="Zum Wort hört springen">hört</span> <span class="word" data-start="55.3" data-end="55.51" tabindex="0" role="button" aria-label="Zum Wort gern springen">gern</span> <span class="word" data-start="55.51" data-end="55.93" tabindex="0" role="button" aria-label="Zum Wort Musik springen">Musik</span> <span class="word" data-start="55.93" data-end="56.14" tabindex="0" role="button" aria-label="Zum Wort und springen">und</span> <span class="word" data-start="56.14" data-end="56.35" tabindex="0" role="button" aria-label="Zum Wort ich springen">ich</span> <span class="word" data-start="56.35" data-end="56.77" tabindex="0" role="button" aria-label="Zum Wort lese springen">lese</span> <span class="word" data-start="56.77" data-end="56.98" tabindex="0" role="button" aria-label="Zum Wort gern springen">gern</span> <span class="word" data-start="56.98" data-end="57.19" tabindex="0" role="button" aria-label="Zum Wort ein springen">ein</span> <span class="word" data-start="57.19" data-end="57.4" tabindex="0" role="button" aria-label="Zum Wort Buch. springen">Buch.</span></p>
+<p class="sentence" data-sentence="12" data-start="58.35" data-end="60.35"><span class="word" data-start="58.35" data-end="58.683" tabindex="0" role="button" aria-label="Zum Wort Danach springen">Danach</span> <span class="word" data-start="58.683" data-end="59.017" tabindex="0" role="button" aria-label="Zum Wort sprechen springen">sprechen</span> <span class="word" data-start="59.017" data-end="59.183" tabindex="0" role="button" aria-label="Zum Wort wir springen">wir</span> <span class="word" data-start="59.183" data-end="59.517" tabindex="0" role="button" aria-label="Zum Wort über springen">über</span> <span class="word" data-start="59.517" data-end="60.017" tabindex="0" role="button" aria-label="Zum Wort unsere springen">unsere</span> <span class="word" data-start="60.017" data-end="60.35" tabindex="0" role="button" aria-label="Zum Wort Pläne. springen">Pläne.</span></p>
+<p class="sentence" data-sentence="13" data-start="61.8" data-end="65.7"><span class="word" data-start="61.8" data-end="61.986" tabindex="0" role="button" aria-label="Zum Wort Mein springen">Mein</span> <span class="word" data-start="61.986" data-end="62.357" tabindex="0" role="button" aria-label="Zum Wort Bruder springen">Bruder</span> <span class="word" data-start="62.357" data-end="62.729" tabindex="0" role="button" aria-label="Zum Wort möchte springen">möchte</span> <span class="word" data-start="62.729" data-end="63.1" tabindex="0" role="button" aria-label="Zum Wort Fußball springen">Fußball</span> <span class="word" data-start="63.1" data-end="63.471" tabindex="0" role="button" aria-label="Zum Wort spielen, springen">spielen,</span> <span class="word" data-start="63.471" data-end="63.843" tabindex="0" role="button" aria-label="Zum Wort aber springen">aber</span> <span class="word" data-start="63.843" data-end="64.214" tabindex="0" role="button" aria-label="Zum Wort meine springen">meine</span> <span class="word" data-start="64.214" data-end="64.586" tabindex="0" role="button" aria-label="Zum Wort Schwester springen">Schwester</span> <span class="word" data-start="64.586" data-end="64.771" tabindex="0" role="button" aria-label="Zum Wort will springen">will</span> <span class="word" data-start="64.771" data-end="65.329" tabindex="0" role="button" aria-label="Zum Wort einkaufen springen">einkaufen</span> <span class="word" data-start="65.329" data-end="65.7" tabindex="0" role="button" aria-label="Zum Wort gehen. springen">gehen.</span></p>
+<p class="sentence" data-sentence="14" data-start="66.7" data-end="68.4"><span class="word" data-start="66.7" data-end="66.87" tabindex="0" role="button" aria-label="Zum Wort Ich springen">Ich</span> <span class="word" data-start="66.87" data-end="67.21" tabindex="0" role="button" aria-label="Zum Wort möchte springen">möchte</span> <span class="word" data-start="67.21" data-end="67.55" tabindex="0" role="button" aria-label="Zum Wort meine springen">meine</span> <span class="word" data-start="67.55" data-end="68.06" tabindex="0" role="button" aria-label="Zum Wort Freundinnen springen">Freundinnen</span> <span class="word" data-start="68.06" data-end="68.4" tabindex="0" role="button" aria-label="Zum Wort treffen. springen">treffen.</span></p>
+<p class="sentence" data-sentence="15" data-start="69.4" data-end="71.95"><span class="word" data-start="69.4" data-end="69.582" tabindex="0" role="button" aria-label="Zum Wort Wir springen">Wir</span> <span class="word" data-start="69.582" data-end="70.311" tabindex="0" role="button" aria-label="Zum Wort überlegen springen">überlegen</span> <span class="word" data-start="70.311" data-end="70.857" tabindex="0" role="button" aria-label="Zum Wort zusammen, springen">zusammen,</span> <span class="word" data-start="70.857" data-end="71.039" tabindex="0" role="button" aria-label="Zum Wort was springen">was</span> <span class="word" data-start="71.039" data-end="71.221" tabindex="0" role="button" aria-label="Zum Wort wir springen">wir</span> <span class="word" data-start="71.221" data-end="71.586" tabindex="0" role="button" aria-label="Zum Wort machen springen">machen</span> <span class="word" data-start="71.586" data-end="71.95" tabindex="0" role="button" aria-label="Zum Wort können. springen">können.</span></p>
+<p class="sentence" data-sentence="16" data-start="72.95" data-end="75.45"><span class="word" data-start="72.95" data-end="73.158" tabindex="0" role="button" aria-label="Zum Wort Wenn springen">Wenn</span> <span class="word" data-start="73.158" data-end="73.367" tabindex="0" role="button" aria-label="Zum Wort das springen">das</span> <span class="word" data-start="73.367" data-end="73.783" tabindex="0" role="button" aria-label="Zum Wort Wetter springen">Wetter</span> <span class="word" data-start="73.783" data-end="73.992" tabindex="0" role="button" aria-label="Zum Wort schön springen">schön</span> <span class="word" data-start="73.992" data-end="74.2" tabindex="0" role="button" aria-label="Zum Wort ist, springen">ist,</span> <span class="word" data-start="74.2" data-end="74.617" tabindex="0" role="button" aria-label="Zum Wort gehen springen">gehen</span> <span class="word" data-start="74.617" data-end="74.825" tabindex="0" role="button" aria-label="Zum Wort wir springen">wir</span> <span class="word" data-start="74.825" data-end="75.033" tabindex="0" role="button" aria-label="Zum Wort in springen">in</span> <span class="word" data-start="75.033" data-end="75.242" tabindex="0" role="button" aria-label="Zum Wort den springen">den</span> <span class="word" data-start="75.242" data-end="75.45" tabindex="0" role="button" aria-label="Zum Wort Park. springen">Park.</span></p>
+<p class="sentence" data-sentence="17" data-start="76.4" data-end="79.35"><span class="word" data-start="76.4" data-end="76.584" tabindex="0" role="button" aria-label="Zum Wort Dort springen">Dort</span> <span class="word" data-start="76.584" data-end="76.953" tabindex="0" role="button" aria-label="Zum Wort können springen">können</span> <span class="word" data-start="76.953" data-end="77.138" tabindex="0" role="button" aria-label="Zum Wort wir springen">wir</span> <span class="word" data-start="77.138" data-end="77.691" tabindex="0" role="button" aria-label="Zum Wort spazieren springen">spazieren</span> <span class="word" data-start="77.691" data-end="78.059" tabindex="0" role="button" aria-label="Zum Wort gehen, springen">gehen,</span> <span class="word" data-start="78.059" data-end="78.244" tabindex="0" role="button" aria-label="Zum Wort Rad springen">Rad</span> <span class="word" data-start="78.244" data-end="78.612" tabindex="0" role="button" aria-label="Zum Wort fahren springen">fahren</span> <span class="word" data-start="78.612" data-end="78.981" tabindex="0" role="button" aria-label="Zum Wort oder springen">oder</span> <span class="word" data-start="78.981" data-end="79.35" tabindex="0" role="button" aria-label="Zum Wort joggen. springen">joggen.</span></p>
+<p class="sentence" data-sentence="18" data-start="80.35" data-end="83.2"><span class="word" data-start="80.35" data-end="80.757" tabindex="0" role="button" aria-label="Zum Wort Manchmal springen">Manchmal</span> <span class="word" data-start="80.757" data-end="81.164" tabindex="0" role="button" aria-label="Zum Wort sitzen springen">sitzen</span> <span class="word" data-start="81.164" data-end="81.368" tabindex="0" role="button" aria-label="Zum Wort wir springen">wir</span> <span class="word" data-start="81.368" data-end="81.775" tabindex="0" role="button" aria-label="Zum Wort einfach springen">einfach</span> <span class="word" data-start="81.775" data-end="81.979" tabindex="0" role="button" aria-label="Zum Wort auf springen">auf</span> <span class="word" data-start="81.979" data-end="82.386" tabindex="0" role="button" aria-label="Zum Wort einer springen">einer</span> <span class="word" data-start="82.386" data-end="82.589" tabindex="0" role="button" aria-label="Zum Wort Bank springen">Bank</span> <span class="word" data-start="82.589" data-end="82.793" tabindex="0" role="button" aria-label="Zum Wort und springen">und</span> <span class="word" data-start="82.793" data-end="83.2" tabindex="0" role="button" aria-label="Zum Wort sprechen. springen">sprechen.</span></p>
+</section>
+<section class="chapter"><h2>Meine Freundin Aicha</h2>
+<p class="sentence" data-sentence="19" data-start="84.2" data-end="86.0"><span class="word" data-start="84.2" data-end="84.6" tabindex="0" role="button" aria-label="Zum Wort Meine springen">Meine</span> <span class="word" data-start="84.6" data-end="85.0" tabindex="0" role="button" aria-label="Zum Wort beste springen">beste</span> <span class="word" data-start="85.0" data-end="85.4" tabindex="0" role="button" aria-label="Zum Wort Freundin springen">Freundin</span> <span class="word" data-start="85.4" data-end="85.6" tabindex="0" role="button" aria-label="Zum Wort heißt springen">heißt</span> <span class="word" data-start="85.6" data-end="86.0" tabindex="0" role="button" aria-label="Zum Wort Aicha. springen">Aicha.</span></p>
+<p class="sentence" data-sentence="20" data-start="86.95" data-end="89.1"><span class="word" data-start="86.95" data-end="87.189" tabindex="0" role="button" aria-label="Zum Wort Sie springen">Sie</span> <span class="word" data-start="87.189" data-end="87.428" tabindex="0" role="button" aria-label="Zum Wort liest springen">liest</span> <span class="word" data-start="87.428" data-end="87.667" tabindex="0" role="button" aria-label="Zum Wort sehr springen">sehr</span> <span class="word" data-start="87.667" data-end="87.906" tabindex="0" role="button" aria-label="Zum Wort gern springen">gern</span> <span class="word" data-start="87.906" data-end="88.144" tabindex="0" role="button" aria-label="Zum Wort und springen">und</span> <span class="word" data-start="88.144" data-end="88.383" tabindex="0" role="button" aria-label="Zum Wort hört springen">hört</span> <span class="word" data-start="88.383" data-end="88.622" tabindex="0" role="button" aria-label="Zum Wort oft springen">oft</span> <span class="word" data-start="88.622" data-end="89.1" tabindex="0" role="button" aria-label="Zum Wort Musik. springen">Musik.</span></p>
+<p class="sentence" data-sentence="21" data-start="90.0" data-end="91.85"><span class="word" data-start="90.0" data-end="90.206" tabindex="0" role="button" aria-label="Zum Wort Sie springen">Sie</span> <span class="word" data-start="90.206" data-end="90.411" tabindex="0" role="button" aria-label="Zum Wort kann springen">kann</span> <span class="word" data-start="90.411" data-end="90.617" tabindex="0" role="button" aria-label="Zum Wort auch springen">auch</span> <span class="word" data-start="90.617" data-end="90.822" tabindex="0" role="button" aria-label="Zum Wort sehr springen">sehr</span> <span class="word" data-start="90.822" data-end="91.028" tabindex="0" role="button" aria-label="Zum Wort gut springen">gut</span> <span class="word" data-start="91.028" data-end="91.439" tabindex="0" role="button" aria-label="Zum Wort Klavier springen">Klavier</span> <span class="word" data-start="91.439" data-end="91.85" tabindex="0" role="button" aria-label="Zum Wort spielen. springen">spielen.</span></p>
+<p class="sentence" data-sentence="22" data-start="92.85" data-end="95.65"><span class="word" data-start="92.85" data-end="93.083" tabindex="0" role="button" aria-label="Zum Wort Am springen">Am</span> <span class="word" data-start="93.083" data-end="93.55" tabindex="0" role="button" aria-label="Zum Wort Samstag springen">Samstag</span> <span class="word" data-start="93.55" data-end="94.017" tabindex="0" role="button" aria-label="Zum Wort treffen springen">treffen</span> <span class="word" data-start="94.017" data-end="94.25" tabindex="0" role="button" aria-label="Zum Wort wir springen">wir</span> <span class="word" data-start="94.25" data-end="94.483" tabindex="0" role="button" aria-label="Zum Wort uns springen">uns</span> <span class="word" data-start="94.483" data-end="94.95" tabindex="0" role="button" aria-label="Zum Wort meistens springen">meistens</span> <span class="word" data-start="94.95" data-end="95.183" tabindex="0" role="button" aria-label="Zum Wort um springen">um</span> <span class="word" data-start="95.183" data-end="95.417" tabindex="0" role="button" aria-label="Zum Wort zehn springen">zehn</span> <span class="word" data-start="95.417" data-end="95.65" tabindex="0" role="button" aria-label="Zum Wort Uhr. springen">Uhr.</span></p>
+<p class="sentence" data-sentence="23" data-start="97.1" data-end="99.8"><span class="word" data-start="97.1" data-end="97.325" tabindex="0" role="button" aria-label="Zum Wort Zuerst springen">Zuerst</span> <span class="word" data-start="97.325" data-end="97.775" tabindex="0" role="button" aria-label="Zum Wort gehen springen">gehen</span> <span class="word" data-start="97.775" data-end="98.0" tabindex="0" role="button" aria-label="Zum Wort wir springen">wir</span> <span class="word" data-start="98.0" data-end="98.225" tabindex="0" role="button" aria-label="Zum Wort in springen">in</span> <span class="word" data-start="98.225" data-end="98.45" tabindex="0" role="button" aria-label="Zum Wort ein springen">ein</span> <span class="word" data-start="98.45" data-end="98.675" tabindex="0" role="button" aria-label="Zum Wort Café springen">Café</span> <span class="word" data-start="98.675" data-end="98.9" tabindex="0" role="button" aria-label="Zum Wort und springen">und</span> <span class="word" data-start="98.9" data-end="99.35" tabindex="0" role="button" aria-label="Zum Wort trinken springen">trinken</span> <span class="word" data-start="99.35" data-end="99.8" tabindex="0" role="button" aria-label="Zum Wort etwas. springen">etwas.</span></p>
+<p class="sentence" data-sentence="24" data-start="100.75" data-end="102.55"><span class="word" data-start="100.75" data-end="101.11" tabindex="0" role="button" aria-label="Zum Wort Danach springen">Danach</span> <span class="word" data-start="101.11" data-end="101.47" tabindex="0" role="button" aria-label="Zum Wort gehen springen">gehen</span> <span class="word" data-start="101.47" data-end="101.65" tabindex="0" role="button" aria-label="Zum Wort wir springen">wir</span> <span class="word" data-start="101.65" data-end="102.01" tabindex="0" role="button" aria-label="Zum Wort manchmal springen">manchmal</span> <span class="word" data-start="102.01" data-end="102.19" tabindex="0" role="button" aria-label="Zum Wort ins springen">ins</span> <span class="word" data-start="102.19" data-end="102.55" tabindex="0" role="button" aria-label="Zum Wort Kino. springen">Kino.</span></p>
+<p class="sentence" data-sentence="25" data-start="103.55" data-end="107.45"><span class="word" data-start="103.55" data-end="103.921" tabindex="0" role="button" aria-label="Zum Wort Aicha springen">Aicha</span> <span class="word" data-start="103.921" data-end="104.293" tabindex="0" role="button" aria-label="Zum Wort möchte springen">möchte</span> <span class="word" data-start="104.293" data-end="104.479" tabindex="0" role="button" aria-label="Zum Wort oft springen">oft</span> <span class="word" data-start="104.479" data-end="104.85" tabindex="0" role="button" aria-label="Zum Wort einen springen">einen</span> <span class="word" data-start="104.85" data-end="105.036" tabindex="0" role="button" aria-label="Zum Wort Film springen">Film</span> <span class="word" data-start="105.036" data-end="105.407" tabindex="0" role="button" aria-label="Zum Wort sehen, springen">sehen,</span> <span class="word" data-start="105.407" data-end="105.779" tabindex="0" role="button" aria-label="Zum Wort aber springen">aber</span> <span class="word" data-start="105.779" data-end="105.964" tabindex="0" role="button" aria-label="Zum Wort ich springen">ich</span> <span class="word" data-start="105.964" data-end="106.336" tabindex="0" role="button" aria-label="Zum Wort möchte springen">möchte</span> <span class="word" data-start="106.336" data-end="106.707" tabindex="0" role="button" aria-label="Zum Wort lieber springen">lieber</span> <span class="word" data-start="106.707" data-end="106.893" tabindex="0" role="button" aria-label="Zum Wort mit springen">mit</span> <span class="word" data-start="106.893" data-end="107.079" tabindex="0" role="button" aria-label="Zum Wort ihr springen">ihr</span> <span class="word" data-start="107.079" data-end="107.45" tabindex="0" role="button" aria-label="Zum Wort sprechen. springen">sprechen.</span></p>
+<p class="sentence" data-sentence="26" data-start="108.45" data-end="110.85"><span class="word" data-start="108.45" data-end="108.635" tabindex="0" role="button" aria-label="Zum Wort Wir springen">Wir</span> <span class="word" data-start="108.635" data-end="109.004" tabindex="0" role="button" aria-label="Zum Wort können springen">können</span> <span class="word" data-start="109.004" data-end="109.188" tabindex="0" role="button" aria-label="Zum Wort auch springen">auch</span> <span class="word" data-start="109.188" data-end="109.373" tabindex="0" role="button" aria-label="Zum Wort in springen">in</span> <span class="word" data-start="109.373" data-end="109.558" tabindex="0" role="button" aria-label="Zum Wort die springen">die</span> <span class="word" data-start="109.558" data-end="109.742" tabindex="0" role="button" aria-label="Zum Wort Stadt springen">Stadt</span> <span class="word" data-start="109.742" data-end="110.112" tabindex="0" role="button" aria-label="Zum Wort gehen springen">gehen</span> <span class="word" data-start="110.112" data-end="110.296" tabindex="0" role="button" aria-label="Zum Wort und springen">und</span> <span class="word" data-start="110.296" data-end="110.85" tabindex="0" role="button" aria-label="Zum Wort einkaufen. springen">einkaufen.</span></p>
+<p class="sentence" data-sentence="27" data-start="111.85" data-end="114.35"><span class="word" data-start="111.85" data-end="112.235" tabindex="0" role="button" aria-label="Zum Wort Aicha springen">Aicha</span> <span class="word" data-start="112.235" data-end="112.427" tabindex="0" role="button" aria-label="Zum Wort sucht springen">sucht</span> <span class="word" data-start="112.427" data-end="112.812" tabindex="0" role="button" aria-label="Zum Wort manchmal springen">manchmal</span> <span class="word" data-start="112.812" data-end="113.004" tabindex="0" role="button" aria-label="Zum Wort ein springen">ein</span> <span class="word" data-start="113.004" data-end="113.388" tabindex="0" role="button" aria-label="Zum Wort Geschenk springen">Geschenk</span> <span class="word" data-start="113.388" data-end="113.581" tabindex="0" role="button" aria-label="Zum Wort für springen">für</span> <span class="word" data-start="113.581" data-end="113.965" tabindex="0" role="button" aria-label="Zum Wort ihre springen">ihre</span> <span class="word" data-start="113.965" data-end="114.35" tabindex="0" role="button" aria-label="Zum Wort Schwester. springen">Schwester.</span></p>
+<p class="sentence" data-sentence="28" data-start="115.35" data-end="116.4"><span class="word" data-start="115.35" data-end="115.56" tabindex="0" role="button" aria-label="Zum Wort Ich springen">Ich</span> <span class="word" data-start="115.56" data-end="115.98" tabindex="0" role="button" aria-label="Zum Wort helfe springen">helfe</span> <span class="word" data-start="115.98" data-end="116.19" tabindex="0" role="button" aria-label="Zum Wort ihr springen">ihr</span> <span class="word" data-start="116.19" data-end="116.4" tabindex="0" role="button" aria-label="Zum Wort gern. springen">gern.</span></p>
+<p class="sentence" data-sentence="29" data-start="117.4" data-end="120.75"><span class="word" data-start="117.4" data-end="117.576" tabindex="0" role="button" aria-label="Zum Wort Wenn springen">Wenn</span> <span class="word" data-start="117.576" data-end="117.753" tabindex="0" role="button" aria-label="Zum Wort wir springen">wir</span> <span class="word" data-start="117.753" data-end="118.105" tabindex="0" role="button" aria-label="Zum Wort keine springen">keine</span> <span class="word" data-start="118.105" data-end="118.282" tabindex="0" role="button" aria-label="Zum Wort Lust springen">Lust</span> <span class="word" data-start="118.282" data-end="118.458" tabindex="0" role="button" aria-label="Zum Wort auf springen">auf</span> <span class="word" data-start="118.458" data-end="118.634" tabindex="0" role="button" aria-label="Zum Wort die springen">die</span> <span class="word" data-start="118.634" data-end="118.811" tabindex="0" role="button" aria-label="Zum Wort Stadt springen">Stadt</span> <span class="word" data-start="118.811" data-end="119.163" tabindex="0" role="button" aria-label="Zum Wort haben, springen">haben,</span> <span class="word" data-start="119.163" data-end="119.692" tabindex="0" role="button" aria-label="Zum Wort besuchen springen">besuchen</span> <span class="word" data-start="119.692" data-end="119.868" tabindex="0" role="button" aria-label="Zum Wort wir springen">wir</span> <span class="word" data-start="119.868" data-end="120.221" tabindex="0" role="button" aria-label="Zum Wort ihre springen">ihre</span> <span class="word" data-start="120.221" data-end="120.75" tabindex="0" role="button" aria-label="Zum Wort Familie. springen">Familie.</span></p>
+<p class="sentence" data-sentence="30" data-start="121.8" data-end="124.85"><span class="word" data-start="121.8" data-end="122.181" tabindex="0" role="button" aria-label="Zum Wort Ihre springen">Ihre</span> <span class="word" data-start="122.181" data-end="122.562" tabindex="0" role="button" aria-label="Zum Wort Eltern springen">Eltern</span> <span class="word" data-start="122.562" data-end="122.753" tabindex="0" role="button" aria-label="Zum Wort sind springen">sind</span> <span class="word" data-start="122.753" data-end="122.944" tabindex="0" role="button" aria-label="Zum Wort sehr springen">sehr</span> <span class="word" data-start="122.944" data-end="123.325" tabindex="0" role="button" aria-label="Zum Wort freundlich springen">freundlich</span> <span class="word" data-start="123.325" data-end="123.516" tabindex="0" role="button" aria-label="Zum Wort und springen">und</span> <span class="word" data-start="123.516" data-end="123.706" tabindex="0" role="button" aria-label="Zum Wort wir springen">wir</span> <span class="word" data-start="123.706" data-end="124.087" tabindex="0" role="button" aria-label="Zum Wort essen springen">essen</span> <span class="word" data-start="124.087" data-end="124.278" tabindex="0" role="button" aria-label="Zum Wort oft springen">oft</span> <span class="word" data-start="124.278" data-end="124.85" tabindex="0" role="button" aria-label="Zum Wort zusammen. springen">zusammen.</span></p>
+</section>
+<section class="chapter"><h2>Mein Freund Omar</h2>
+<p class="sentence" data-sentence="31" data-start="125.85" data-end="127.85"><span class="word" data-start="125.85" data-end="126.05" tabindex="0" role="button" aria-label="Zum Wort Mein springen">Mein</span> <span class="word" data-start="126.05" data-end="126.25" tabindex="0" role="button" aria-label="Zum Wort Freund springen">Freund</span> <span class="word" data-start="126.25" data-end="126.65" tabindex="0" role="button" aria-label="Zum Wort Omar springen">Omar</span> <span class="word" data-start="126.65" data-end="126.85" tabindex="0" role="button" aria-label="Zum Wort hat springen">hat</span> <span class="word" data-start="126.85" data-end="127.45" tabindex="0" role="button" aria-label="Zum Wort andere springen">andere</span> <span class="word" data-start="127.45" data-end="127.85" tabindex="0" role="button" aria-label="Zum Wort Hobbys. springen">Hobbys.</span></p>
+<p class="sentence" data-sentence="32" data-start="128.75" data-end="131.0"><span class="word" data-start="128.75" data-end="129.0" tabindex="0" role="button" aria-label="Zum Wort Er springen">Er</span> <span class="word" data-start="129.0" data-end="129.25" tabindex="0" role="button" aria-label="Zum Wort fährt springen">fährt</span> <span class="word" data-start="129.25" data-end="129.5" tabindex="0" role="button" aria-label="Zum Wort gern springen">gern</span> <span class="word" data-start="129.5" data-end="129.75" tabindex="0" role="button" aria-label="Zum Wort Rad springen">Rad</span> <span class="word" data-start="129.75" data-end="130.0" tabindex="0" role="button" aria-label="Zum Wort und springen">und</span> <span class="word" data-start="130.0" data-end="130.25" tabindex="0" role="button" aria-label="Zum Wort joggt springen">joggt</span> <span class="word" data-start="130.25" data-end="130.5" tabindex="0" role="button" aria-label="Zum Wort oft springen">oft</span> <span class="word" data-start="130.5" data-end="130.75" tabindex="0" role="button" aria-label="Zum Wort im springen">im</span> <span class="word" data-start="130.75" data-end="131.0" tabindex="0" role="button" aria-label="Zum Wort Park. springen">Park.</span></p>
+<p class="sentence" data-sentence="33" data-start="132.45" data-end="135.55"><span class="word" data-start="132.45" data-end="132.688" tabindex="0" role="button" aria-label="Zum Wort Wenn springen">Wenn</span> <span class="word" data-start="132.688" data-end="132.927" tabindex="0" role="button" aria-label="Zum Wort er springen">er</span> <span class="word" data-start="132.927" data-end="133.165" tabindex="0" role="button" aria-label="Zum Wort Zeit springen">Zeit</span> <span class="word" data-start="133.165" data-end="133.404" tabindex="0" role="button" aria-label="Zum Wort hat, springen">hat,</span> <span class="word" data-start="133.404" data-end="133.642" tabindex="0" role="button" aria-label="Zum Wort macht springen">macht</span> <span class="word" data-start="133.642" data-end="133.881" tabindex="0" role="button" aria-label="Zum Wort er springen">er</span> <span class="word" data-start="133.881" data-end="134.358" tabindex="0" role="button" aria-label="Zum Wort Fitness springen">Fitness</span> <span class="word" data-start="134.358" data-end="134.596" tabindex="0" role="button" aria-label="Zum Wort im springen">im</span> <span class="word" data-start="134.596" data-end="135.55" tabindex="0" role="button" aria-label="Zum Wort Fitness-Studio. springen">Fitness-Studio.</span></p>
+<p class="sentence" data-sentence="34" data-start="136.5" data-end="138.4"><span class="word" data-start="136.5" data-end="136.673" tabindex="0" role="button" aria-label="Zum Wort Er springen">Er</span> <span class="word" data-start="136.673" data-end="136.845" tabindex="0" role="button" aria-label="Zum Wort muss springen">muss</span> <span class="word" data-start="136.845" data-end="137.191" tabindex="0" role="button" aria-label="Zum Wort aber springen">aber</span> <span class="word" data-start="137.191" data-end="137.364" tabindex="0" role="button" aria-label="Zum Wort nicht springen">nicht</span> <span class="word" data-start="137.364" data-end="137.709" tabindex="0" role="button" aria-label="Zum Wort jeden springen">jeden</span> <span class="word" data-start="137.709" data-end="137.882" tabindex="0" role="button" aria-label="Zum Wort Tag springen">Tag</span> <span class="word" data-start="137.882" data-end="138.4" tabindex="0" role="button" aria-label="Zum Wort trainieren. springen">trainieren.</span></p>
+<p class="sentence" data-sentence="35" data-start="139.4" data-end="141.75"><span class="word" data-start="139.4" data-end="139.596" tabindex="0" role="button" aria-label="Zum Wort Am springen">Am</span> <span class="word" data-start="139.596" data-end="139.988" tabindex="0" role="button" aria-label="Zum Wort Sonntag springen">Sonntag</span> <span class="word" data-start="139.988" data-end="140.379" tabindex="0" role="button" aria-label="Zum Wort möchte springen">möchte</span> <span class="word" data-start="140.379" data-end="140.575" tabindex="0" role="button" aria-label="Zum Wort er springen">er</span> <span class="word" data-start="140.575" data-end="140.967" tabindex="0" role="button" aria-label="Zum Wort manchmal springen">manchmal</span> <span class="word" data-start="140.967" data-end="141.358" tabindex="0" role="button" aria-label="Zum Wort lange springen">lange</span> <span class="word" data-start="141.358" data-end="141.75" tabindex="0" role="button" aria-label="Zum Wort schlafen. springen">schlafen.</span></p>
+<p class="sentence" data-sentence="36" data-start="142.75" data-end="146.05"><span class="word" data-start="142.75" data-end="143.162" tabindex="0" role="button" aria-label="Zum Wort Omar springen">Omar</span> <span class="word" data-start="143.162" data-end="143.369" tabindex="0" role="button" aria-label="Zum Wort surft springen">surft</span> <span class="word" data-start="143.369" data-end="143.575" tabindex="0" role="button" aria-label="Zum Wort auch springen">auch</span> <span class="word" data-start="143.575" data-end="143.781" tabindex="0" role="button" aria-label="Zum Wort gern springen">gern</span> <span class="word" data-start="143.781" data-end="143.988" tabindex="0" role="button" aria-label="Zum Wort im springen">im</span> <span class="word" data-start="143.988" data-end="144.606" tabindex="0" role="button" aria-label="Zum Wort Internet springen">Internet</span> <span class="word" data-start="144.606" data-end="144.813" tabindex="0" role="button" aria-label="Zum Wort und springen">und</span> <span class="word" data-start="144.813" data-end="145.019" tabindex="0" role="button" aria-label="Zum Wort spielt springen">spielt</span> <span class="word" data-start="145.019" data-end="146.05" tabindex="0" role="button" aria-label="Zum Wort Computerspiele. springen">Computerspiele.</span></p>
+<p class="sentence" data-sentence="37" data-start="147.05" data-end="148.7"><span class="word" data-start="147.05" data-end="147.256" tabindex="0" role="button" aria-label="Zum Wort Er springen">Er</span> <span class="word" data-start="147.256" data-end="147.463" tabindex="0" role="button" aria-label="Zum Wort kann springen">kann</span> <span class="word" data-start="147.463" data-end="147.669" tabindex="0" role="button" aria-label="Zum Wort sehr springen">sehr</span> <span class="word" data-start="147.669" data-end="147.875" tabindex="0" role="button" aria-label="Zum Wort gut springen">gut</span> <span class="word" data-start="147.875" data-end="148.288" tabindex="0" role="button" aria-label="Zum Wort Fußball springen">Fußball</span> <span class="word" data-start="148.288" data-end="148.7" tabindex="0" role="button" aria-label="Zum Wort spielen. springen">spielen.</span></p>
+<p class="sentence" data-sentence="38" data-start="149.7" data-end="152.85"><span class="word" data-start="149.7" data-end="149.875" tabindex="0" role="button" aria-label="Zum Wort Am springen">Am</span> <span class="word" data-start="149.875" data-end="150.575" tabindex="0" role="button" aria-label="Zum Wort Wochenende springen">Wochenende</span> <span class="word" data-start="150.575" data-end="150.75" tabindex="0" role="button" aria-label="Zum Wort trifft springen">trifft</span> <span class="word" data-start="150.75" data-end="150.925" tabindex="0" role="button" aria-label="Zum Wort er springen">er</span> <span class="word" data-start="150.925" data-end="151.275" tabindex="0" role="button" aria-label="Zum Wort seine springen">seine</span> <span class="word" data-start="151.275" data-end="151.625" tabindex="0" role="button" aria-label="Zum Wort Freunde springen">Freunde</span> <span class="word" data-start="151.625" data-end="151.8" tabindex="0" role="button" aria-label="Zum Wort und springen">und</span> <span class="word" data-start="151.8" data-end="151.975" tabindex="0" role="button" aria-label="Zum Wort sie springen">sie</span> <span class="word" data-start="151.975" data-end="152.325" tabindex="0" role="button" aria-label="Zum Wort spielen springen">spielen</span> <span class="word" data-start="152.325" data-end="152.85" tabindex="0" role="button" aria-label="Zum Wort zusammen. springen">zusammen.</span></p>
+<p class="sentence" data-sentence="39" data-start="153.85" data-end="155.6"><span class="word" data-start="153.85" data-end="154.025" tabindex="0" role="button" aria-label="Zum Wort Im springen">Im</span> <span class="word" data-start="154.025" data-end="154.375" tabindex="0" role="button" aria-label="Zum Wort Winter springen">Winter</span> <span class="word" data-start="154.375" data-end="154.725" tabindex="0" role="button" aria-label="Zum Wort möchte springen">möchte</span> <span class="word" data-start="154.725" data-end="155.075" tabindex="0" role="button" aria-label="Zum Wort Omar springen">Omar</span> <span class="word" data-start="155.075" data-end="155.6" tabindex="0" role="button" aria-label="Zum Wort snowboarden. springen">snowboarden.</span></p>
+<p class="sentence" data-sentence="40" data-start="156.6" data-end="158.95"><span class="word" data-start="156.6" data-end="156.781" tabindex="0" role="button" aria-label="Zum Wort Er springen">Er</span> <span class="word" data-start="156.781" data-end="156.962" tabindex="0" role="button" aria-label="Zum Wort fährt springen">fährt</span> <span class="word" data-start="156.962" data-end="157.142" tabindex="0" role="button" aria-label="Zum Wort dann springen">dann</span> <span class="word" data-start="157.142" data-end="157.323" tabindex="0" role="button" aria-label="Zum Wort mit springen">mit</span> <span class="word" data-start="157.323" data-end="157.685" tabindex="0" role="button" aria-label="Zum Wort seiner springen">seiner</span> <span class="word" data-start="157.685" data-end="158.227" tabindex="0" role="button" aria-label="Zum Wort Familie springen">Familie</span> <span class="word" data-start="158.227" data-end="158.408" tabindex="0" role="button" aria-label="Zum Wort in springen">in</span> <span class="word" data-start="158.408" data-end="158.588" tabindex="0" role="button" aria-label="Zum Wort die springen">die</span> <span class="word" data-start="158.588" data-end="158.95" tabindex="0" role="button" aria-label="Zum Wort Berge. springen">Berge.</span></p>
+<p class="sentence" data-sentence="41" data-start="159.95" data-end="162.3"><span class="word" data-start="159.95" data-end="160.342" tabindex="0" role="button" aria-label="Zum Wort Seine springen">Seine</span> <span class="word" data-start="160.342" data-end="160.733" tabindex="0" role="button" aria-label="Zum Wort Schwester springen">Schwester</span> <span class="word" data-start="160.733" data-end="161.321" tabindex="0" role="button" aria-label="Zum Wort Fatima springen">Fatima</span> <span class="word" data-start="161.321" data-end="161.517" tabindex="0" role="button" aria-label="Zum Wort spielt springen">spielt</span> <span class="word" data-start="161.517" data-end="161.908" tabindex="0" role="button" aria-label="Zum Wort lieber springen">lieber</span> <span class="word" data-start="161.908" data-end="162.3" tabindex="0" role="button" aria-label="Zum Wort Klavier. springen">Klavier.</span></p>
+<p class="sentence" data-sentence="42" data-start="163.3" data-end="166.4"><span class="word" data-start="163.3" data-end="163.507" tabindex="0" role="button" aria-label="Zum Wort Sie springen">Sie</span> <span class="word" data-start="163.507" data-end="163.713" tabindex="0" role="button" aria-label="Zum Wort übt springen">übt</span> <span class="word" data-start="163.713" data-end="164.127" tabindex="0" role="button" aria-label="Zum Wort jeden springen">jeden</span> <span class="word" data-start="164.127" data-end="164.333" tabindex="0" role="button" aria-label="Zum Wort Tag, springen">Tag,</span> <span class="word" data-start="164.333" data-end="164.54" tabindex="0" role="button" aria-label="Zum Wort denn springen">denn</span> <span class="word" data-start="164.54" data-end="164.747" tabindex="0" role="button" aria-label="Zum Wort sie springen">sie</span> <span class="word" data-start="164.747" data-end="165.16" tabindex="0" role="button" aria-label="Zum Wort möchte springen">möchte</span> <span class="word" data-start="165.16" data-end="165.367" tabindex="0" role="button" aria-label="Zum Wort sehr springen">sehr</span> <span class="word" data-start="165.367" data-end="165.573" tabindex="0" role="button" aria-label="Zum Wort gut springen">gut</span> <span class="word" data-start="165.573" data-end="165.987" tabindex="0" role="button" aria-label="Zum Wort spielen springen">spielen</span> <span class="word" data-start="165.987" data-end="166.4" tabindex="0" role="button" aria-label="Zum Wort können. springen">können.</span></p>
+</section>
+  </main>
+<button type="button" id="translation-close" class="translation-close" aria-label="إغلاق الترجمة">×</button>
+    </div>
+  <footer>Die gelbe Markierung folgt dem gesprochenen Text. Du kannst auch direkt auf ein Wort klicken.</footer>
+</div>
+
+<script>
+(() => {
+  const audio = document.getElementById('audio');
+  const words = Array.from(document.querySelectorAll('.word'));
+  const sentences = Array.from(document.querySelectorAll('.sentence'));
+  const speedButtons = Array.from(document.querySelectorAll('[data-rate]'));
+  const translationBox = document.getElementById('translation');
+  const translationText = document.getElementById('translation-text');
+  const translationClose = document.getElementById('translation-close');
+  const translations = {"abend":"المساء","aber":"لكن","aicha":"عائشة","alt":"العمر","am":"في","andere":"آخر / أخرى","anderen":"الآخرين","auch":"أيضًا","auf":"على","ausschlafen":"ينام حتى وقت متأخر / يأخذ قسطًا من الراحة","bank":"مقعد","berge":"الجبال","beste":"أفضل","besuchen":"يزور","bin":"أكون","bis":"حتى","bisschen":"قليل","bleiben":"يبقى","bruder":"أخ","buch":"كتاب","café":"مقهى","computerspiele":"ألعاب الكمبيوتر","danach":"بعد ذلك","dann":"ثم","das":"هذا / أداة تعريف","den":"أداة تعريف للمذكر","denn":"لأن","die":"هذه / أداة تعريف","dinge":"أشياء","dort":"هناك","ein":"واحد / أداة نكرة","einen":"أداة نكرة للمذكر","einer":"أداة نكرة للمؤنث","einfach":"ببساطة","einkaufen":"يتسوّق","eltern":"الوالدان","entspannen":"يسترخي","er":"هو","essen":"يأكل","etwas":"شيء / قليلًا","fahren":"يركب / يذهب بوسيلة نقل","familie":"العائلة","fatima":"فاطمة","film":"فيلم","fitness":"اللياقة البدنية","fitness-studio":"صالة رياضية","freitag":"الجمعة","freizeit":"وقت الفراغ","freund":"صديق","freunde":"أصدقاء","freundin":"صديقة","freundinnen":"صديقات","freundlich":"ودود / لطيف","früh":"مبكرًا","frühstücken":"يتناول الفطور","fußball":"كرة القدم","fährt":"يركب / يذهب بوسيلة نقل","für":"من أجل","gehe":"أذهب","gehen":"يذهب","gern":"بسرور / يحبّ","geschenk":"هدية","gut":"جيد","habe":"لديّ","haben":"لديهم / نملك","hat":"لديه / لديها","hausaufgaben":"الواجبات المنزلية","hause":"المنزل","heißt":"يُدعى / اسمه","helfe":"أساعد","heute":"اليوم","hobbys":"الهوايات","hört":"يستمع","ich":"أنا","ihr":"لها / إياها","ihre":"لها / خاصتها","ihrer":"لها / خاصتها","im":"في الـ","in":"في","ins":"إلى الـ","internet":"الإنترنت","ist":"هو / يكون","jahre":"سنوات","jeden":"كلّ","joggen":"يركض هرولةً","joggt":"يركض هرولةً","kaffee":"القهوة","kann":"يستطيع","keine":"لا توجد / ليس أيّ","kino":"السينما","klavier":"البيانو","kleinen":"صغيرة","können":"يستطيعون / نستطيع","lange":"طويلًا / لمدة طويلة","lese":"أقرأ","lieber":"يفضّل / بالأحرى","liest":"يقرأ","lina":"لينا","lust":"رغبة","mache":"أفعل / أقوم بـ","machen":"يفعل / يقوم بـ","macht":"يفعل / تقوم بـ","manchmal":"أحيانًا","mehr":"أكثر","mein":"لي / خاصتي","meine":"لي / خاصتي","meiner":"لي / خاصتي","meistens":"غالبًا","menschen":"الناس","mich":"ني / نفسي","mit":"مع","montag":"الاثنين","morgen":"الصباح","musik":"الموسيقى","muss":"يجب عليه / يجب عليّ","mutter":"الأم","möchte":"أودّ","nachmittag":"بعد الظهر","nachrichten":"الأخبار","name":"الاسم","neue":"جديدة","nicht":"لا / ليس","normalerweise":"عادةً","nur":"فقط","oder":"أو","oft":"غالبًا","omar":"عمر","park":"الحديقة","pläne":"الخطط","rad":"الدراجة","samstag":"السبت","schlafen":"ينام","schwester":"أخت","schön":"جميل","sehen":"يرى / يشاهد","sehr":"جدًا","seine":"له / خاصته","seiner":"له / خاصته","sie":"هي / هم","sind":"يكونون / هم","sitzen":"يجلس","snowboarden":"يتزلّج على اللوح الثلجي","sondern":"بل / وإنما","sonntag":"الأحد","spazieren":"يتنزّه","spielen":"يلعب","spielt":"يلعب / تعزف","sprechen":"يتحدّث","stadt":"مدينة","stehe":"أنهض / أقف","sucht":"يبحث / تبحث","surft":"يتصفّح الإنترنت","tag":"يوم","trainieren":"يتدرّب","treffen":"يلتقي","trifft":"يلتقي","trinken":"يشرب","trotzdem":"مع ذلك","tun":"يفعل","uhr":"الساعة","um":"في / عند","und":"و","uns":"نحن / بعضنا","unsere":"لنا / خاصتنا","unternehmen":"يقوم بنشاط / يفعل شيئًا","unterricht":"الدرس / الحصّة الدراسية","vater":"الأب","viel":"كثير","von":"من","was":"ماذا / ما","wenn":"إذا / عندما","wetter":"الطقس","wichtig":"مهم","will":"يريد","winter":"الشتاء","wir":"نحن","wochenende":"عطلة نهاية الأسبوع","wohne":"أسكن","zehn":"عشرة","zeit":"الوقت","zu":"إلى","zuerst":"أولًا","zum":"إلى الـ","zusammen":"معًا","zwanzig":"عشرون","über":"عن / حول","überlegen":"يفكّر / يتشاور","übt":"يتدرّب"};
+  let activeWord = null;
+  let activeSentence = null;
+
+  function showTranslation(word) {
+    const original = word.textContent.trim();
+    const key = original.replace(/[.,!?;:]+$/, '').toLocaleLowerCase('de');
+    const meaning = translations[key] || 'معنى الكلمة حسب السياق';
+    const german = document.createElement('span');
+    german.className = 'german-word';
+    german.dir = 'ltr';
+    german.textContent = original;
+    const arabic = document.createElement('span');
+    arabic.className = 'arabic-meaning';
+    arabic.textContent = meaning;
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: "podcast-word-translation",
+        german: original,
+        meaning: meaning
+      }, "*");
+      translationBox.hidden = true;
+      return;
+    }
+    translationText.replaceChildren(german, arabic);
+    translationBox.hidden = false;
+  }
+
+  translationClose.addEventListener('click', () => {
+    translationBox.hidden = true;
+  });
+
+  function setActiveWord(word) {
+    if (activeWord === word) return;
+    if (activeWord) activeWord.classList.remove('active');
+    activeWord = word;
+    if (activeWord) {
+      activeWord.classList.add('active');
+      const sentence = activeWord.closest('.sentence');
+      if (sentence !== activeSentence) {
+        if (activeSentence) activeSentence.classList.remove('sentence-active');
+        activeSentence = sentence;
+        if (activeSentence) {
+          activeSentence.classList.add('sentence-active');
+          activeSentence.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    }
+  }
+
+  function sync() {
+    const t = audio.currentTime;
+    let current = null;
+    // Binary search: the word intervals are in chronological order.
+    let lo = 0, hi = words.length - 1;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      const start = Number(words[mid].dataset.start);
+      const end = Number(words[mid].dataset.end);
+      if (t < start) hi = mid - 1;
+      else if (t >= end) lo = mid + 1;
+      else { current = words[mid]; break; }
+    }
+    setActiveWord(current);
+  }
+
+  audio.addEventListener('timeupdate', sync);
+  audio.addEventListener('seeked', sync);
+  audio.addEventListener('play', sync);
+  audio.addEventListener('ended', () => setActiveWord(null));
+
+  words.forEach(word => {
+    const showMeaning = () => {
+      // Pause the recording when a word is selected, then show its translation.
+      audio.pause();
+      showTranslation(word);
+    };
+    word.addEventListener('click', showMeaning);
+    word.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        showMeaning();
+      }
+    });
+  });
+
+  speedButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      audio.playbackRate = Number(button.dataset.rate);
+      speedButtons.forEach(b => b.classList.toggle('active', b === button));
+    });
+  });
+})();
+</script>
+</body>
+</html>

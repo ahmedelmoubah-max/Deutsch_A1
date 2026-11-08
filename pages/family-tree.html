@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#eaf6ff">
+<title>Familienstammbaum – Aussprache hören</title>
+<style>
+  :root {
+    --blue: #1676d2;
+    --pink: #d94691;
+    --ink: #17324d;
+    --paper: #fffdf8;
+    --shadow: 0 12px 34px rgba(22, 58, 90, .14);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    color: var(--ink);
+    background: linear-gradient(180deg, #e8f6ff 0%, #f8fbff 50%, #f4fbef 100%);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  .page { width: min(1100px, calc(100% - 24px)); margin: 22px auto 36px; }
+  .top {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 12px; padding: 16px 20px; margin-bottom: 14px;
+    background: rgba(255,255,255,.9); border: 1px solid #d7eaf8;
+    border-radius: 20px; box-shadow: var(--shadow);
+  }
+  h1 { margin: 0; font-size: clamp(1.15rem, 3vw, 1.65rem); color: #14599b; }
+  .sub { margin: 5px 0 0; font-size: .95rem; color: #47647d; }
+  .controls { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+  .control { border: 0; border-radius: 999px; padding: 10px 15px; font: inherit; font-weight: 700; cursor:pointer; }
+  .stop { background:#e8eef5; color:#29445d; }
+  .rate-label { font-size:.88rem; color:#47647d; display:flex; align-items:center; gap:8px; }
+  select { font:inherit; border:1px solid #c8ddeb; border-radius:10px; padding:7px 8px; background:white; color:var(--ink); }
+  .notice { margin: 0 0 12px; padding: 10px 14px; background:#fff; border:1px solid #d7eaf8; border-radius:14px; color:#35536c; }
+  .status { min-height: 1.5em; margin: 0 0 12px; color:#14599b; font-weight:700; }
+  .poster { position:relative; width:100%; line-height:0; overflow:hidden; border-radius:18px; background:white; box-shadow:var(--shadow); border:1px solid #d7eaf8; }
+  .poster img { display:block; width:100%; height:auto; }
+  .hotspot {
+    position:absolute; display:block; padding:0; margin:0; border:2px solid transparent;
+    background:rgba(255,255,255,0); border-radius:12px; cursor:pointer; z-index:2;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .hotspot::after { content:""; position:absolute; inset:0; border-radius:10px; }
+  .hotspot:hover, .hotspot:focus-visible {
+    outline:none; border-color: var(--blue); background:rgba(255,255,255,.18);
+    box-shadow:0 0 0 3px rgba(22,118,210,.18);
+  }
+  .hotspot.fem:hover, .hotspot.fem:focus-visible { border-color:var(--pink); box-shadow:0 0 0 3px rgba(217,70,145,.16); }
+  .hotspot.title:hover, .hotspot.group:hover { border-color:#f3a51a; box-shadow:0 0 0 3px rgba(243,165,26,.2); }
+  .hotspot:active { background:rgba(255,255,255,.35); }
+  .below { display:grid; grid-template-columns:1fr; gap:14px; margin-top:16px; }
+  .card { background:rgba(255,255,255,.92); border:1px solid #d7eaf8; border-radius:18px; padding:16px; box-shadow:var(--shadow); }
+  h2 { font-size:1.1rem; margin:0 0 10px; color:#14599b; }
+  .terms { display:flex; flex-wrap:wrap; gap:8px; }
+  .term { border:1px solid #cde3f3; background:#f2f9ff; color:#174d7b; border-radius:999px; padding:8px 12px; cursor:pointer; font:inherit; font-weight:650; }
+  .term.fem { border-color:#f2c7df; background:#fff3f9; color:#9b2762; }
+  .term.group { border-color:#f6d28d; background:#fff8e8; color:#80510b; }
+  .term:hover, .term:focus-visible { outline:3px solid rgba(22,118,210,.2); transform:translateY(-1px); }
+  .hint { color:#526e83; font-size:.9rem; margin:10px 0 0; line-height:1.5; }
+  footer { text-align:center; color:#607a8f; font-size:.82rem; margin-top:14px; }
+  @media (max-width:600px) {
+    .page { width:calc(100% - 12px); margin:8px auto 18px; }
+    .top { padding:12px; border-radius:14px; }
+    .poster { border-radius:10px; }
+    .control { padding:8px 11px; }
+    .card { padding:12px; }
+  }
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="top">
+    <div>
+      <h1>Deutsch lernen · Familie</h1>
+      <p class="sub">Klicke auf ein Wort im Familienstammbaum und höre die deutsche Aussprache.</p>
+    </div>
+    <div class="controls">
+      <label class="rate-label" for="rate">Sprechtempo
+        <select id="rate" aria-label="Sprechtempo">
+          <option value="0.75">Langsam</option>
+          <option value="0.9" selected>Normal</option>
+          <option value="1.05">Schnell</option>
+        </select>
+      </label>
+      <button class="control stop" id="stop" type="button">■ Stopp</button>
+    </div>
+  </header>
+  <p class="notice">🔊 Tippe oder klicke auf einen Begriff im Bild. Die Aussprache wird mit der deutschen Stimme de-DE abgespielt.</p>
+  <p class="status" id="status" aria-live="polite">Bereit zum Anhören.</p>
+  <section class="poster" id="poster" aria-label="Interaktiver Familienstammbaum">
+    <img src="../assets/images/family-tree-poster.png" width="1122" height="1402" alt="Cartoon-Familienstammbaum mit deutschen Familienwörtern" draggable="false">
+  </section>
+  <section class="below">
+    <div class="card">
+      <h2>Wörter zum Anhören</h2>
+      <div class="terms" id="terms"></div>
+      <p class="hint">Hinweis: Die Aussprache nutzt die Sprachfunktion deines Browsers. Für die beste Aussprache wähle eine deutsche Stimme in den Spracheinstellungen deines Geräts.</p>
+    </div>
+  </section>
+  <footer>Offline nutzbar · Bild und Bedienoberfläche sind in dieser HTML-Datei enthalten.</footer>
+</main>
+<script>
+(() => {
+  const imageWidth = 1122;
+  const imageHeight = 1402;
+  const hotspotData = [{"x": 91, "y": 119, "w": 234, "h": 54, "label": "Deutsch lernen", "kind": "ui"}, {"x": 404, "y": 119, "w": 166, "h": 51, "label": "Wortschatz", "kind": "ui"}, {"x": 584, "y": 119, "w": 162, "h": 51, "label": "Familie", "kind": "ui"}, {"x": 773, "y": 119, "w": 150, "h": 51, "label": "Übungen", "kind": "ui"}, {"x": 941, "y": 119, "w": 132, "h": 51, "label": "Spiele", "kind": "ui"}, {"x": 245, "y": 214, "w": 600, "h": 76, "label": "Familienstammbaum", "kind": "title"}, {"x": 431, "y": 307, "w": 220, "h": 55, "label": "Großeltern", "kind": "group"}, {"x": 231, "y": 449, "w": 263, "h": 56, "label": "der Großvater", "kind": "masc"}, {"x": 611, "y": 449, "w": 264, "h": 56, "label": "die Großmutter", "kind": "fem"}, {"x": 431, "y": 535, "w": 232, "h": 56, "label": "Eltern", "kind": "group"}, {"x": 128, "y": 710, "w": 225, "h": 57, "label": "der Vater", "kind": "masc"}, {"x": 390, "y": 711, "w": 224, "h": 57, "label": "die Mutter", "kind": "fem"}, {"x": 637, "y": 720, "w": 197, "h": 56, "label": "der Onkel", "kind": "masc"}, {"x": 833, "y": 720, "w": 185, "h": 56, "label": "die Tante", "kind": "fem"}, {"x": 316, "y": 797, "w": 263, "h": 62, "label": "Geschwister", "kind": "group"}, {"x": 116, "y": 974, "w": 202, "h": 46, "label": "der Sohn", "kind": "masc"}, {"x": 116, "y": 1017, "w": 203, "h": 53, "label": "der Bruder", "kind": "masc"}, {"x": 387, "y": 974, "w": 213, "h": 47, "label": "die Tochter", "kind": "fem"}, {"x": 386, "y": 1017, "w": 214, "h": 53, "label": "die Schwester", "kind": "fem"}, {"x": 627, "y": 974, "w": 207, "h": 48, "label": "der Cousin", "kind": "masc"}, {"x": 836, "y": 974, "w": 201, "h": 48, "label": "die Cousine", "kind": "fem"}, {"x": 441, "y": 1088, "w": 210, "h": 61, "label": "Enkel", "kind": "group"}, {"x": 296, "y": 1247, "w": 220, "h": 58, "label": "der Enkel", "kind": "masc"}, {"x": 579, "y": 1247, "w": 231, "h": 58, "label": "die Enkelin", "kind": "fem"}];
+  const vocabulary = ["Großeltern", "der Großvater", "die Großmutter", "Eltern", "der Vater", "die Mutter", "der Onkel", "die Tante", "Geschwister", "der Sohn", "der Bruder", "die Tochter", "die Schwester", "der Cousin", "die Cousine", "Enkel", "der Enkel", "die Enkelin"];
+  const poster = document.getElementById('poster');
+  const status = document.getElementById('status');
+  const rateSelect = document.getElementById('rate');
+  const terms = document.getElementById('terms');
+
+  function speak(text) {
+    if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
+      status.textContent = 'Dein Browser unterstützt die Sprachausgabe leider nicht. Bitte öffne die Datei in Chrome, Edge oder Safari.';
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'de-DE';
+    utterance.rate = Number(rateSelect.value) || 0.9;
+    utterance.pitch = 1;
+    const voices = window.speechSynthesis.getVoices();
+    const germanVoice = voices.find(v => /^de(-|_)/i.test(v.lang) && /de-DE/i.test(v.lang))
+      || voices.find(v => /^de(-|_)/i.test(v.lang));
+    if (germanVoice) utterance.voice = germanVoice;
+    utterance.onstart = () => { status.textContent = 'Wird ausgesprochen: „' + text + '“'; };
+    utterance.onend = () => { status.textContent = 'Fertig: „' + text + '“'; };
+    utterance.onerror = () => { status.textContent = 'Die Aussprache konnte nicht gestartet werden. Prüfe die Audio- und Spracheinstellungen.'; };
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function addHotspot(item) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'hotspot ' + item.kind;
+    button.setAttribute('aria-label', 'Aussprache hören: ' + item.label);
+    button.title = 'Aussprache hören: ' + item.label;
+    button.dataset.say = item.label;
+    button.style.left = (item.x / imageWidth * 100) + '%';
+    button.style.top = (item.y / imageHeight * 100) + '%';
+    button.style.width = (item.w / imageWidth * 100) + '%';
+    button.style.height = (item.h / imageHeight * 100) + '%';
+    button.addEventListener('click', () => speak(item.label));
+    poster.appendChild(button);
+  }
+
+  hotspotData.forEach(addHotspot);
+
+  const uniqueTerms = [...new Set(vocabulary)];
+  uniqueTerms.forEach(label => {
+    const item = hotspotData.find(x => x.label === label);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'term ' + (item ? item.kind : 'group');
+    button.textContent = '🔊 ' + label;
+    button.addEventListener('click', () => speak(label));
+    terms.appendChild(button);
+  });
+
+  document.getElementById('stop').addEventListener('click', () => {
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    status.textContent = 'Sprachausgabe gestoppt.';
+  });
+
+  // Recalculate overlays after layout changes, keeping all clickable regions aligned to the image.
+  window.addEventListener('resize', () => {
+    [...poster.querySelectorAll('.hotspot')].forEach((button, index) => {
+      const item = hotspotData[index];
+      button.style.left = (item.x / imageWidth * 100) + '%';
+      button.style.top = (item.y / imageHeight * 100) + '%';
+      button.style.width = (item.w / imageWidth * 100) + '%';
+      button.style.height = (item.h / imageHeight * 100) + '%';
+    });
+  });
+})();
+</script>
+</body>
+</html>
