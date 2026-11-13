@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wetter, Stadt und Arbeit – Audio-Lesetraining</title>
+<style>
+:root {
+  --ink: #202a35;
+  --muted: #687482;
+  --paper: #ffffff;
+  --page: #f3f5f7;
+  --line: #e5e9ee;
+  --yellow: #ffe45c;
+  --yellow-soft: #fff9d8;
+  --blue: #315b78;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  line-height: 1.8;
+}
+.wrap { width: min(920px, calc(100% - 28px)); margin: 28px auto 56px; }
+header {
+  padding: 26px 28px 22px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 18px 18px 0 0;
+}
+.eyebrow {
+  color: var(--blue); font-size: 12px; font-weight: 800;
+  letter-spacing: .12em; text-transform: uppercase;
+}
+h1 { margin: 5px 0 4px; font-size: clamp(25px, 4vw, 34px); line-height: 1.25; }
+.sub { color: var(--muted); font-size: 14px; margin: 0; }
+.player {
+  position: sticky; top: 0; z-index: 5;
+  padding: 17px 22px 16px;
+  background: rgba(255,255,255,.97);
+  border: 1px solid var(--line);
+  border-top: 0;
+  box-shadow: 0 8px 22px rgba(31,48,65,.06);
+}
+audio { display: block; width: 100%; height: 42px; }
+.tools {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 10px; margin-top: 12px;
+}
+.hint { color: var(--muted); font-size: 13px; }
+.speeds { display: flex; gap: 6px; }
+.speeds button {
+  border: 1px solid var(--line); background: #fff; color: var(--ink);
+  padding: 6px 11px; border-radius: 20px; cursor: pointer; font-weight: 700;
+}
+.speeds button.active { background: var(--blue); color: white; border-color: var(--blue); }
+main {
+  padding: 26px clamp(18px, 4vw, 34px) 34px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-top: 0;
+  border-radius: 0 0 18px 18px;
+}
+.chapter { margin: 0 0 30px; }
+.chapter h2 {
+  font-size: 15px; color: var(--blue); letter-spacing: .02em;
+  margin: 0 0 12px; padding-bottom: 7px; border-bottom: 1px solid var(--line);
+}
+.sentence {
+  margin: 0 0 13px; padding: 4px 8px;
+  border-radius: 8px; font-size: clamp(17px, 2.2vw, 19px);
+  transition: background .15s ease;
+}
+.sentence.sentence-active { background: #fffdf0; }
+
+.sentence.audio-missing { border-left: 3px solid #d8c98a; padding-left: 12px; }
+.audio-note { display: inline-block; color: var(--muted); font-size: 12px; font-style: italic; }
+
+.word {
+  border-radius: 4px; cursor: pointer; padding: 1px 1px;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+.word:hover { background: #f0f3f6; }
+.word.active {
+  background: var(--yellow);
+  color: #15191d;
+  box-shadow: 0 0 0 2px var(--yellow);
+  font-weight: 750;
+}
+.word:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+footer {
+  text-align: center; color: var(--muted); font-size: 12px; padding: 18px 0 0;
+}
+.translation {
+  position: fixed;
+  z-index: 50;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(520px, calc(100vw - 32px));
+  padding: 20px 22px 22px;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #ffffff 0%, #fff9dc 100%);
+  border: 1px solid #eadb91;
+  box-shadow: 0 18px 55px rgba(20, 35, 50, .24);
+  direction: rtl;
+  text-align: center;
+}
+.translation[hidden] { display: none; }
+.translation-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid #eee3b5;
+}
+.translation-label {
+  color: #806a12;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+.translation-text {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 9px 13px;
+  font-size: 20px;
+  line-height: 1.7;
+}
+.translation-text .german-word {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-weight: 800;
+  color: #263746;
+}
+.translation-text .arabic-meaning {
+  direction: rtl;
+  unicode-bidi: isolate;
+  font-weight: 650;
+  color: #252b32;
+}
+.translation-close {
+  border: 0;
+  background: #f5edc9;
+  color: #66550d;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+@media (max-width: 600px) {
+  .wrap { width: calc(100% - 16px); margin-top: 8px; }
+  header { padding: 21px 18px 17px; }
+  .player { padding: 13px 14px; }
+  main { padding: 20px 12px 26px; }
+  .sentence { padding: 4px 5px; line-height: 1.95; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Deutsch · Hör- und Lesetraining</div>
+    <h1>Wetter, Stadt und Arbeit</h1>
+    <p class="sub">Lina spricht über das Wetter, ihre Stadt, ihre Arbeit und ihre Freizeit.</p>
+  </header>
+
+  <div class="player">
+    <audio id="audio" controls preload="metadata">
+      <source src="../../assets/audio/podcast-7-1.mp3" type="audio/mpeg">
+      Dein Browser unterstützt das Audioelement nicht.
+    </audio>
+    <div class="tools">
+      <div class="hint">شغّلي الصوت وتبعي الكلمات المظللة بالأصفر. اضغطي على أي كلمة للانتقال إليها.</div>
+      <div class="speeds" aria-label="Wiedergabegeschwindigkeit">
+        <button type="button" data-rate="0.75">0,75×</button>
+        <button type="button" data-rate="1" class="active">1×</button>
+        <button type="button" data-rate="1.25">1,25×</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="translation" class="translation" hidden aria-live="polite">
+    <div class="translation-heading">
+      <span class="translation-label">معنى الكلمة</span>
+      <button type="button" id="translation-close" class="translation-close" aria-label="إخفاء الترجمة">×</button>
+    </div>
+    <div id="translation-text" class="translation-text"></div>
+  </div>
+
+  <main id="transcript">
+<section class="chapter"><h2>Das Wetter und der Tagesplan</h2>
+<p class="sentence" data-sentence="0" data-start="0.25" data-end="2.0"><span class="word" data-start="0.25" data-end="0.444" tabindex="0" role="button" aria-label="ترجمة الكلمة Ich">Ich</span> <span class="word" data-start="0.444" data-end="0.833" tabindex="0" role="button" aria-label="ترجمة الكلمة heiße">heiße</span> <span class="word" data-start="0.833" data-end="1.222" tabindex="0" role="button" aria-label="ترجمة الكلمة Lina">Lina</span> <span class="word" data-start="1.222" data-end="1.417" tabindex="0" role="button" aria-label="ترجمة الكلمة und">und</span> <span class="word" data-start="1.417" data-end="1.806" tabindex="0" role="button" aria-label="ترجمة الكلمة lerne">lerne</span> <span class="word" data-start="1.806" data-end="2.0" tabindex="0" role="button" aria-label="ترجمة الكلمة Deutsch.">Deutsch.</span></p>
+<p class="sentence" data-sentence="1" data-start="2.98" data-end="7.64"><span class="word" data-start="2.98" data-end="3.353" tabindex="0" role="button" aria-label="ترجمة الكلمة Heute">Heute</span> <span class="word" data-start="3.353" data-end="3.726" tabindex="0" role="button" aria-label="ترجمة الكلمة möchte">möchte</span> <span class="word" data-start="3.726" data-end="3.912" tabindex="0" role="button" aria-label="ترجمة الكلمة ich">ich</span> <span class="word" data-start="3.912" data-end="4.285" tabindex="0" role="button" aria-label="ترجمة الكلمة über">über</span> <span class="word" data-start="4.285" data-end="4.471" tabindex="0" role="button" aria-label="ترجمة الكلمة das">das</span> <span class="word" data-start="4.471" data-end="4.844" tabindex="0" role="button" aria-label="ترجمة الكلمة Wetter,">Wetter,</span> <span class="word" data-start="4.844" data-end="5.217" tabindex="0" role="button" aria-label="ترجمة الكلمة meine">meine</span> <span class="word" data-start="5.217" data-end="5.403" tabindex="0" role="button" aria-label="ترجمة الكلمة Stadt,">Stadt,</span> <span class="word" data-start="5.403" data-end="5.776" tabindex="0" role="button" aria-label="ترجمة الكلمة meine">meine</span> <span class="word" data-start="5.776" data-end="6.149" tabindex="0" role="button" aria-label="ترجمة الكلمة Arbeit">Arbeit</span> <span class="word" data-start="6.149" data-end="6.335" tabindex="0" role="button" aria-label="ترجمة الكلمة und">und</span> <span class="word" data-start="6.335" data-end="6.522" tabindex="0" role="button" aria-label="ترجمة الكلمة mein">mein</span> <span class="word" data-start="6.522" data-end="7.267" tabindex="0" role="button" aria-label="ترجمة الكلمة Wochenende">Wochenende</span> <span class="word" data-start="7.267" data-end="7.64" tabindex="0" role="button" aria-label="ترجمة الكلمة sprechen.">sprechen.</span></p>
+<p class="sentence" data-sentence="2" data-start="8.7" data-end="12.2"><span class="word" data-start="8.7" data-end="8.884" tabindex="0" role="button" aria-label="ترجمة الكلمة Das">Das</span> <span class="word" data-start="8.884" data-end="9.253" tabindex="0" role="button" aria-label="ترجمة الكلمة Wetter">Wetter</span> <span class="word" data-start="9.253" data-end="9.437" tabindex="0" role="button" aria-label="ترجمة الكلمة ist">ist</span> <span class="word" data-start="9.437" data-end="9.621" tabindex="0" role="button" aria-label="ترجمة الكلمة ein">ein</span> <span class="word" data-start="9.621" data-end="10.174" tabindex="0" role="button" aria-label="ترجمة الكلمة wichtiges">wichtiges</span> <span class="word" data-start="10.174" data-end="10.542" tabindex="0" role="button" aria-label="ترجمة الكلمة Thema,">Thema,</span> <span class="word" data-start="10.542" data-end="10.726" tabindex="0" role="button" aria-label="ترجمة الكلمة denn">denn</span> <span class="word" data-start="10.726" data-end="10.911" tabindex="0" role="button" aria-label="ترجمة الكلمة es">es</span> <span class="word" data-start="10.911" data-end="11.463" tabindex="0" role="button" aria-label="ترجمة الكلمة verändert">verändert</span> <span class="word" data-start="11.463" data-end="11.647" tabindex="0" role="button" aria-label="ترجمة الكلمة sich">sich</span> <span class="word" data-start="11.647" data-end="12.016" tabindex="0" role="button" aria-label="ترجمة الكلمة jeden">jeden</span> <span class="word" data-start="12.016" data-end="12.2" tabindex="0" role="button" aria-label="ترجمة الكلمة Tag.">Tag.</span></p>
+<p class="sentence" data-sentence="3" data-start="13.2" data-end="17.48"><span class="word" data-start="13.2" data-end="13.414" tabindex="0" role="button" aria-label="ترجمة الكلمة Am">Am</span> <span class="word" data-start="13.414" data-end="13.842" tabindex="0" role="button" aria-label="ترجمة الكلمة Morgen">Morgen</span> <span class="word" data-start="13.842" data-end="14.056" tabindex="0" role="button" aria-label="ترجمة الكلمة schaue">schaue</span> <span class="word" data-start="14.056" data-end="14.27" tabindex="0" role="button" aria-label="ترجمة الكلمة ich">ich</span> <span class="word" data-start="14.27" data-end="14.484" tabindex="0" role="button" aria-label="ترجمة الكلمة aus">aus</span> <span class="word" data-start="14.484" data-end="14.698" tabindex="0" role="button" aria-label="ترجمة الكلمة dem">dem</span> <span class="word" data-start="14.698" data-end="15.126" tabindex="0" role="button" aria-label="ترجمة الكلمة Fenster">Fenster</span> <span class="word" data-start="15.126" data-end="15.34" tabindex="0" role="button" aria-label="ترجمة الكلمة und">und</span> <span class="word" data-start="15.34" data-end="15.768" tabindex="0" role="button" aria-label="ترجمة الكلمة frage">frage</span> <span class="word" data-start="15.768" data-end="15.982" tabindex="0" role="button" aria-label="ترجمة الكلمة mich:">mich:</span> <span class="word" data-start="15.982" data-end="16.196" tabindex="0" role="button" aria-label="ترجمة الكلمة Wie">Wie</span> <span class="word" data-start="16.196" data-end="16.41" tabindex="0" role="button" aria-label="ترجمة الكلمة ist">ist</span> <span class="word" data-start="16.41" data-end="16.624" tabindex="0" role="button" aria-label="ترجمة الكلمة das">das</span> <span class="word" data-start="16.624" data-end="17.052" tabindex="0" role="button" aria-label="ترجمة الكلمة Wetter">Wetter</span> <span class="word" data-start="17.052" data-end="17.48" tabindex="0" role="button" aria-label="ترجمة الكلمة heute?">heute?</span></p>
+<p class="sentence" data-sentence="4" data-start="18.48" data-end="20.96"><span class="word" data-start="18.48" data-end="18.756" tabindex="0" role="button" aria-label="ترجمة الكلمة Ist">Ist</span> <span class="word" data-start="18.756" data-end="19.031" tabindex="0" role="button" aria-label="ترجمة الكلمة es">es</span> <span class="word" data-start="19.031" data-end="19.582" tabindex="0" role="button" aria-label="ترجمة الكلمة sonnig,">sonnig,</span> <span class="word" data-start="19.582" data-end="19.858" tabindex="0" role="button" aria-label="ترجمة الكلمة warm,">warm,</span> <span class="word" data-start="19.858" data-end="20.133" tabindex="0" role="button" aria-label="ترجمة الكلمة kühl">kühl</span> <span class="word" data-start="20.133" data-end="20.684" tabindex="0" role="button" aria-label="ترجمة الكلمة oder">oder</span> <span class="word" data-start="20.684" data-end="20.96" tabindex="0" role="button" aria-label="ترجمة الكلمة kalt?">kalt?</span></p>
+<p class="sentence" data-sentence="5" data-start="21.96" data-end="22.82"><span class="word" data-start="21.96" data-end="22.175" tabindex="0" role="button" aria-label="ترجمة الكلمة Gibt">Gibt</span> <span class="word" data-start="22.175" data-end="22.39" tabindex="0" role="button" aria-label="ترجمة الكلمة es">es</span> <span class="word" data-start="22.39" data-end="22.82" tabindex="0" role="button" aria-label="ترجمة الكلمة Wolken?">Wolken?</span></p>
+<p class="sentence" data-sentence="6" data-start="23.82" data-end="25.38"><span class="word" data-start="23.82" data-end="24.266" tabindex="0" role="button" aria-label="ترجمة الكلمة Regnet">Regnet</span> <span class="word" data-start="24.266" data-end="24.489" tabindex="0" role="button" aria-label="ترجمة الكلمة es">es</span> <span class="word" data-start="24.489" data-end="24.934" tabindex="0" role="button" aria-label="ترجمة الكلمة oder">oder</span> <span class="word" data-start="24.934" data-end="25.157" tabindex="0" role="button" aria-label="ترجمة الكلمة schneit">schneit</span> <span class="word" data-start="25.157" data-end="25.38" tabindex="0" role="button" aria-label="ترجمة الكلمة es?">es?</span></p>
+<p class="sentence" data-sentence="7" data-start="26.36" data-end="29.86"><span class="word" data-start="26.36" data-end="26.535" tabindex="0" role="button" aria-label="ترجمة الكلمة Wenn">Wenn</span> <span class="word" data-start="26.535" data-end="26.71" tabindex="0" role="button" aria-label="ترجمة الكلمة ich">ich</span> <span class="word" data-start="26.71" data-end="26.885" tabindex="0" role="button" aria-label="ترجمة الكلمة die">die</span> <span class="word" data-start="26.885" data-end="27.935" tabindex="0" role="button" aria-label="ترجمة الكلمة Wettervorhersage">Wettervorhersage</span> <span class="word" data-start="27.935" data-end="28.285" tabindex="0" role="button" aria-label="ترجمة الكلمة kenne,">kenne,</span> <span class="word" data-start="28.285" data-end="28.46" tabindex="0" role="button" aria-label="ترجمة الكلمة kann">kann</span> <span class="word" data-start="28.46" data-end="28.635" tabindex="0" role="button" aria-label="ترجمة الكلمة ich">ich</span> <span class="word" data-start="28.635" data-end="28.985" tabindex="0" role="button" aria-label="ترجمة الكلمة meinen">meinen</span> <span class="word" data-start="28.985" data-end="29.16" tabindex="0" role="button" aria-label="ترجمة الكلمة Tag">Tag</span> <span class="word" data-start="29.16" data-end="29.51" tabindex="0" role="button" aria-label="ترجمة الكلمة besser">besser</span> <span class="word" data-start="29.51" data-end="29.86" tabindex="0" role="button" aria-label="ترجمة الكلمة planen.">planen.</span></p>
+<p class="sentence" data-sentence="8" data-start="31.44" data-end="35.56"><span class="word" data-start="31.44" data-end="31.646" tabindex="0" role="button" aria-label="ترجمة الكلمة Dann">Dann</span> <span class="word" data-start="31.646" data-end="31.852" tabindex="0" role="button" aria-label="ترجمة الكلمة weiß">weiß</span> <span class="word" data-start="31.852" data-end="32.058" tabindex="0" role="button" aria-label="ترجمة الكلمة ich,">ich,</span> <span class="word" data-start="32.058" data-end="32.47" tabindex="0" role="button" aria-label="ترجمة الكلمة welche">welche</span> <span class="word" data-start="32.47" data-end="32.882" tabindex="0" role="button" aria-label="ترجمة الكلمة Kleidung">Kleidung</span> <span class="word" data-start="32.882" data-end="33.088" tabindex="0" role="button" aria-label="ترجمة الكلمة ich">ich</span> <span class="word" data-start="33.088" data-end="33.5" tabindex="0" role="button" aria-label="ترجمة الكلمة brauche">brauche</span> <span class="word" data-start="33.5" data-end="33.706" tabindex="0" role="button" aria-label="ترجمة الكلمة und">und</span> <span class="word" data-start="33.706" data-end="33.912" tabindex="0" role="button" aria-label="ترجمة الكلمة ob">ob</span> <span class="word" data-start="33.912" data-end="34.118" tabindex="0" role="button" aria-label="ترجمة الكلمة ich">ich</span> <span class="word" data-start="34.118" data-end="34.324" tabindex="0" role="button" aria-label="ترجمة الكلمة mit">mit</span> <span class="word" data-start="34.324" data-end="34.53" tabindex="0" role="button" aria-label="ترجمة الكلمة dem">dem</span> <span class="word" data-start="34.53" data-end="34.942" tabindex="0" role="button" aria-label="ترجمة الكلمة Fahrrad">Fahrrad</span> <span class="word" data-start="34.942" data-end="35.354" tabindex="0" role="button" aria-label="ترجمة الكلمة fahren">fahren</span> <span class="word" data-start="35.354" data-end="35.56" tabindex="0" role="button" aria-label="ترجمة الكلمة kann.">kann.</span></p>
+</section>
+<section class="chapter"><h2>Meine Stadt</h2>
+<p class="sentence" data-sentence="9" data-start="36.6" data-end="38.2"><span class="word" data-start="36.6" data-end="36.778" tabindex="0" role="button" aria-label="ترجمة الكلمة Ich">Ich</span> <span class="word" data-start="36.778" data-end="37.133" tabindex="0" role="button" aria-label="ترجمة الكلمة wohne">wohne</span> <span class="word" data-start="37.133" data-end="37.311" tabindex="0" role="button" aria-label="ترجمة الكلمة in">in</span> <span class="word" data-start="37.311" data-end="37.667" tabindex="0" role="button" aria-label="ترجمة الكلمة einer">einer</span> <span class="word" data-start="37.667" data-end="38.022" tabindex="0" role="button" aria-label="ترجمة الكلمة großen">großen</span> <span class="word" data-start="38.022" data-end="38.2" tabindex="0" role="button" aria-label="ترجمة الكلمة Stadt.">Stadt.</span></p>
+<p class="sentence" data-sentence="10" data-start="39.2" data-end="44.54"><span class="word" data-start="39.2" data-end="39.454" tabindex="0" role="button" aria-label="ترجمة الكلمة Hier">Hier</span> <span class="word" data-start="39.454" data-end="39.709" tabindex="0" role="button" aria-label="ترجمة الكلمة gibt">gibt</span> <span class="word" data-start="39.709" data-end="39.963" tabindex="0" role="button" aria-label="ترجمة الكلمة es">es</span> <span class="word" data-start="39.963" data-end="40.471" tabindex="0" role="button" aria-label="ترجمة الكلمة viele">viele</span> <span class="word" data-start="40.471" data-end="40.98" tabindex="0" role="button" aria-label="ترجمة الكلمة Menschen,">Menschen,</span> <span class="word" data-start="40.98" data-end="41.743" tabindex="0" role="button" aria-label="ترجمة الكلمة Geschäfte,">Geschäfte,</span> <span class="word" data-start="41.743" data-end="41.997" tabindex="0" role="button" aria-label="ترجمة الكلمة Cafés,">Cafés,</span> <span class="word" data-start="41.997" data-end="42.76" tabindex="0" role="button" aria-label="ترجمة الكلمة Restaurants,">Restaurants,</span> <span class="word" data-start="42.76" data-end="43.269" tabindex="0" role="button" aria-label="ترجمة الكلمة Büros">Büros</span> <span class="word" data-start="43.269" data-end="43.523" tabindex="0" role="button" aria-label="ترجمة الكلمة und">und</span> <span class="word" data-start="43.523" data-end="44.031" tabindex="0" role="button" aria-label="ترجمة الكلمة einen">einen</span> <span class="word" data-start="44.031" data-end="44.54" tabindex="0" role="button" aria-label="ترجمة الكلمة Bahnhof.">Bahnhof.</span></p>
+<p class="sentence" data-sentence="11" data-start="45.56" data-end="47.22"><span class="word" data-start="45.56" data-end="45.767" tabindex="0" role="button" aria-label="ترجمة الكلمة Die">Die</span> <span class="word" data-start="45.767" data-end="46.182" tabindex="0" role="button" aria-label="ترجمة الكلمة Straßen">Straßen</span> <span class="word" data-start="46.182" data-end="46.39" tabindex="0" role="button" aria-label="ترجمة الكلمة sind">sind</span> <span class="word" data-start="46.39" data-end="46.597" tabindex="0" role="button" aria-label="ترجمة الكلمة oft">oft</span> <span class="word" data-start="46.597" data-end="46.805" tabindex="0" role="button" aria-label="ترجمة الكلمة laut">laut</span> <span class="word" data-start="46.805" data-end="47.012" tabindex="0" role="button" aria-label="ترجمة الكلمة und">und</span> <span class="word" data-start="47.012" data-end="47.22" tabindex="0" role="button" aria-label="ترجمة الكلمة voll.">voll.</span></p>
+<p class="sentence" data-sentence="12" data-start="48.26" data-end="52.0"><span class="word" data-start="48.26" data-end="48.457" tabindex="0" role="button" aria-label="ترجمة الكلمة Im">Im</span> <span class="word" data-start="48.457" data-end="48.851" tabindex="0" role="button" aria-label="ترجمة الكلمة Zentrum">Zentrum</span> <span class="word" data-start="48.851" data-end="49.244" tabindex="0" role="button" aria-label="ترجمة الكلمة fahren">fahren</span> <span class="word" data-start="49.244" data-end="49.638" tabindex="0" role="button" aria-label="ترجمة الكلمة Busse">Busse</span> <span class="word" data-start="49.638" data-end="49.835" tabindex="0" role="button" aria-label="ترجمة الكلمة und">und</span> <span class="word" data-start="49.835" data-end="50.228" tabindex="0" role="button" aria-label="ترجمة الكلمة Bahnen,">Bahnen,</span> <span class="word" data-start="50.228" data-end="50.425" tabindex="0" role="button" aria-label="ترجمة الكلمة und">und</span> <span class="word" data-start="50.425" data-end="50.819" tabindex="0" role="button" aria-label="ترجمة الكلمة viele">viele</span> <span class="word" data-start="50.819" data-end="51.213" tabindex="0" role="button" aria-label="ترجمة الكلمة Menschen">Menschen</span> <span class="word" data-start="51.213" data-end="51.606" tabindex="0" role="button" aria-label="ترجمة الكلمة gehen">gehen</span> <span class="word" data-start="51.606" data-end="51.803" tabindex="0" role="button" aria-label="ترجمة الكلمة zu">zu</span> <span class="word" data-start="51.803" data-end="52.0" tabindex="0" role="button" aria-label="ترجمة الكلمة Fuß.">Fuß.</span></p>
+<p class="sentence" data-sentence="13" data-start="52.96" data-end="54.92"><span class="word" data-start="52.96" data-end="53.156" tabindex="0" role="button" aria-label="ترجمة الكلمة In">In</span> <span class="word" data-start="53.156" data-end="53.548" tabindex="0" role="button" aria-label="ترجمة الكلمة einem">einem</span> <span class="word" data-start="53.548" data-end="53.744" tabindex="0" role="button" aria-label="ترجمة الكلمة Park">Park</span> <span class="word" data-start="53.744" data-end="53.94" tabindex="0" role="button" aria-label="ترجمة الكلمة ist">ist</span> <span class="word" data-start="53.94" data-end="54.136" tabindex="0" role="button" aria-label="ترجمة الكلمة es">es</span> <span class="word" data-start="54.136" data-end="54.528" tabindex="0" role="button" aria-label="ترجمة الكلمة meistens">meistens</span> <span class="word" data-start="54.528" data-end="54.92" tabindex="0" role="button" aria-label="ترجمة الكلمة ruhig.">ruhig.</span></p>
+<p class="sentence" data-sentence="14" data-start="55.9" data-end="58.76"><span class="word" data-start="55.9" data-end="56.091" tabindex="0" role="button" aria-label="ترجمة الكلمة Dort">Dort</span> <span class="word" data-start="56.091" data-end="56.281" tabindex="0" role="button" aria-label="ترجمة الكلمة kann">kann</span> <span class="word" data-start="56.281" data-end="56.472" tabindex="0" role="button" aria-label="ترجمة الكلمة man">man</span> <span class="word" data-start="56.472" data-end="57.044" tabindex="0" role="button" aria-label="ترجمة الكلمة spazieren">spazieren</span> <span class="word" data-start="57.044" data-end="57.425" tabindex="0" role="button" aria-label="ترجمة الكلمة gehen">gehen</span> <span class="word" data-start="57.425" data-end="57.616" tabindex="0" role="button" aria-label="ترجمة الكلمة und">und</span> <span class="word" data-start="57.616" data-end="57.997" tabindex="0" role="button" aria-label="ترجمة الكلمة frische">frische</span> <span class="word" data-start="57.997" data-end="58.188" tabindex="0" role="button" aria-label="ترجمة الكلمة Luft">Luft</span> <span class="word" data-start="58.188" data-end="58.76" tabindex="0" role="button" aria-label="ترجمة الكلمة genießen.">genießen.</span></p>
+<p class="sentence" data-sentence="15" data-start="59.84" data-end="62.06"><span class="word" data-start="59.84" data-end="60.244" tabindex="0" role="button" aria-label="ترجمة الكلمة Meine">Meine</span> <span class="word" data-start="60.244" data-end="60.647" tabindex="0" role="button" aria-label="ترجمة الكلمة Freundin">Freundin</span> <span class="word" data-start="60.647" data-end="61.051" tabindex="0" role="button" aria-label="ترجمة الكلمة Sara">Sara</span> <span class="word" data-start="61.051" data-end="61.253" tabindex="0" role="button" aria-label="ترجمة الكلمة wohnt">wohnt</span> <span class="word" data-start="61.253" data-end="61.455" tabindex="0" role="button" aria-label="ترجمة الكلمة auch">auch</span> <span class="word" data-start="61.455" data-end="61.656" tabindex="0" role="button" aria-label="ترجمة الكلمة in">in</span> <span class="word" data-start="61.656" data-end="61.858" tabindex="0" role="button" aria-label="ترجمة الكلمة der">der</span> <span class="word" data-start="61.858" data-end="62.06" tabindex="0" role="button" aria-label="ترجمة الكلمة Stadt.">Stadt.</span></p>
+<p class="sentence" data-sentence="16" data-start="63.06" data-end="65.72"><span class="word" data-start="63.06" data-end="63.265" tabindex="0" role="button" aria-label="ترجمة الكلمة Wir">Wir</span> <span class="word" data-start="63.265" data-end="63.674" tabindex="0" role="button" aria-label="ترجمة الكلمة treffen">treffen</span> <span class="word" data-start="63.674" data-end="63.878" tabindex="0" role="button" aria-label="ترجمة الكلمة uns">uns</span> <span class="word" data-start="63.878" data-end="64.083" tabindex="0" role="button" aria-label="ترجمة الكلمة oft">oft</span> <span class="word" data-start="64.083" data-end="64.288" tabindex="0" role="button" aria-label="ترجمة الكلمة am">am</span> <span class="word" data-start="64.288" data-end="64.902" tabindex="0" role="button" aria-label="ترجمة الكلمة Nachmittag">Nachmittag</span> <span class="word" data-start="64.902" data-end="65.106" tabindex="0" role="button" aria-label="ترجمة الكلمة in">in</span> <span class="word" data-start="65.106" data-end="65.515" tabindex="0" role="button" aria-label="ترجمة الكلمة einem">einem</span> <span class="word" data-start="65.515" data-end="65.72" tabindex="0" role="button" aria-label="ترجمة الكلمة Café.">Café.</span></p>
+<p class="sentence" data-sentence="17" data-start="67.22" data-end="69.54"><span class="word" data-start="67.22" data-end="67.431" tabindex="0" role="button" aria-label="ترجمة الكلمة Wenn">Wenn</span> <span class="word" data-start="67.431" data-end="67.642" tabindex="0" role="button" aria-label="ترجمة الكلمة das">das</span> <span class="word" data-start="67.642" data-end="68.064" tabindex="0" role="button" aria-label="ترجمة الكلمة Wetter">Wetter</span> <span class="word" data-start="68.064" data-end="68.275" tabindex="0" role="button" aria-label="ترجمة الكلمة schön">schön</span> <span class="word" data-start="68.275" data-end="68.485" tabindex="0" role="button" aria-label="ترجمة الكلمة ist,">ist,</span> <span class="word" data-start="68.485" data-end="68.907" tabindex="0" role="button" aria-label="ترجمة الكلمة sitzen">sitzen</span> <span class="word" data-start="68.907" data-end="69.118" tabindex="0" role="button" aria-label="ترجمة الكلمة wir">wir</span> <span class="word" data-start="69.118" data-end="69.54" tabindex="0" role="button" aria-label="ترجمة الكلمة draußen.">draußen.</span></p>
+<p class="sentence" data-sentence="18" data-start="70.58" data-end="74.24"><span class="word" data-start="70.58" data-end="70.754" tabindex="0" role="button" aria-label="ترجمة الكلمة Bei">Bei</span> <span class="word" data-start="70.754" data-end="71.103" tabindex="0" role="button" aria-label="ترجمة الكلمة Regen">Regen</span> <span class="word" data-start="71.103" data-end="71.451" tabindex="0" role="button" aria-label="ترجمة الكلمة oder">oder</span> <span class="word" data-start="71.451" data-end="71.626" tabindex="0" role="button" aria-label="ترجمة الكلمة Wind">Wind</span> <span class="word" data-start="71.626" data-end="71.974" tabindex="0" role="button" aria-label="ترجمة الكلمة bleiben">bleiben</span> <span class="word" data-start="71.974" data-end="72.149" tabindex="0" role="button" aria-label="ترجمة الكلمة wir">wir</span> <span class="word" data-start="72.149" data-end="72.497" tabindex="0" role="button" aria-label="ترجمة الكلمة lieber">lieber</span> <span class="word" data-start="72.497" data-end="72.846" tabindex="0" role="button" aria-label="ترجمة الكلمة drinnen">drinnen</span> <span class="word" data-start="72.846" data-end="73.02" tabindex="0" role="button" aria-label="ترجمة الكلمة und">und</span> <span class="word" data-start="73.02" data-end="73.369" tabindex="0" role="button" aria-label="ترجمة الكلمة trinken">trinken</span> <span class="word" data-start="73.369" data-end="73.543" tabindex="0" role="button" aria-label="ترجمة الكلمة Tee">Tee</span> <span class="word" data-start="73.543" data-end="73.891" tabindex="0" role="button" aria-label="ترجمة الكلمة oder">oder</span> <span class="word" data-start="73.891" data-end="74.24" tabindex="0" role="button" aria-label="ترجمة الكلمة Kaffee.">Kaffee.</span></p>
+</section>
+<section class="chapter"><h2>Pläne für das Wochenende</h2>
+<p class="sentence" data-sentence="19" data-start="75.3" data-end="84.58"><span class="word" data-start="75.3" data-end="75.489" tabindex="0" role="button" aria-label="ترجمة الكلمة Am">Am</span> <span class="word" data-start="75.489" data-end="76.058" tabindex="0" role="button" aria-label="ترجمة الكلمة Nachmittag">Nachmittag</span> <span class="word" data-start="76.058" data-end="76.436" tabindex="0" role="button" aria-label="ترجمة الكلمة sitze">sitze</span> <span class="word" data-start="76.436" data-end="76.626" tabindex="0" role="button" aria-label="ترجمة الكلمة ich">ich</span> <span class="word" data-start="76.626" data-end="76.815" tabindex="0" role="button" aria-label="ترجمة الكلمة oft">oft</span> <span class="word" data-start="76.815" data-end="77.383" tabindex="0" role="button" aria-label="ترجمة الكلمة gemeinsam">gemeinsam</span> <span class="word" data-start="77.383" data-end="77.573" tabindex="0" role="button" aria-label="ترجمة الكلمة mit">mit</span> <span class="word" data-start="77.573" data-end="77.951" tabindex="0" role="button" aria-label="ترجمة الكلمة meinen">meinen</span> <span class="word" data-start="77.951" data-end="78.33" tabindex="0" role="button" aria-label="ترجمة الكلمة Freunden">Freunden</span> <span class="word" data-start="78.33" data-end="78.52" tabindex="0" role="button" aria-label="ترجمة الكلمة in">in</span> <span class="word" data-start="78.52" data-end="78.898" tabindex="0" role="button" aria-label="ترجمة الكلمة einem">einem</span> <span class="word" data-start="78.898" data-end="79.088" tabindex="0" role="button" aria-label="ترجمة الكلمة Café">Café</span> <span class="word" data-start="79.088" data-end="79.277" tabindex="0" role="button" aria-label="ترجمة الكلمة und">und</span> <span class="word" data-start="79.277" data-end="79.656" tabindex="0" role="button" aria-label="ترجمة الكلمة spreche">spreche</span> <span class="word" data-start="79.656" data-end="79.845" tabindex="0" role="button" aria-label="ترجمة الكلمة dort">dort</span> <span class="word" data-start="79.845" data-end="80.224" tabindex="0" role="button" aria-label="ترجمة الكلمة über">über</span> <span class="word" data-start="80.224" data-end="80.413" tabindex="0" role="button" aria-label="ترجمة الكلمة das">das</span> <span class="word" data-start="80.413" data-end="80.792" tabindex="0" role="button" aria-label="ترجمة الكلمة Wetter,">Wetter,</span> <span class="word" data-start="80.792" data-end="80.982" tabindex="0" role="button" aria-label="ترجمة الكلمة die">die</span> <span class="word" data-start="80.982" data-end="81.929" tabindex="0" role="button" aria-label="ترجمة الكلمة Temperaturen">Temperaturen</span> <span class="word" data-start="81.929" data-end="82.118" tabindex="0" role="button" aria-label="ترجمة الكلمة und">und</span> <span class="word" data-start="82.118" data-end="82.686" tabindex="0" role="button" aria-label="ترجمة الكلمة unsere">unsere</span> <span class="word" data-start="82.686" data-end="83.065" tabindex="0" role="button" aria-label="ترجمة الكلمة nächsten">nächsten</span> <span class="word" data-start="83.065" data-end="83.444" tabindex="0" role="button" aria-label="ترجمة الكلمة Pläne">Pläne</span> <span class="word" data-start="83.444" data-end="83.633" tabindex="0" role="button" aria-label="ترجمة الكلمة für">für</span> <span class="word" data-start="83.633" data-end="83.822" tabindex="0" role="button" aria-label="ترجمة الكلمة das">das</span> <span class="word" data-start="83.822" data-end="84.58" tabindex="0" role="button" aria-label="ترجمة الكلمة Wochenende.">Wochenende.</span></p>
+</section>
+<section class="chapter"><h2>Meine Familie und meine Arbeit</h2>
+<p class="sentence" data-sentence="20" data-start="85.6" data-end="87.86"><span class="word" data-start="85.6" data-end="86.011" tabindex="0" role="button" aria-label="ترجمة الكلمة Meine">Meine</span> <span class="word" data-start="86.011" data-end="86.627" tabindex="0" role="button" aria-label="ترجمة الكلمة Familie">Familie</span> <span class="word" data-start="86.627" data-end="86.833" tabindex="0" role="button" aria-label="ترجمة الكلمة wohnt">wohnt</span> <span class="word" data-start="86.833" data-end="87.038" tabindex="0" role="button" aria-label="ترجمة الكلمة nicht">nicht</span> <span class="word" data-start="87.038" data-end="87.244" tabindex="0" role="button" aria-label="ترجمة الكلمة weit">weit</span> <span class="word" data-start="87.244" data-end="87.449" tabindex="0" role="button" aria-label="ترجمة الكلمة vom">vom</span> <span class="word" data-start="87.449" data-end="87.86" tabindex="0" role="button" aria-label="ترجمة الكلمة Zentrum.">Zentrum.</span></p>
+<p class="sentence" data-sentence="21" data-start="88.94" data-end="91.76"><span class="word" data-start="88.94" data-end="89.128" tabindex="0" role="button" aria-label="ترجمة الكلمة Mein">Mein</span> <span class="word" data-start="89.128" data-end="89.504" tabindex="0" role="button" aria-label="ترجمة الكلمة Vater">Vater</span> <span class="word" data-start="89.504" data-end="90.068" tabindex="0" role="button" aria-label="ترجمة الكلمة arbeitet">arbeitet</span> <span class="word" data-start="90.068" data-end="90.256" tabindex="0" role="button" aria-label="ترجمة الكلمة in">in</span> <span class="word" data-start="90.256" data-end="90.632" tabindex="0" role="button" aria-label="ترجمة الكلمة einem">einem</span> <span class="word" data-start="90.632" data-end="91.008" tabindex="0" role="button" aria-label="ترجمة الكلمة Büro">Büro</span> <span class="word" data-start="91.008" data-end="91.196" tabindex="0" role="button" aria-label="ترجمة الكلمة und">und</span> <span class="word" data-start="91.196" data-end="91.384" tabindex="0" role="button" aria-label="ترجمة الكلمة schreibt">schreibt</span> <span class="word" data-start="91.384" data-end="91.76" tabindex="0" role="button" aria-label="ترجمة الكلمة E-Mails.">E-Mails.</span></p>
+<p class="sentence" data-sentence="22" data-start="92.74" data-end="94.66"><span class="word" data-start="92.74" data-end="93.035" tabindex="0" role="button" aria-label="ترجمة الكلمة Meine">Meine</span> <span class="word" data-start="93.035" data-end="93.331" tabindex="0" role="button" aria-label="ترجمة الكلمة Mutter">Mutter</span> <span class="word" data-start="93.331" data-end="93.774" tabindex="0" role="button" aria-label="ترجمة الكلمة arbeitet">arbeitet</span> <span class="word" data-start="93.774" data-end="93.922" tabindex="0" role="button" aria-label="ترجمة الكلمة in">in</span> <span class="word" data-start="93.922" data-end="94.217" tabindex="0" role="button" aria-label="ترجمة الكلمة einer">einer</span> <span class="word" data-start="94.217" data-end="94.66" tabindex="0" role="button" aria-label="ترجمة الكلمة Bäckerei.">Bäckerei.</span></p>
+<p class="sentence" data-sentence="23" data-start="95.72" data-end="98.08"><span class="word" data-start="95.72" data-end="95.956" tabindex="0" role="button" aria-label="ترجمة الكلمة Sie">Sie</span> <span class="word" data-start="95.956" data-end="96.192" tabindex="0" role="button" aria-label="ترجمة الكلمة steht">steht</span> <span class="word" data-start="96.192" data-end="96.428" tabindex="0" role="button" aria-label="ترجمة الكلمة früh">früh</span> <span class="word" data-start="96.428" data-end="96.664" tabindex="0" role="button" aria-label="ترجمة الكلمة auf">auf</span> <span class="word" data-start="96.664" data-end="96.9" tabindex="0" role="button" aria-label="ترجمة الكلمة und">und</span> <span class="word" data-start="96.9" data-end="97.136" tabindex="0" role="button" aria-label="ترجمة الكلمة backt">backt</span> <span class="word" data-start="97.136" data-end="97.372" tabindex="0" role="button" aria-label="ترجمة الكلمة Brot">Brot</span> <span class="word" data-start="97.372" data-end="97.608" tabindex="0" role="button" aria-label="ترجمة الكلمة und">und</span> <span class="word" data-start="97.608" data-end="98.08" tabindex="0" role="button" aria-label="ترجمة الكلمة Kuchen.">Kuchen.</span></p>
+<p class="sentence" data-sentence="24" data-start="99.62" data-end="101.2"><span class="word" data-start="99.62" data-end="99.796" tabindex="0" role="button" aria-label="ترجمة الكلمة Mein">Mein</span> <span class="word" data-start="99.796" data-end="100.147" tabindex="0" role="button" aria-label="ترجمة الكلمة Bruder">Bruder</span> <span class="word" data-start="100.147" data-end="100.498" tabindex="0" role="button" aria-label="ترجمة الكلمة besucht">besucht</span> <span class="word" data-start="100.498" data-end="100.849" tabindex="0" role="button" aria-label="ترجمة الكلمة eine">eine</span> <span class="word" data-start="100.849" data-end="101.2" tabindex="0" role="button" aria-label="ترجمة الكلمة Schule.">Schule.</span></p>
+<p class="sentence" data-sentence="25" data-start="102.24" data-end="105.86"><span class="word" data-start="102.24" data-end="102.431" tabindex="0" role="button" aria-label="ترجمة الكلمة Ich">Ich</span> <span class="word" data-start="102.431" data-end="103.002" tabindex="0" role="button" aria-label="ترجمة الكلمة arbeite">arbeite</span> <span class="word" data-start="103.002" data-end="103.193" tabindex="0" role="button" aria-label="ترجمة الكلمة als">als</span> <span class="word" data-start="103.193" data-end="103.764" tabindex="0" role="button" aria-label="ترجمة الكلمة Kurierin">Kurierin</span> <span class="word" data-start="103.764" data-end="103.955" tabindex="0" role="button" aria-label="ترجمة الكلمة und">und</span> <span class="word" data-start="103.955" data-end="104.336" tabindex="0" role="button" aria-label="ترجمة الكلمة fahre">fahre</span> <span class="word" data-start="104.336" data-end="104.526" tabindex="0" role="button" aria-label="ترجمة الكلمة oft">oft</span> <span class="word" data-start="104.526" data-end="104.717" tabindex="0" role="button" aria-label="ترجمة الكلمة mit">mit</span> <span class="word" data-start="104.717" data-end="104.907" tabindex="0" role="button" aria-label="ترجمة الكلمة dem">dem</span> <span class="word" data-start="104.907" data-end="105.288" tabindex="0" role="button" aria-label="ترجمة الكلمة Fahrrad">Fahrrad</span> <span class="word" data-start="105.288" data-end="105.479" tabindex="0" role="button" aria-label="ترجمة الكلمة durch">durch</span> <span class="word" data-start="105.479" data-end="105.669" tabindex="0" role="button" aria-label="ترجمة الكلمة die">die</span> <span class="word" data-start="105.669" data-end="105.86" tabindex="0" role="button" aria-label="ترجمة الكلمة Stadt.">Stadt.</span></p>
+<p class="sentence" data-sentence="26" data-start="106.84" data-end="108.54"><span class="word" data-start="106.84" data-end="107.01" tabindex="0" role="button" aria-label="ترجمة الكلمة Ich">Ich</span> <span class="word" data-start="107.01" data-end="107.52" tabindex="0" role="button" aria-label="ترجمة الكلمة liefere">liefere</span> <span class="word" data-start="107.52" data-end="108.03" tabindex="0" role="button" aria-label="ترجمة الكلمة Pakete">Pakete</span> <span class="word" data-start="108.03" data-end="108.2" tabindex="0" role="button" aria-label="ترجمة الكلمة und">und</span> <span class="word" data-start="108.2" data-end="108.54" tabindex="0" role="button" aria-label="ترجمة الكلمة Briefe.">Briefe.</span></p>
+<p class="sentence" data-sentence="27" data-start="109.58" data-end="113.06"><span class="word" data-start="109.58" data-end="109.797" tabindex="0" role="button" aria-label="ترجمة الكلمة Mein">Mein</span> <span class="word" data-start="109.797" data-end="110.45" tabindex="0" role="button" aria-label="ترجمة الكلمة Arbeitstag">Arbeitstag</span> <span class="word" data-start="110.45" data-end="110.885" tabindex="0" role="button" aria-label="ترجمة الكلمة beginnt">beginnt</span> <span class="word" data-start="110.885" data-end="111.103" tabindex="0" role="button" aria-label="ترجمة الكلمة um">um</span> <span class="word" data-start="111.103" data-end="111.32" tabindex="0" role="button" aria-label="ترجمة الكلمة acht">acht</span> <span class="word" data-start="111.32" data-end="111.538" tabindex="0" role="button" aria-label="ترجمة الكلمة Uhr">Uhr</span> <span class="word" data-start="111.538" data-end="111.755" tabindex="0" role="button" aria-label="ترجمة الكلمة und">und</span> <span class="word" data-start="111.755" data-end="112.19" tabindex="0" role="button" aria-label="ترجمة الكلمة endet">endet</span> <span class="word" data-start="112.19" data-end="112.408" tabindex="0" role="button" aria-label="ترجمة الكلمة um">um</span> <span class="word" data-start="112.408" data-end="112.843" tabindex="0" role="button" aria-label="ترجمة الكلمة siebzehn">siebzehn</span> <span class="word" data-start="112.843" data-end="113.06" tabindex="0" role="button" aria-label="ترجمة الكلمة Uhr.">Uhr.</span></p>
+<p class="sentence" data-sentence="28" data-start="114.08" data-end="117.7"><span class="word" data-start="114.08" data-end="114.506" tabindex="0" role="button" aria-label="ترجمة الكلمة Manchmal">Manchmal</span> <span class="word" data-start="114.506" data-end="114.719" tabindex="0" role="button" aria-label="ترجمة الكلمة ist">ist</span> <span class="word" data-start="114.719" data-end="114.932" tabindex="0" role="button" aria-label="ترجمة الكلمة die">die</span> <span class="word" data-start="114.932" data-end="115.358" tabindex="0" role="button" aria-label="ترجمة الكلمة Arbeit">Arbeit</span> <span class="word" data-start="115.358" data-end="115.996" tabindex="0" role="button" aria-label="ترجمة الكلمة anstrengend,">anstrengend,</span> <span class="word" data-start="115.996" data-end="116.635" tabindex="0" role="button" aria-label="ترجمة الكلمة besonders">besonders</span> <span class="word" data-start="116.635" data-end="116.848" tabindex="0" role="button" aria-label="ترجمة الكلمة bei">bei</span> <span class="word" data-start="116.848" data-end="117.274" tabindex="0" role="button" aria-label="ترجمة الكلمة schlechtem">schlechtem</span> <span class="word" data-start="117.274" data-end="117.7" tabindex="0" role="button" aria-label="ترجمة الكلمة Wetter.">Wetter.</span></p>
+<p class="sentence" data-sentence="29" data-start="118.74" data-end="121.38"><span class="word" data-start="118.74" data-end="118.943" tabindex="0" role="button" aria-label="ترجمة الكلمة Bei">Bei</span> <span class="word" data-start="118.943" data-end="119.349" tabindex="0" role="button" aria-label="ترجمة الكلمة Sonne,">Sonne,</span> <span class="word" data-start="119.349" data-end="119.755" tabindex="0" role="button" aria-label="ترجمة الكلمة Regen">Regen</span> <span class="word" data-start="119.755" data-end="120.162" tabindex="0" role="button" aria-label="ترجمة الكلمة oder">oder</span> <span class="word" data-start="120.162" data-end="120.365" tabindex="0" role="button" aria-label="ترجمة الكلمة Schnee">Schnee</span> <span class="word" data-start="120.365" data-end="120.568" tabindex="0" role="button" aria-label="ترجمة الكلمة bin">bin</span> <span class="word" data-start="120.568" data-end="120.771" tabindex="0" role="button" aria-label="ترجمة الكلمة ich">ich</span> <span class="word" data-start="120.771" data-end="121.38" tabindex="0" role="button" aria-label="ترجمة الكلمة unterwegs.">unterwegs.</span></p>
+<p class="sentence" data-sentence="30" data-start="122.32" data-end="126.5"><span class="word" data-start="122.32" data-end="122.7" tabindex="0" role="button" aria-label="ترجمة الكلمة Trotzdem">Trotzdem</span> <span class="word" data-start="122.7" data-end="122.89" tabindex="0" role="button" aria-label="ترجمة الكلمة mag">mag</span> <span class="word" data-start="122.89" data-end="123.08" tabindex="0" role="button" aria-label="ترجمة الكلمة ich">ich</span> <span class="word" data-start="123.08" data-end="123.46" tabindex="0" role="button" aria-label="ترجمة الكلمة meinen">meinen</span> <span class="word" data-start="123.46" data-end="123.65" tabindex="0" role="button" aria-label="ترجمة الكلمة Job,">Job,</span> <span class="word" data-start="123.65" data-end="123.84" tabindex="0" role="button" aria-label="ترجمة الكلمة weil">weil</span> <span class="word" data-start="123.84" data-end="124.03" tabindex="0" role="button" aria-label="ترجمة الكلمة ich">ich</span> <span class="word" data-start="124.03" data-end="124.41" tabindex="0" role="button" aria-label="ترجمة الكلمة draußen">draußen</span> <span class="word" data-start="124.41" data-end="124.6" tabindex="0" role="button" aria-label="ترجمة الكلمة bin">bin</span> <span class="word" data-start="124.6" data-end="124.79" tabindex="0" role="button" aria-label="ترجمة الكلمة und">und</span> <span class="word" data-start="124.79" data-end="125.74" tabindex="0" role="button" aria-label="ترجمة الكلمة interessante">interessante</span> <span class="word" data-start="125.74" data-end="126.12" tabindex="0" role="button" aria-label="ترجمة الكلمة Leute">Leute</span> <span class="word" data-start="126.12" data-end="126.5" tabindex="0" role="button" aria-label="ترجمة الكلمة treffe.">treffe.</span></p>
+</section>
+<section class="chapter"><h2>Frühling und Sommer</h2>
+<p class="sentence" data-sentence="31" data-start="127.54" data-end="129.3"><span class="word" data-start="127.54" data-end="127.736" tabindex="0" role="button" aria-label="ترجمة الكلمة Im">Im</span> <span class="word" data-start="127.736" data-end="128.127" tabindex="0" role="button" aria-label="ترجمة الكلمة Frühling">Frühling</span> <span class="word" data-start="128.127" data-end="128.322" tabindex="0" role="button" aria-label="ترجمة الكلمة ist">ist</span> <span class="word" data-start="128.322" data-end="128.518" tabindex="0" role="button" aria-label="ترجمة الكلمة das">das</span> <span class="word" data-start="128.518" data-end="128.909" tabindex="0" role="button" aria-label="ترجمة الكلمة Wetter">Wetter</span> <span class="word" data-start="128.909" data-end="129.104" tabindex="0" role="button" aria-label="ترجمة الكلمة oft">oft</span> <span class="word" data-start="129.104" data-end="129.3" tabindex="0" role="button" aria-label="ترجمة الكلمة schön.">schön.</span></p>
+<p class="sentence" data-sentence="32" data-start="130.82" data-end="134.1"><span class="word" data-start="130.82" data-end="131.013" tabindex="0" role="button" aria-label="ترجمة الكلمة Die">Die</span> <span class="word" data-start="131.013" data-end="131.399" tabindex="0" role="button" aria-label="ترجمة الكلمة Sonne">Sonne</span> <span class="word" data-start="131.399" data-end="131.592" tabindex="0" role="button" aria-label="ترجمة الكلمة scheint,">scheint,</span> <span class="word" data-start="131.592" data-end="131.785" tabindex="0" role="button" aria-label="ترجمة الكلمة die">die</span> <span class="word" data-start="131.785" data-end="132.171" tabindex="0" role="button" aria-label="ترجمة الكلمة Tage">Tage</span> <span class="word" data-start="132.171" data-end="132.556" tabindex="0" role="button" aria-label="ترجمة الكلمة werden">werden</span> <span class="word" data-start="132.556" data-end="132.942" tabindex="0" role="button" aria-label="ترجمة الكلمة länger">länger</span> <span class="word" data-start="132.942" data-end="133.135" tabindex="0" role="button" aria-label="ترجمة الكلمة und">und</span> <span class="word" data-start="133.135" data-end="133.328" tabindex="0" role="button" aria-label="ترجمة الكلمة die">die</span> <span class="word" data-start="133.328" data-end="133.714" tabindex="0" role="button" aria-label="ترجمة الكلمة Blumen">Blumen</span> <span class="word" data-start="133.714" data-end="134.1" tabindex="0" role="button" aria-label="ترجمة الكلمة wachsen.">wachsen.</span></p>
+<p class="sentence" data-sentence="33" data-start="135.12" data-end="138.94"><span class="word" data-start="135.12" data-end="135.332" tabindex="0" role="button" aria-label="ترجمة الكلمة Im">Im</span> <span class="word" data-start="135.332" data-end="135.544" tabindex="0" role="button" aria-label="ترجمة الكلمة März">März</span> <span class="word" data-start="135.544" data-end="135.757" tabindex="0" role="button" aria-label="ترجمة الكلمة kann">kann</span> <span class="word" data-start="135.757" data-end="135.969" tabindex="0" role="button" aria-label="ترجمة الكلمة es">es</span> <span class="word" data-start="135.969" data-end="136.181" tabindex="0" role="button" aria-label="ترجمة الكلمة noch">noch</span> <span class="word" data-start="136.181" data-end="136.393" tabindex="0" role="button" aria-label="ترجمة الكلمة kühl">kühl</span> <span class="word" data-start="136.393" data-end="136.606" tabindex="0" role="button" aria-label="ترجمة الكلمة sein,">sein,</span> <span class="word" data-start="136.606" data-end="137.03" tabindex="0" role="button" aria-label="ترجمة الكلمة aber">aber</span> <span class="word" data-start="137.03" data-end="137.242" tabindex="0" role="button" aria-label="ترجمة الكلمة im">im</span> <span class="word" data-start="137.242" data-end="137.454" tabindex="0" role="button" aria-label="ترجمة الكلمة Mai">Mai</span> <span class="word" data-start="137.454" data-end="137.667" tabindex="0" role="button" aria-label="ترجمة الكلمة ist">ist</span> <span class="word" data-start="137.667" data-end="137.879" tabindex="0" role="button" aria-label="ترجمة الكلمة es">es</span> <span class="word" data-start="137.879" data-end="138.303" tabindex="0" role="button" aria-label="ترجمة الكلمة meistens">meistens</span> <span class="word" data-start="138.303" data-end="138.94" tabindex="0" role="button" aria-label="ترجمة الكلمة angenehm.">angenehm.</span></p>
+<p class="sentence" data-sentence="34" data-start="139.98" data-end="143.7"><span class="word" data-start="139.98" data-end="140.166" tabindex="0" role="button" aria-label="ترجمة الكلمة Ich">Ich</span> <span class="word" data-start="140.166" data-end="140.538" tabindex="0" role="button" aria-label="ترجمة الكلمة gehe">gehe</span> <span class="word" data-start="140.538" data-end="140.724" tabindex="0" role="button" aria-label="ترجمة الكلمة dann">dann</span> <span class="word" data-start="140.724" data-end="140.91" tabindex="0" role="button" aria-label="ترجمة الكلمة gern">gern</span> <span class="word" data-start="140.91" data-end="141.096" tabindex="0" role="button" aria-label="ترجمة الكلمة in">in</span> <span class="word" data-start="141.096" data-end="141.282" tabindex="0" role="button" aria-label="ترجمة الكلمة den">den</span> <span class="word" data-start="141.282" data-end="141.468" tabindex="0" role="button" aria-label="ترجمة الكلمة Park">Park</span> <span class="word" data-start="141.468" data-end="141.84" tabindex="0" role="button" aria-label="ترجمة الكلمة oder">oder</span> <span class="word" data-start="141.84" data-end="142.212" tabindex="0" role="button" aria-label="ترجمة الكلمة fahre">fahre</span> <span class="word" data-start="142.212" data-end="142.398" tabindex="0" role="button" aria-label="ترجمة الكلمة mit">mit</span> <span class="word" data-start="142.398" data-end="142.584" tabindex="0" role="button" aria-label="ترجمة الكلمة dem">dem</span> <span class="word" data-start="142.584" data-end="142.956" tabindex="0" role="button" aria-label="ترجمة الكلمة Fahrrad">Fahrrad</span> <span class="word" data-start="142.956" data-end="143.142" tabindex="0" role="button" aria-label="ترجمة الكلمة am">am</span> <span class="word" data-start="143.142" data-end="143.328" tabindex="0" role="button" aria-label="ترجمة الكلمة Fluss">Fluss</span> <span class="word" data-start="143.328" data-end="143.7" tabindex="0" role="button" aria-label="ترجمة الكلمة entlang.">entlang.</span></p>
+<p class="sentence" data-sentence="35" data-start="144.76" data-end="147.4"><span class="word" data-start="144.76" data-end="144.949" tabindex="0" role="button" aria-label="ترجمة الكلمة Wenn">Wenn</span> <span class="word" data-start="144.949" data-end="145.137" tabindex="0" role="button" aria-label="ترجمة الكلمة die">die</span> <span class="word" data-start="145.137" data-end="145.514" tabindex="0" role="button" aria-label="ترجمة الكلمة Sonne">Sonne</span> <span class="word" data-start="145.514" data-end="145.703" tabindex="0" role="button" aria-label="ترجمة الكلمة scheint,">scheint,</span> <span class="word" data-start="145.703" data-end="146.08" tabindex="0" role="button" aria-label="ترجمة الكلمة trage">trage</span> <span class="word" data-start="146.08" data-end="146.269" tabindex="0" role="button" aria-label="ترجمة الكلمة ich">ich</span> <span class="word" data-start="146.269" data-end="146.646" tabindex="0" role="button" aria-label="ترجمة الكلمة eine">eine</span> <span class="word" data-start="146.646" data-end="147.023" tabindex="0" role="button" aria-label="ترجمة الكلمة leichte">leichte</span> <span class="word" data-start="147.023" data-end="147.4" tabindex="0" role="button" aria-label="ترجمة الكلمة Jacke.">Jacke.</span></p>
+<p class="sentence" data-sentence="36" data-start="148.44" data-end="150.84"><span class="word" data-start="148.44" data-end="148.64" tabindex="0" role="button" aria-label="ترجمة الكلمة Wenn">Wenn</span> <span class="word" data-start="148.64" data-end="148.84" tabindex="0" role="button" aria-label="ترجمة الكلمة es">es</span> <span class="word" data-start="148.84" data-end="149.24" tabindex="0" role="button" aria-label="ترجمة الكلمة windig">windig</span> <span class="word" data-start="149.24" data-end="149.44" tabindex="0" role="button" aria-label="ترجمة الكلمة ist,">ist,</span> <span class="word" data-start="149.44" data-end="149.84" tabindex="0" role="button" aria-label="ترجمة الكلمة nehme">nehme</span> <span class="word" data-start="149.84" data-end="150.04" tabindex="0" role="button" aria-label="ترجمة الكلمة ich">ich</span> <span class="word" data-start="150.04" data-end="150.44" tabindex="0" role="button" aria-label="ترجمة الكلمة einen">einen</span> <span class="word" data-start="150.44" data-end="150.64" tabindex="0" role="button" aria-label="ترجمة الكلمة Schal">Schal</span> <span class="word" data-start="150.64" data-end="150.84" tabindex="0" role="button" aria-label="ترجمة الكلمة mit.">mit.</span></p>
+<p class="sentence" data-sentence="37" data-start="151.84" data-end="155.88"><span class="word" data-start="151.84" data-end="152.064" tabindex="0" role="button" aria-label="ترجمة الكلمة Ich">Ich</span> <span class="word" data-start="152.064" data-end="152.289" tabindex="0" role="button" aria-label="ترجمة الكلمة mag">mag</span> <span class="word" data-start="152.289" data-end="152.513" tabindex="0" role="button" aria-label="ترجمة الكلمة den">den</span> <span class="word" data-start="152.513" data-end="152.962" tabindex="0" role="button" aria-label="ترجمة الكلمة Frühling,">Frühling,</span> <span class="word" data-start="152.962" data-end="153.187" tabindex="0" role="button" aria-label="ترجمة الكلمة weil">weil</span> <span class="word" data-start="153.187" data-end="153.636" tabindex="0" role="button" aria-label="ترجمة الكلمة alles">alles</span> <span class="word" data-start="153.636" data-end="153.86" tabindex="0" role="button" aria-label="ترجمة الكلمة grün">grün</span> <span class="word" data-start="153.86" data-end="154.084" tabindex="0" role="button" aria-label="ترجمة الكلمة wird">wird</span> <span class="word" data-start="154.084" data-end="154.309" tabindex="0" role="button" aria-label="ترجمة الكلمة und">und</span> <span class="word" data-start="154.309" data-end="154.533" tabindex="0" role="button" aria-label="ترجمة الكلمة die">die</span> <span class="word" data-start="154.533" data-end="154.758" tabindex="0" role="button" aria-label="ترجمة الكلمة Stadt">Stadt</span> <span class="word" data-start="154.758" data-end="155.431" tabindex="0" role="button" aria-label="ترجمة الكلمة freundlicher">freundlicher</span> <span class="word" data-start="155.431" data-end="155.88" tabindex="0" role="button" aria-label="ترجمة الكلمة aussieht.">aussieht.</span></p>
+<p class="sentence" data-sentence="38" data-start="156.84" data-end="158.74"><span class="word" data-start="156.84" data-end="157.03" tabindex="0" role="button" aria-label="ترجمة الكلمة Im">Im</span> <span class="word" data-start="157.03" data-end="157.41" tabindex="0" role="button" aria-label="ترجمة الكلمة Sommer">Sommer</span> <span class="word" data-start="157.41" data-end="157.6" tabindex="0" role="button" aria-label="ترجمة الكلمة ist">ist</span> <span class="word" data-start="157.6" data-end="157.79" tabindex="0" role="button" aria-label="ترجمة الكلمة es">es</span> <span class="word" data-start="157.79" data-end="157.98" tabindex="0" role="button" aria-label="ترجمة الكلمة oft">oft</span> <span class="word" data-start="157.98" data-end="158.17" tabindex="0" role="button" aria-label="ترجمة الكلمة heiß">heiß</span> <span class="word" data-start="158.17" data-end="158.36" tabindex="0" role="button" aria-label="ترجمة الكلمة und">und</span> <span class="word" data-start="158.36" data-end="158.74" tabindex="0" role="button" aria-label="ترجمة الكلمة sonnig.">sonnig.</span></p>
+<p class="sentence" data-sentence="39" data-start="159.74" data-end="161.88"><span class="word" data-start="159.74" data-end="160.324" tabindex="0" role="button" aria-label="ترجمة الكلمة Besonders">Besonders</span> <span class="word" data-start="160.324" data-end="160.518" tabindex="0" role="button" aria-label="ترجمة الكلمة gern">gern</span> <span class="word" data-start="160.518" data-end="160.713" tabindex="0" role="button" aria-label="ترجمة الكلمة mag">mag</span> <span class="word" data-start="160.713" data-end="160.907" tabindex="0" role="button" aria-label="ترجمة الكلمة ich">ich</span> <span class="word" data-start="160.907" data-end="161.296" tabindex="0" role="button" aria-label="ترجمة الكلمة Juli">Juli</span> <span class="word" data-start="161.296" data-end="161.491" tabindex="0" role="button" aria-label="ترجمة الكلمة und">und</span> <span class="word" data-start="161.491" data-end="161.88" tabindex="0" role="button" aria-label="ترجمة الكلمة August.">August.</span></p>
+<p class="sentence" data-sentence="40" data-start="163.34" data-end="167.16"><span class="word" data-start="163.34" data-end="163.552" tabindex="0" role="button" aria-label="ترجمة الكلمة Die">Die</span> <span class="word" data-start="163.552" data-end="164.401" tabindex="0" role="button" aria-label="ترجمة الكلمة Temperatur">Temperatur</span> <span class="word" data-start="164.401" data-end="164.613" tabindex="0" role="button" aria-label="ترجمة الكلمة liegt">liegt</span> <span class="word" data-start="164.613" data-end="165.038" tabindex="0" role="button" aria-label="ترجمة الكلمة manchmal">manchmal</span> <span class="word" data-start="165.038" data-end="165.25" tabindex="0" role="button" aria-label="ترجمة الكلمة bei">bei</span> <span class="word" data-start="165.25" data-end="166.099" tabindex="0" role="button" aria-label="ترجمة الكلمة fünfundzwanzig">fünfundzwanzig</span> <span class="word" data-start="166.099" data-end="166.523" tabindex="0" role="button" aria-label="ترجمة الكلمة oder">oder</span> <span class="word" data-start="166.523" data-end="166.948" tabindex="0" role="button" aria-label="ترجمة الكلمة dreißig">dreißig</span> <span class="word" data-start="166.948" data-end="167.16" tabindex="0" role="button" aria-label="ترجمة الكلمة Grad.">Grad.</span></p>
+<p class="sentence" data-sentence="41" data-start="168.16" data-end="171.2"><span class="word" data-start="168.16" data-end="168.32" tabindex="0" role="button" aria-label="ترجمة الكلمة Am">Am</span> <span class="word" data-start="168.32" data-end="168.64" tabindex="0" role="button" aria-label="ترجمة الكلمة Abend">Abend</span> <span class="word" data-start="168.64" data-end="168.96" tabindex="0" role="button" aria-label="ترجمة الكلمة gehen">gehen</span> <span class="word" data-start="168.96" data-end="169.12" tabindex="0" role="button" aria-label="ترجمة الكلمة wir">wir</span> <span class="word" data-start="169.12" data-end="169.6" tabindex="0" role="button" aria-label="ترجمة الكلمة spazieren">spazieren</span> <span class="word" data-start="169.6" data-end="169.92" tabindex="0" role="button" aria-label="ترجمة الكلمة oder">oder</span> <span class="word" data-start="169.92" data-end="170.24" tabindex="0" role="button" aria-label="ترجمة الكلمة essen">essen</span> <span class="word" data-start="170.24" data-end="170.4" tabindex="0" role="button" aria-label="ترجمة الكلمة in">in</span> <span class="word" data-start="170.4" data-end="170.72" tabindex="0" role="button" aria-label="ترجمة الكلمة einem">einem</span> <span class="word" data-start="170.72" data-end="171.2" tabindex="0" role="button" aria-label="ترجمة الكلمة Restaurant.">Restaurant.</span></p>
+</section>
+  </main>
+<button type="button" id="translation-close" class="translation-close" aria-label="إغلاق الترجمة">×</button>
+    </div>
+  <footer>Die gelbe Markierung folgt dem gesprochenen Text. Du kannst auch direkt auf ein Wort klicken.</footer>
+</div>
+
+<script>
+(() => {
+  const audio = document.getElementById('audio');
+  const words = Array.from(document.querySelectorAll('.word'));
+  const sentences = Array.from(document.querySelectorAll('.sentence'));
+  const speedButtons = Array.from(document.querySelectorAll('[data-rate]'));
+  const translationBox = document.getElementById('translation');
+  const translationText = document.getElementById('translation-text');
+  const translationClose = document.getElementById('translation-close');
+  const translations = {"ich":"أنا","heiße":"أُدعى / اسمي","lina":"لينا","und":"و","lerne":"أتعلم","deutsch":"الألمانية","heute":"اليوم","möchte":"أودّ","über":"عن / حول","das":"الـ / هذا","wetter":"الطقس","meine":"خاصتي / ـي","stadt":"مدينة","arbeit":"العمل","mein":"خاصتي","wochenende":"عطلة نهاية الأسبوع","sprechen":"يتحدث","ist":"هو / يكون","ein":"أداة نكرة","wichtiges":"مهم","thema":"موضوع","denn":"لأن","es":"هو / يكون","verändert":"يتغير","sich":"نفسه","jeden":"كل","tag":"يوم","am":"في / عند","morgen":"الصباح","schaue":"أنظر","aus":"من / إلى الخارج","dem":"أداة تعريف في حالة الجر","fenster":"نافذة","frage":"أسأل","mich":"نفسي","wie":"كيف","sonnig":"مشمس","warm":"دافئ","kühl":"مائل إلى البرودة","oder":"أو","kalt":"بارد","gibt":"يوجد","wolken":"غيوم","regnet":"تمطر","schneit":"تتساقط الثلوج","wenn":"إذا / عندما","wettervorhersage":"توقعات الطقس","kenne":"أعرف","kann":"أستطيع","meinen":"خاصتي","besser":"بشكل أفضل","planen":"أخطط","dann":"حينها / ثم","weiß":"أعرف","welche":"أيّ / ما","kleidung":"ملابس","brauche":"أحتاج","ob":"ما إذا","mit":"مع","fahrrad":"دراجة","fahren":"يركب / يقود","wohne":"أسكن","in":"في","einer":"أداة نكرة للمؤنث","großen":"كبيرة","hier":"هنا","viele":"كثير من","menschen":"أشخاص","geschäfte":"متاجر","cafés":"مقاهٍ","restaurants":"مطاعم","büros":"مكاتب","einen":"أداة نكرة للمذكر","bahnhof":"محطة قطار","die":"الـ","straßen":"شوارع","sind":"يكونون / تكون","oft":"غالبًا","laut":"صاخب","voll":"مزدحم","im":"في الـ","zentrum":"وسط المدينة","busse":"حافلات","bahnen":"قطارات / وسائل نقل","gehen":"يذهبون / نمشي","zu":"إلى / على","fuß":"القدم","einem":"أداة نكرة في حالة الجر","park":"حديقة","meistens":"غالبًا","ruhig":"هادئ","dort":"هناك","man":"المرء / يمكن للمرء","spazieren":"يتمشى","frische":"منعش","luft":"هواء","genießen":"يستمتع","freundin":"صديقة","sara":"سارة","wohnt":"تسكن","auch":"أيضًا","wir":"نحن","treffen":"نلتقي","uns":"بعضنا / أنفسنا","nachmittag":"بعد الظهر","café":"مقهى","schön":"جميل","sitzen":"نجلس","draußen":"في الخارج","bei":"عند / في حالة","regen":"مطر","wind":"رياح","bleiben":"نبقى","lieber":"نفضّل","drinnen":"في الداخل","trinken":"نشرب","tee":"شاي","kaffee":"قهوة","gemeinsam":"معًا","freunden":"أصدقاء","temperaturen":"درجات الحرارة","unsere":"خاصتنا","nächsten":"القادمة","pläne":"خطط","für":"من أجل","familie":"العائلة","weit":"بعيد","vom":"من الـ","vater":"الأب","arbeitet":"يعمل","büro":"مكتب","schreibt":"يكتب","e-mails":"رسائل إلكترونية","mutter":"الأم","bäckerei":"مخبز","sie":"هي","steht":"تنهض / تقف","früh":"مبكرًا","auf":"إلى الأعلى","backt":"يخبز","brot":"خبز","kuchen":"كعك","bruder":"أخ","besucht":"يزور / يرتاد","schule":"مدرسة","arbeite":"أعمل","als":"بصفتي / كـ","kurierin":"مندوبة توصيل","fahre":"أقود / أركب","durch":"عبر","liefere":"أوصل","pakete":"طرود","briefe":"رسائل","arbeitstag":"يوم العمل","beginnt":"يبدأ","acht":"الثامنة / ثمانية","uhr":"الساعة","endet":"ينتهي","siebzehn":"السابعة عشرة","manchmal":"أحيانًا","anstrengend":"مُتعب","besonders":"خصوصًا","schlechtem":"سيئ","sonne":"الشمس","schnee":"ثلج","bin":"أكون","unterwegs":"في الطريق / متنقل","trotzdem":"مع ذلك","mag":"أحب","job":"وظيفة","weil":"لأن","interessante":"مثيرون للاهتمام","leute":"ناس","treffe":"ألتقي","frühling":"الربيع","scheint":"تشرق","tage":"أيام","werden":"تصبح","länger":"أطول","blumen":"زهور","wachsen":"تنمو","märz":"مارس","noch":"ما زال","sein":"يكون","mai":"مايو","angenehm":"معتدل / لطيف","gehe":"أذهب","gern":"بسرور / أحب","fluss":"نهر","entlang":"على طول","trage":"أرتدي","leichte":"خفيفة","jacke":"سترة","windig":"عاصف","nehme":"آخذ","schal":"وشاح","alles":"كل شيء","grün":"أخضر","wird":"يصبح","freundlicher":"أكثر لطفًا","aussieht":"يبدو","sommer":"الصيف","heiß":"حار","juli":"يوليو","august":"أغسطس","temperatur":"درجة الحرارة","liegt":"تكون / تقع","fünfundzwanzig":"خمسة وعشرون","dreißig":"ثلاثون","grad":"درجة","abend":"المساء","essen":"نأكل","restaurant":"مطعم","aber":"لكن","den":"الـ / أداة تعريف للمذكر","der":"الـ / أداة تعريف للمذكر","eine":"أداة نكرة للمؤنث","nicht":"لا / ليس","sitze":"أجلس","spreche":"أتحدث","um":"عند / في الساعة"};
+  let activeWord = null;
+  let activeSentence = null;
+
+  function showTranslation(word) {
+    const original = word.textContent.trim();
+    const key = original.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}-]+$/gu, '').toLocaleLowerCase('de');
+    const meaning = translations[key] || 'معنى الكلمة حسب السياق';
+    const german = document.createElement('span');
+    german.className = 'german-word';
+    german.dir = 'ltr';
+    german.textContent = original;
+    const arabic = document.createElement('span');
+    arabic.className = 'arabic-meaning';
+    arabic.textContent = meaning;
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: "podcast-word-translation",
+        german: original,
+        meaning: meaning
+      }, "*");
+      translationBox.hidden = true;
+      return;
+    }
+    translationText.replaceChildren(german, arabic);
+    translationBox.hidden = false;
+  }
+
+  translationClose.addEventListener('click', () => {
+    translationBox.hidden = true;
+  });
+
+  function setActiveWord(word) {
+    if (activeWord === word) return;
+    if (activeWord) activeWord.classList.remove('active');
+    activeWord = word;
+    if (activeWord) {
+      activeWord.classList.add('active');
+      const sentence = activeWord.closest('.sentence');
+      if (sentence !== activeSentence) {
+        if (activeSentence) activeSentence.classList.remove('sentence-active');
+        activeSentence = sentence;
+        if (activeSentence) {
+          activeSentence.classList.add('sentence-active');
+          activeSentence.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    }
+  }
+
+  function sync() {
+    const t = audio.currentTime;
+    let current = null;
+    // Binary search: the word intervals are in chronological order.
+    let lo = 0, hi = words.length - 1;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      const start = Number(words[mid].dataset.start);
+      const end = Number(words[mid].dataset.end);
+      if (t < start) hi = mid - 1;
+      else if (t >= end) lo = mid + 1;
+      else { current = words[mid]; break; }
+    }
+    setActiveWord(current);
+  }
+
+  audio.addEventListener('timeupdate', sync);
+  audio.addEventListener('seeked', sync);
+  audio.addEventListener('play', sync);
+  audio.addEventListener('ended', () => setActiveWord(null));
+
+  words.forEach(word => {
+    const showMeaning = () => {
+      // Pause the recording when a word is selected, then show its translation.
+      audio.pause();
+      showTranslation(word);
+    };
+    word.addEventListener('click', showMeaning);
+    word.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        showMeaning();
+      }
+    });
+  });
+
+  speedButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      audio.playbackRate = Number(button.dataset.rate);
+      speedButtons.forEach(b => b.classList.toggle('active', b === button));
+    });
+  });
+})();
+</script>
+</body>
+</html>

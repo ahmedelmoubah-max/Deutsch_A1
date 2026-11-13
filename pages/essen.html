@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Essen und Trinken – Vokabeln mit Aussprache</title>
+<style>
+  :root { color-scheme: light; --blue:#1674d1; --ink:#16304a; }
+  * { box-sizing: border-box; }
+  body {
+    margin:0; padding:20px 12px 32px;
+    background:linear-gradient(180deg,#eaf7ff,#fff8e7);
+    color:var(--ink); font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  }
+  main { max-width:900px; margin:0 auto; }
+  header { text-align:center; margin:0 auto 14px; }
+  h1 { margin:0 0 5px; font-size:clamp(1.35rem,4vw,2rem); }
+  header p { margin:0; color:#38556e; line-height:1.45; }
+  .controls {
+    display:flex; flex-wrap:wrap; justify-content:center; align-items:center;
+    gap:9px; margin:14px auto 16px;
+  }
+  .controls button {
+    border:1px solid #b9d7ef; border-radius:999px; padding:9px 14px;
+    background:#fff; color:#154c83; font:inherit; font-weight:650; cursor:pointer;
+  }
+  .controls button:hover { background:#eaf5ff; }
+  .rate-wrap {
+    display:flex; gap:8px; align-items:center; background:#fff;
+    border:1px solid #b9d7ef; border-radius:999px; padding:5px 12px;
+  }
+  .rate-wrap label { font-size:.9rem; font-weight:650; }
+  .rate-wrap input { width:100px; accent-color:var(--blue); }
+  .poster {
+    position:relative; width:100%; overflow:hidden; border-radius:15px;
+    background:#d9f1ff; box-shadow:0 12px 32px rgba(35,73,108,.18);
+    line-height:0;
+  }
+  .poster img { display:block; width:100%; height:auto; }
+  .hotspot {
+    position:absolute; display:block; padding:0; margin:0;
+    border:2px solid transparent; border-radius:12px;
+    background:transparent; cursor:pointer; color:transparent;
+    -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+  }
+  .hotspot:hover { border-color:rgba(22,116,209,.9); background:rgba(255,255,255,.12); }
+  .hotspot:focus-visible { outline:4px solid #073f8c; outline-offset:1px; border-color:#fff; }
+  .hotspot:active { background:rgba(22,116,209,.18); }
+  .status { min-height:1.6em; text-align:center; margin:12px 0 0; font-weight:700; color:#164f87; }
+  .note { text-align:center; color:#536b7f; font-size:.88rem; line-height:1.5; margin:7px auto 0; max-width:680px; }
+  @media (max-width:520px) {
+    body { padding:12px 6px 24px; }
+    .poster { border-radius:8px; }
+    .hotspot { border-radius:6px; border-width:1px; }
+    .controls { gap:7px; }
+    .controls button { padding:8px 11px; }
+    .rate-wrap { padding:5px 9px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>🍎 Essen und Trinken – Vokabeln</h1>
+    <p>Klicke auf eine Vokabelkarte im Bild und höre die deutsche Aussprache.</p>
+  </header>
+  <div class="controls">
+    <button id="repeat" type="button">🔊 Wiederholen</button>
+    <button id="stop" type="button">⏹ Stopp</button>
+    <div class="rate-wrap">
+      <label for="rate">Sprechtempo</label>
+      <input id="rate" type="range" min="0.55" max="1.15" step="0.05" value="0.85">
+      <output id="rateValue" for="rate">0,85×</output>
+    </div>
+  </div>
+  <section class="poster" aria-label="Interaktives Poster Essen und Trinken">
+    <img src="../assets/images/essen-poster.png" alt="Deutsches Vokabelposter mit 20 Lebensmitteln und 10 Getränken, jeweils mit Artikel und Wort">
+    <button class="hotspot" type="button" style="left:1.6043%;top:16.1198%;width:18.4492%;height:11.3409%;" data-word="das Brot" aria-label="Aussprache: das Brot" title="Klicken und hören: das Brot"></button><button class="hotspot" type="button" style="left:20.5882%;top:16.1198%;width:18.6275%;height:11.3409%;" data-word="der Käse" aria-label="Aussprache: der Käse" title="Klicken und hören: der Käse"></button><button class="hotspot" type="button" style="left:39.7504%;top:16.1198%;width:18.6275%;height:11.3409%;" data-word="der Apfel" aria-label="Aussprache: der Apfel" title="Klicken und hören: der Apfel"></button><button class="hotspot" type="button" style="left:58.9127%;top:16.1198%;width:18.6275%;height:11.3409%;" data-word="die Banane" aria-label="Aussprache: die Banane" title="Klicken und hören: die Banane"></button><button class="hotspot" type="button" style="left:78.0749%;top:16.1198%;width:18.6275%;height:11.3409%;" data-word="die Orange" aria-label="Aussprache: die Orange" title="Klicken und hören: die Orange"></button><button class="hotspot" type="button" style="left:1.6043%;top:27.8887%;width:18.4492%;height:11.3409%;" data-word="das Ei" aria-label="Aussprache: das Ei" title="Klicken und hören: das Ei"></button><button class="hotspot" type="button" style="left:20.5882%;top:27.8887%;width:18.6275%;height:11.3409%;" data-word="der Fisch" aria-label="Aussprache: der Fisch" title="Klicken und hören: der Fisch"></button><button class="hotspot" type="button" style="left:39.7504%;top:27.8887%;width:18.6275%;height:11.3409%;" data-word="das Fleisch" aria-label="Aussprache: das Fleisch" title="Klicken und hören: das Fleisch"></button><button class="hotspot" type="button" style="left:58.9127%;top:27.8887%;width:18.6275%;height:11.3409%;" data-word="der Reis" aria-label="Aussprache: der Reis" title="Klicken und hören: der Reis"></button><button class="hotspot" type="button" style="left:78.0749%;top:27.8887%;width:18.6275%;height:11.3409%;" data-word="die Nudeln" aria-label="Aussprache: die Nudeln" title="Klicken und hören: die Nudeln"></button><button class="hotspot" type="button" style="left:1.6043%;top:39.6576%;width:18.4492%;height:11.6262%;" data-word="die Suppe" aria-label="Aussprache: die Suppe" title="Klicken und hören: die Suppe"></button><button class="hotspot" type="button" style="left:20.5882%;top:39.6576%;width:18.6275%;height:11.6262%;" data-word="der Salat" aria-label="Aussprache: der Salat" title="Klicken und hören: der Salat"></button><button class="hotspot" type="button" style="left:39.7504%;top:39.6576%;width:18.6275%;height:11.6262%;" data-word="die Tomate" aria-label="Aussprache: die Tomate" title="Klicken und hören: die Tomate"></button><button class="hotspot" type="button" style="left:58.9127%;top:39.6576%;width:18.6275%;height:11.6262%;" data-word="die Kartoffel" aria-label="Aussprache: die Kartoffel" title="Klicken und hören: die Kartoffel"></button><button class="hotspot" type="button" style="left:78.0749%;top:39.6576%;width:18.6275%;height:11.6262%;" data-word="das Hähnchen" aria-label="Aussprache: das Hähnchen" title="Klicken und hören: das Hähnchen"></button><button class="hotspot" type="button" style="left:1.6043%;top:51.7832%;width:18.4492%;height:12.2682%;" data-word="die Wurst" aria-label="Aussprache: die Wurst" title="Klicken und hören: die Wurst"></button><button class="hotspot" type="button" style="left:20.5882%;top:51.7832%;width:18.6275%;height:12.2682%;" data-word="die Pizza" aria-label="Aussprache: die Pizza" title="Klicken und hören: die Pizza"></button><button class="hotspot" type="button" style="left:39.7504%;top:51.7832%;width:18.6275%;height:12.2682%;" data-word="das Gemüse" aria-label="Aussprache: das Gemüse" title="Klicken und hören: das Gemüse"></button><button class="hotspot" type="button" style="left:58.9127%;top:51.7832%;width:18.6275%;height:12.2682%;" data-word="der Kuchen" aria-label="Aussprache: der Kuchen" title="Klicken und hören: der Kuchen"></button><button class="hotspot" type="button" style="left:78.0749%;top:51.7832%;width:18.6275%;height:12.2682%;" data-word="das Eis" aria-label="Aussprache: das Eis" title="Klicken und hören: das Eis"></button><button class="hotspot" type="button" style="left:1.7825%;top:72.2539%;width:18.5383%;height:12.0542%;" data-word="das Wasser" aria-label="Aussprache: das Wasser" title="Klicken und hören: das Wasser"></button><button class="hotspot" type="button" style="left:20.9447%;top:72.2539%;width:18.7166%;height:12.0542%;" data-word="der Saft" aria-label="Aussprache: der Saft" title="Klicken und hören: der Saft"></button><button class="hotspot" type="button" style="left:40.1961%;top:72.2539%;width:17.7362%;height:12.0542%;" data-word="die Milch" aria-label="Aussprache: die Milch" title="Klicken und hören: die Milch"></button><button class="hotspot" type="button" style="left:58.6453%;top:72.2539%;width:18.4492%;height:12.0542%;" data-word="der Kaffee" aria-label="Aussprache: der Kaffee" title="Klicken und hören: der Kaffee"></button><button class="hotspot" type="button" style="left:77.8075%;top:72.2539%;width:18.8057%;height:12.0542%;" data-word="der Tee" aria-label="Aussprache: der Tee" title="Klicken und hören: der Tee"></button><button class="hotspot" type="button" style="left:1.7825%;top:84.5934%;width:18.5383%;height:12.2682%;" data-word="die Limonade" aria-label="Aussprache: die Limonade" title="Klicken und hören: die Limonade"></button><button class="hotspot" type="button" style="left:20.9447%;top:84.5934%;width:18.7166%;height:12.2682%;" data-word="die Cola" aria-label="Aussprache: die Cola" title="Klicken und hören: die Cola"></button><button class="hotspot" type="button" style="left:40.1961%;top:84.5934%;width:17.7362%;height:12.2682%;" data-word="die heiße Schokolade" aria-label="Aussprache: die heiße Schokolade" title="Klicken und hören: die heiße Schokolade"></button><button class="hotspot" type="button" style="left:58.6453%;top:84.5934%;width:18.4492%;height:12.2682%;" data-word="das Mineralwasser" aria-label="Aussprache: das Mineralwasser" title="Klicken und hören: das Mineralwasser"></button><button class="hotspot" type="button" style="left:77.8075%;top:84.5934%;width:18.8057%;height:12.2682%;" data-word="der Orangensaft" aria-label="Aussprache: der Orangensaft" title="Klicken und hören: der Orangensaft"></button>
+  </section>
+  <p id="status" class="status" aria-live="polite">Bereit zum Lernen!</p>
+  <p class="note">Die Aussprache verwendet die deutsche Stimme deines Browsers oder Geräts. Für die Tonwiedergabe muss eine deutsche Sprachstimme verfügbar sein.</p>
+</main>
+<script>
+(() => {
+  const status = document.getElementById('status');
+  const rateInput = document.getElementById('rate');
+  const rateValue = document.getElementById('rateValue');
+  let lastWord = 'das Brot';
+  const supported = ('speechSynthesis' in window) && ('SpeechSynthesisUtterance' in window);
+
+  function speak(word) {
+    lastWord = word;
+    if (!supported) {
+      status.textContent = 'Dieser Browser unterstützt keine Sprachausgabe.';
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.lang = 'de-DE';
+    utterance.rate = Number(rateInput.value);
+    utterance.pitch = 1;
+    const voices = window.speechSynthesis.getVoices();
+    const germanVoice = voices.find(v => /^de([-_]|$)/i.test(v.lang));
+    if (germanVoice) utterance.voice = germanVoice;
+    status.textContent = 'Wird gesprochen: ' + word;
+    utterance.onend = () => { status.textContent = 'Gehört: ' + word; };
+    utterance.onerror = () => { status.textContent = 'Ton konnte nicht gestartet werden. Bitte erneut klicken.'; };
+    window.speechSynthesis.speak(utterance);
+  }
+
+  document.querySelectorAll('.hotspot').forEach(button => {
+    button.addEventListener('click', () => speak(button.dataset.word));
+  });
+  document.getElementById('repeat').addEventListener('click', () => speak(lastWord));
+  document.getElementById('stop').addEventListener('click', () => {
+    if (supported) window.speechSynthesis.cancel();
+    status.textContent = 'Gestoppt.';
+  });
+  rateInput.addEventListener('input', () => {
+    rateValue.textContent = Number(rateInput.value).toFixed(2).replace('.', ',') + '×';
+  });
+  if (supported) window.speechSynthesis.getVoices();
+})();
+</script>
+</body>
+</html>

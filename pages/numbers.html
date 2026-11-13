@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Die Zahlen – Deutsch lernen mit Aussprache</title>
+<style>
+  :root { color-scheme: light; --blue:#1674d1; --ink:#16304a; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 22px 14px 34px; background: linear-gradient(180deg,#eaf7ff,#fff8e7);
+    color: var(--ink); font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  }
+  main { max-width: 860px; margin: 0 auto; }
+  .intro { text-align:center; margin: 0 auto 14px; }
+  h1 { margin: 0 0 6px; font-size: clamp(1.35rem,4vw,2rem); }
+  .hint { margin: 0; color:#38556e; font-size: .98rem; }
+  .controls {
+    display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:10px;
+    margin: 14px auto 16px;
+  }
+  .controls button, .controls select {
+    border: 1px solid #b9d7ef; border-radius: 999px; padding: 9px 14px;
+    background:white; color:#154c83; font: inherit; font-weight:650;
+  }
+  .controls button { cursor:pointer; }
+  .controls button:hover { background:#eaf5ff; }
+  .rate-wrap { display:flex; gap:8px; align-items:center; background:#fff; border:1px solid #b9d7ef; border-radius:999px; padding:5px 12px; }
+  .rate-wrap label { font-size:.9rem; font-weight:600; }
+  .rate-wrap input { width:100px; accent-color:var(--blue); }
+  .poster {
+    position:relative; width:100%; line-height:0; border-radius:16px; overflow:hidden;
+    box-shadow:0 12px 32px rgba(35,73,108,.18); background:#d9f1ff;
+  }
+  .poster img { display:block; width:100%; height:auto; }
+  .hotspot {
+    position:absolute; display:block; padding:0; margin:0; border:2px solid transparent;
+    border-radius:14px; background:transparent; cursor:pointer; color:transparent;
+    -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+  }
+  .hotspot:hover { border-color:rgba(22,116,209,.9); background:rgba(255,255,255,.10); }
+  .hotspot:focus-visible { outline:4px solid #073f8c; outline-offset:1px; border-color:#fff; }
+  .hotspot:active { background:rgba(22,116,209,.18); }
+  .status { min-height:1.6em; text-align:center; margin:12px 0 0; font-weight:650; color:#164f87; }
+  .note { text-align:center; color:#536b7f; font-size:.88rem; line-height:1.45; margin:8px auto 0; max-width:680px; }
+  @media (max-width:520px) {
+    body { padding:12px 7px 24px; }
+    .poster { border-radius:9px; }
+    .hotspot { border-radius:7px; border-width:1px; }
+    .controls { gap:7px; }
+    .controls button { padding:8px 11px; }
+    .rate-wrap { padding:5px 9px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header class="intro">
+    <h1>Die Zahlen – mit Aussprache</h1>
+    <p class="hint">Klicke auf eine Zahl oder ein Wort, um es auf Deutsch zu hören.</p>
+  </header>
+  <div class="controls">
+    <button id="repeat" type="button">🔊 Wiederholen</button>
+    <button id="stop" type="button">⏹ Stopp</button>
+    <div class="rate-wrap">
+      <label for="rate">Sprechtempo</label>
+      <input id="rate" type="range" min="0.55" max="1.15" step="0.05" value="0.85">
+      <output id="rateValue" for="rate">0,85×</output>
+    </div>
+  </div>
+  <section class="poster" aria-label="Interaktives Zahlenposter">
+    <img src="../assets/images/numbers-poster.png" alt="Buntes Lernposter mit deutschen Zahlen von eins bis zwanzig sowie 21, 22, 30, 40, 50, 60, 70, 80, 90, 100, 200, 1000 und 2000">
+    <button class="hotspot title-hotspot" type="button" style="left:19.4313%;top:0.6707%;width:57.8199%;height:14.4199%;" data-word="Die Zahlen" aria-label="Höre Die Zahlen" title="Die Zahlen"></button>
+    <button class="hotspot" type="button" style="left:6.0664%;top:16.2978%;width:16.3981%;height:9.3226%;" data-word="eins" aria-label="Höre 1, eins" title="1, eins"></button><button class="hotspot" type="button" style="left:23.4123%;top:16.2978%;width:16.1137%;height:9.3226%;" data-word="zwei" aria-label="Höre 2, zwei" title="2, zwei"></button><button class="hotspot" type="button" style="left:40.5687%;top:16.2978%;width:15.9242%;height:9.3226%;" data-word="drei" aria-label="Höre 3, drei" title="3, drei"></button><button class="hotspot" type="button" style="left:57.6303%;top:16.2978%;width:16.3033%;height:9.3226%;" data-word="vier" aria-label="Höre 4, vier" title="4, vier"></button><button class="hotspot" type="button" style="left:74.6919%;top:16.2978%;width:16.2085%;height:9.3226%;" data-word="fünf" aria-label="Höre 5, fünf" title="5, fünf"></button><button class="hotspot" type="button" style="left:6.3507%;top:26.6264%;width:16.0190%;height:9.3226%;" data-word="sechs" aria-label="Höre 6, sechs" title="6, sechs"></button><button class="hotspot" type="button" style="left:23.4123%;top:26.6264%;width:16.1137%;height:9.3226%;" data-word="sieben" aria-label="Höre 7, sieben" title="7, sieben"></button><button class="hotspot" type="button" style="left:40.5687%;top:26.6264%;width:15.9242%;height:9.3226%;" data-word="acht" aria-label="Höre 8, acht" title="8, acht"></button><button class="hotspot" type="button" style="left:57.6303%;top:26.6264%;width:16.3033%;height:9.3226%;" data-word="neun" aria-label="Höre 9, neun" title="9, neun"></button><button class="hotspot" type="button" style="left:74.6919%;top:26.6264%;width:16.2085%;height:9.3226%;" data-word="zehn" aria-label="Höre 10, zehn" title="10, zehn"></button><button class="hotspot" type="button" style="left:6.3507%;top:36.9551%;width:16.0190%;height:9.3226%;" data-word="elf" aria-label="Höre 11, elf" title="11, elf"></button><button class="hotspot" type="button" style="left:23.4123%;top:36.9551%;width:16.1137%;height:9.3226%;" data-word="zwölf" aria-label="Höre 12, zwölf" title="12, zwölf"></button><button class="hotspot" type="button" style="left:40.5687%;top:36.9551%;width:15.9242%;height:9.3226%;" data-word="dreizehn" aria-label="Höre 13, dreizehn" title="13, dreizehn"></button><button class="hotspot" type="button" style="left:57.6303%;top:36.9551%;width:16.3033%;height:9.3226%;" data-word="vierzehn" aria-label="Höre 14, vierzehn" title="14, vierzehn"></button><button class="hotspot" type="button" style="left:74.6919%;top:36.9551%;width:16.2085%;height:9.3226%;" data-word="fünfzehn" aria-label="Höre 15, fünfzehn" title="15, fünfzehn"></button><button class="hotspot" type="button" style="left:6.3507%;top:47.2166%;width:16.0190%;height:9.3897%;" data-word="sechzehn" aria-label="Höre 16, sechzehn" title="16, sechzehn"></button><button class="hotspot" type="button" style="left:23.4123%;top:47.2166%;width:16.1137%;height:9.3897%;" data-word="siebzehn" aria-label="Höre 17, siebzehn" title="17, siebzehn"></button><button class="hotspot" type="button" style="left:40.5687%;top:47.2166%;width:15.9242%;height:9.3897%;" data-word="achtzehn" aria-label="Höre 18, achtzehn" title="18, achtzehn"></button><button class="hotspot" type="button" style="left:57.6303%;top:47.2166%;width:16.3033%;height:9.3897%;" data-word="neunzehn" aria-label="Höre 19, neunzehn" title="19, neunzehn"></button><button class="hotspot" type="button" style="left:74.6919%;top:47.2166%;width:16.2085%;height:9.3897%;" data-word="zwanzig" aria-label="Höre 20, zwanzig" title="20, zwanzig"></button><button class="hotspot" type="button" style="left:6.3507%;top:57.5453%;width:16.3033%;height:9.9262%;" data-word="einundzwanzig" aria-label="Höre 21, einundzwanzig" title="21, einundzwanzig"></button><button class="hotspot" type="button" style="left:23.4123%;top:57.5453%;width:16.1137%;height:9.9262%;" data-word="zweiundzwanzig" aria-label="Höre 22, zweiundzwanzig" title="22, zweiundzwanzig"></button><button class="hotspot" type="button" style="left:40.5687%;top:57.5453%;width:15.9242%;height:9.9262%;" data-word="dreißig" aria-label="Höre 30, dreißig" title="30, dreißig"></button><button class="hotspot" type="button" style="left:57.6303%;top:57.5453%;width:16.3033%;height:9.9262%;" data-word="vierzig" aria-label="Höre 40, vierzig" title="40, vierzig"></button><button class="hotspot" type="button" style="left:74.6919%;top:57.5453%;width:16.2085%;height:9.9262%;" data-word="fünfzig" aria-label="Höre 50, fünfzig" title="50, fünfzig"></button><button class="hotspot" type="button" style="left:6.3507%;top:68.5446%;width:16.0190%;height:10.1274%;" data-word="sechzig" aria-label="Höre 60, sechzig" title="60, sechzig"></button><button class="hotspot" type="button" style="left:23.4123%;top:68.5446%;width:16.1137%;height:10.1274%;" data-word="siebzig" aria-label="Höre 70, siebzig" title="70, siebzig"></button><button class="hotspot" type="button" style="left:40.5687%;top:68.5446%;width:15.9242%;height:10.1274%;" data-word="achtzig" aria-label="Höre 80, achtzig" title="80, achtzig"></button><button class="hotspot" type="button" style="left:57.6303%;top:68.5446%;width:16.3033%;height:10.1274%;" data-word="neunzig" aria-label="Höre 90, neunzig" title="90, neunzig"></button><button class="hotspot" type="button" style="left:74.6919%;top:68.5446%;width:16.2085%;height:10.1274%;" data-word="hundert" aria-label="Höre 100, hundert" title="100, hundert"></button><button class="hotspot" type="button" style="left:17.0616%;top:79.4769%;width:19.9052%;height:10.2616%;" data-word="zweihundert" aria-label="Höre 200, zweihundert" title="200, zweihundert"></button><button class="hotspot" type="button" style="left:37.9147%;top:79.4769%;width:21.0427%;height:10.2616%;" data-word="tausend" aria-label="Höre 1000, tausend" title="1000, tausend"></button><button class="hotspot" type="button" style="left:59.3365%;top:79.4769%;width:21.7062%;height:10.2616%;" data-word="zweitausend" aria-label="Höre 2000, zweitausend" title="2000, zweitausend"></button>
+  </section>
+  <p id="status" class="status" aria-live="polite">Bereit zum Lernen!</p>
+  <p class="note">Die Aussprache nutzt die deutsche Stimme deines Browsers bzw. Betriebssystems. Wenn keine deutsche Stimme installiert ist, wähle eine deutsche Stimme in den Spracheinstellungen deines Geräts.</p>
+</main>
+<script>
+(() => {
+  const status = document.getElementById('status');
+  const rateInput = document.getElementById('rate');
+  const rateValue = document.getElementById('rateValue');
+  let lastWord = 'eins';
+  const hasSpeech = ('speechSynthesis' in window) && ('SpeechSynthesisUtterance' in window);
+
+  function speak(word) {
+    lastWord = word;
+    status.textContent = 'Wird gesprochen: ' + word;
+    if (!hasSpeech) {
+      status.textContent = 'Die Sprachausgabe wird von diesem Browser nicht unterstützt.';
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.lang = 'de-DE';
+    utterance.rate = Number(rateInput.value);
+    utterance.pitch = 1;
+    const voices = window.speechSynthesis.getVoices();
+    const germanVoice = voices.find(v => /^de(-|_)/i.test(v.lang));
+    if (germanVoice) utterance.voice = germanVoice;
+    utterance.onend = () => { status.textContent = 'Gehört: ' + word; };
+    utterance.onerror = () => { status.textContent = 'Die Aussprache konnte nicht gestartet werden. Versuche es erneut.'; };
+    window.speechSynthesis.speak(utterance);
+  }
+
+  document.querySelectorAll('.hotspot').forEach(button => {
+    button.addEventListener('click', () => speak(button.dataset.word));
+  });
+  document.getElementById('repeat').addEventListener('click', () => speak(lastWord));
+  document.getElementById('stop').addEventListener('click', () => {
+    if (hasSpeech) window.speechSynthesis.cancel();
+    status.textContent = 'Gestoppt.';
+  });
+  rateInput.addEventListener('input', () => {
+    rateValue.textContent = Number(rateInput.value).toFixed(2).replace('.', ',') + '×';
+  });
+  if (hasSpeech) window.speechSynthesis.getVoices();
+})();
+</script>
+</body>
+</html>

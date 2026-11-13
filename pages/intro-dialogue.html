@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sich vorstellen – Dialog mit Aussprache</title>
+<style>
+  :root { --blue:#1674d1; --ink:#16304a; --pink:#d94f7a; }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; padding:18px 10px 30px;
+    background:linear-gradient(180deg,#eaf7ff,#fff7f1);
+    color:var(--ink); font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  }
+  main { max-width:900px; margin:0 auto; }
+  header { text-align:center; margin:0 auto 12px; }
+  h1 { margin:0 0 5px; font-size:clamp(1.35rem,4vw,2rem); }
+  header p { margin:0; color:#45647e; line-height:1.45; }
+  .controls {
+    display:flex; flex-wrap:wrap; align-items:center; justify-content:center;
+    gap:9px; margin:14px auto;
+  }
+  .controls button {
+    border:1px solid #b9d7ef; border-radius:999px; padding:9px 14px;
+    background:#fff; color:#154c83; font:inherit; font-weight:650; cursor:pointer;
+  }
+  .controls button:hover { background:#eaf5ff; }
+  .rate-wrap {
+    display:flex; gap:8px; align-items:center; background:#fff;
+    border:1px solid #b9d7ef; border-radius:999px; padding:5px 12px;
+  }
+  .rate-wrap label { font-size:.9rem; font-weight:650; }
+  .rate-wrap input { width:95px; accent-color:var(--blue); }
+  .poster {
+    position:relative; width:100%; overflow:hidden; border-radius:14px;
+    background:#fff; box-shadow:0 12px 32px rgba(35,73,108,.18); line-height:0;
+  }
+  .poster img { display:block; width:100%; height:auto; }
+  .hotspot {
+    position:absolute; display:block; margin:0; padding:0; border:2px solid transparent;
+    border-radius:12px; background:transparent; color:transparent; cursor:pointer;
+    touch-action:manipulation; -webkit-tap-highlight-color:transparent;
+  }
+  .hotspot:hover { border-color:rgba(22,116,209,.95); background:rgba(255,255,255,.14); }
+  .hotspot:focus-visible { outline:3px solid #073f8c; outline-offset:1px; }
+  .hotspot:active { background:rgba(22,116,209,.18); }
+  .status { min-height:1.6em; margin:12px 0 5px; text-align:center; font-weight:700; color:#164f87; }
+  h2 { margin:24px 0 7px; font-size:1.15rem; }
+  .help { margin:0 0 12px; color:#536b7f; font-size:.92rem; }
+  .word-list { display:flex; flex-wrap:wrap; gap:7px; }
+  .word-chip {
+    border:1px solid #c3dff2; border-radius:999px; padding:7px 11px;
+    background:white; color:#164f87; font:inherit; cursor:pointer;
+  }
+  .word-chip:hover { background:#eaf5ff; border-color:#1674d1; }
+  .note { text-align:center; color:#536b7f; font-size:.88rem; line-height:1.5; margin:12px auto 0; max-width:700px; }
+  @media (max-width:520px) {
+    body { padding:10px 5px 22px; }
+    .poster { border-radius:8px; }
+    .hotspot { border-radius:6px; border-width:1px; }
+    .controls button { padding:8px 11px; }
+    .rate-wrap { padding:5px 9px; }
+    .word-list { gap:6px; }
+    .word-chip { padding:6px 9px; font-size:.92rem; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>🗣️ Sich vorstellen – Dialog</h1>
+    <p>Klicke auf eine Sprechblase, um den ganzen Satz zu hören, oder auf einzelne Wörter unten.</p>
+  </header>
+
+  <div class="controls">
+    <button id="repeat" type="button">🔊 Wiederholen</button>
+    <button id="stop" type="button">⏹ Stopp</button>
+    <div class="rate-wrap">
+      <label for="rate">Sprechtempo</label>
+      <input id="rate" type="range" min="0.55" max="1.15" step="0.05" value="0.85">
+      <output id="rateValue" for="rate">0,85×</output>
+    </div>
+  </div>
+
+  <section class="poster" aria-label="Interaktiver deutscher Vorstellungsdialog">
+    <img src="../assets/images/intro-dialogue-poster.png" alt="Manga-Dialog zum Sich-Vorstellen auf Deutsch mit den Fragen Wie heißt du, Wie alt bist du, Woher kommst du, Wo wohnst du und weiteren A1-Sätzen">
+    <button class="hotspot" type="button" style="left:58.7467%;top:0.7305%;width:12.6197%;height:5.4785%;" data-word="Hallo!" aria-label="Höre: Hallo!" title="Klicken und hören: Hallo!"></button><button class="hotspot" type="button" style="left:82.1584%;top:0.7305%;width:11.9234%;height:5.5515%;" data-word="Hallo!" aria-label="Höre: Hallo!" title="Klicken und hören: Hallo!"></button><button class="hotspot" type="button" style="left:12.6197%;top:14.4631%;width:16.0139%;height:5.1132%;" data-word="Wie heißt du?" aria-label="Höre: Wie heißt du?" title="Klicken und hören: Wie heißt du?"></button><button class="hotspot" type="button" style="left:18.9730%;top:20.1607%;width:13.9252%;height:6.7202%;" data-word="Ich heiße Lena." aria-label="Höre: Ich heiße Lena." title="Klicken und hören: Ich heiße Lena."></button><button class="hotspot" type="button" style="left:57.8764%;top:14.2440%;width:14.6214%;height:5.3324%;" data-word="Wie alt bist du?" aria-label="Höre: Wie alt bist du?" title="Klicken und hören: Wie alt bist du?"></button><button class="hotspot" type="button" style="left:78.8512%;top:14.0248%;width:14.6214%;height:5.8437%;" data-word="Ich bin 20 Jahre alt." aria-label="Höre: Ich bin 20 Jahre alt." title="Klicken und hören: Ich bin 20 Jahre alt."></button><button class="hotspot" type="button" style="left:10.4439%;top:29.4375%;width:18.0157%;height:4.9671%;" data-word="Woher kommst du?" aria-label="Höre: Woher kommst du?" title="Klicken und hören: Woher kommst du?"></button><button class="hotspot" type="button" style="left:29.1558%;top:29.3645%;width:17.1453%;height:5.7706%;" data-word="Ich komme aus Deutschland." aria-label="Höre: Ich komme aus Deutschland." title="Klicken und hören: Ich komme aus Deutschland."></button><button class="hotspot" type="button" style="left:57.7023%;top:29.4375%;width:16.0139%;height:5.1863%;" data-word="Wo wohnst du?" aria-label="Höre: Wo wohnst du?" title="Klicken und hören: Wo wohnst du?"></button><button class="hotspot" type="button" style="left:79.6345%;top:29.2915%;width:13.9252%;height:5.8437%;" data-word="Ich wohne in Berlin." aria-label="Höre: Ich wohne in Berlin." title="Klicken und hören: Ich wohne in Berlin."></button><button class="hotspot" type="button" style="left:11.3142%;top:44.9233%;width:16.1010%;height:6.6472%;" data-word="Was machst du beruflich?" aria-label="Höre: Was machst du beruflich?" title="Klicken und hören: Was machst du beruflich?"></button><button class="hotspot" type="button" style="left:30.2872%;top:44.9233%;width:16.2750%;height:5.8437%;" data-word="Ich bin Studentin." aria-label="Höre: Ich bin Studentin." title="Klicken und hören: Ich bin Studentin."></button><button class="hotspot" type="button" style="left:58.7467%;top:44.8503%;width:15.5788%;height:6.9394%;" data-word="Was sind deine Hobbys?" aria-label="Höre: Was sind deine Hobbys?" title="Klicken und hören: Was sind deine Hobbys?"></button><button class="hotspot" type="button" style="left:76.1532%;top:44.7042%;width:17.1453%;height:7.2316%;" data-word="Ich lese gern und treffe gern Freunde." aria-label="Höre: Ich lese gern und treffe gern Freunde." title="Klicken und hören: Ich lese gern und treffe gern Freunde."></button><button class="hotspot" type="button" style="left:10.2698%;top:62.0891%;width:14.1862%;height:8.6925%;" data-word="Welche Sprachen sprichst du?" aria-label="Höre: Welche Sprachen sprichst du?" title="Klicken und hören: Welche Sprachen sprichst du?"></button><button class="hotspot" type="button" style="left:25.5875%;top:62.0891%;width:14.9695%;height:8.9847%;" data-word="Ich spreche Deutsch, Englisch und Russisch." aria-label="Höre: Ich spreche Deutsch, Englisch und Russisch." title="Klicken und hören: Ich spreche Deutsch, Englisch und Russisch."></button><button class="hotspot" type="button" style="left:57.9634%;top:62.0891%;width:14.2733%;height:5.9898%;" data-word="Hast du Geschwister?" aria-label="Höre: Hast du Geschwister?" title="Klicken und hören: Hast du Geschwister?"></button><button class="hotspot" type="button" style="left:72.2367%;top:62.0891%;width:15.6658%;height:6.0628%;" data-word="Ja, ich habe einen Bruder." aria-label="Höre: Ja, ich habe einen Bruder." title="Klicken und hören: Ja, ich habe einen Bruder."></button><button class="hotspot" type="button" style="left:5.2219%;top:78.8897%;width:13.9252%;height:6.5741%;" data-word="Hast du ein Haustier?" aria-label="Höre: Hast du ein Haustier?" title="Klicken und hören: Hast du ein Haustier?"></button><button class="hotspot" type="button" style="left:19.3211%;top:78.8897%;width:14.7084%;height:6.5741%;" data-word="Ja, ich habe eine Katze." aria-label="Höre: Ja, ich habe eine Katze." title="Klicken und hören: Ja, ich habe eine Katze."></button><button class="hotspot" type="button" style="left:39.7737%;top:78.5245%;width:14.3603%;height:7.1585%;" data-word="Was machst du gern am Wochenende?" aria-label="Höre: Was machst du gern am Wochenende?" title="Klicken und hören: Was machst du gern am Wochenende?"></button><button class="hotspot" type="button" style="left:53.6989%;top:78.5245%;width:14.3603%;height:7.1585%;" data-word="Ich gehe gern ins Kino und fahre gern Rad." aria-label="Höre: Ich gehe gern ins Kino und fahre gern Rad." title="Klicken und hören: Ich gehe gern ins Kino und fahre gern Rad."></button><button class="hotspot" type="button" style="left:72.5849%;top:78.5245%;width:21.3229%;height:6.0628%;" data-word="Schön, dich kennenzulernen!" aria-label="Höre: Schön, dich kennenzulernen!" title="Klicken und hören: Schön, dich kennenzulernen!"></button><button class="hotspot" type="button" style="left:79.1993%;top:84.0029%;width:14.7955%;height:5.6976%;" data-word="Ich auch! Auf Wiedersehen!" aria-label="Höre: Ich auch! Auf Wiedersehen!" title="Klicken und hören: Ich auch! Auf Wiedersehen!"></button>
+  </section>
+
+  <p id="status" class="status" aria-live="polite">Bereit zum Lernen!</p>
+
+  <h2>Einzelne Wörter anhören</h2>
+  <p class="help">Klicke auf ein Wort, um es einzeln auf Deutsch zu hören.</p>
+  <div class="word-list"><button class="word-chip" type="button" data-word="Hallo">Hallo</button><button class="word-chip" type="button" data-word="Wie">Wie</button><button class="word-chip" type="button" data-word="heißt">heißt</button><button class="word-chip" type="button" data-word="du">du</button><button class="word-chip" type="button" data-word="Ich">Ich</button><button class="word-chip" type="button" data-word="heiße">heiße</button><button class="word-chip" type="button" data-word="Lena">Lena</button><button class="word-chip" type="button" data-word="alt">alt</button><button class="word-chip" type="button" data-word="Jahre">Jahre</button><button class="word-chip" type="button" data-word="Woher">Woher</button><button class="word-chip" type="button" data-word="kommst">kommst</button><button class="word-chip" type="button" data-word="kommen">kommen</button><button class="word-chip" type="button" data-word="aus">aus</button><button class="word-chip" type="button" data-word="Deutschland">Deutschland</button><button class="word-chip" type="button" data-word="Wo">Wo</button><button class="word-chip" type="button" data-word="wohnst">wohnst</button><button class="word-chip" type="button" data-word="wohne">wohne</button><button class="word-chip" type="button" data-word="Berlin">Berlin</button><button class="word-chip" type="button" data-word="was">was</button><button class="word-chip" type="button" data-word="machst">machst</button><button class="word-chip" type="button" data-word="beruflich">beruflich</button><button class="word-chip" type="button" data-word="Studentin">Studentin</button><button class="word-chip" type="button" data-word="Hobbys">Hobbys</button><button class="word-chip" type="button" data-word="lesen">lesen</button><button class="word-chip" type="button" data-word="gern">gern</button><button class="word-chip" type="button" data-word="treffen">treffen</button><button class="word-chip" type="button" data-word="Freunde">Freunde</button><button class="word-chip" type="button" data-word="welche">welche</button><button class="word-chip" type="button" data-word="Sprachen">Sprachen</button><button class="word-chip" type="button" data-word="sprichst">sprichst</button><button class="word-chip" type="button" data-word="spreche">spreche</button><button class="word-chip" type="button" data-word="Deutsch">Deutsch</button><button class="word-chip" type="button" data-word="Englisch">Englisch</button><button class="word-chip" type="button" data-word="Russisch">Russisch</button><button class="word-chip" type="button" data-word="Geschwister">Geschwister</button><button class="word-chip" type="button" data-word="Bruder">Bruder</button><button class="word-chip" type="button" data-word="Haustier">Haustier</button><button class="word-chip" type="button" data-word="Katze">Katze</button><button class="word-chip" type="button" data-word="Wochenende">Wochenende</button><button class="word-chip" type="button" data-word="Kino">Kino</button><button class="word-chip" type="button" data-word="fahren">fahren</button><button class="word-chip" type="button" data-word="Rad">Rad</button><button class="word-chip" type="button" data-word="schön">schön</button><button class="word-chip" type="button" data-word="kennenzulernen">kennenzulernen</button><button class="word-chip" type="button" data-word="auch">auch</button><button class="word-chip" type="button" data-word="Auf Wiedersehen">Auf Wiedersehen</button></div>
+
+  <p class="note">Die Sprachausgabe verwendet die deutsche Stimme deines Browsers oder Geräts. Falls keine deutsche Stimme verfügbar ist, wähle in den Geräteeinstellungen eine deutsche Stimme.</p>
+</main>
+
+<script>
+(() => {
+  const status = document.getElementById('status');
+  const rateInput = document.getElementById('rate');
+  const rateValue = document.getElementById('rateValue');
+  let lastWord = 'Hallo!';
+  const supported = ('speechSynthesis' in window) && ('SpeechSynthesisUtterance' in window);
+
+  function speak(word) {
+    lastWord = word;
+    if (!supported) {
+      status.textContent = 'Dieser Browser unterstützt keine Sprachausgabe.';
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.lang = 'de-DE';
+    utterance.rate = Number(rateInput.value);
+    utterance.pitch = 1;
+    const voices = window.speechSynthesis.getVoices();
+    const germanVoice = voices.find(v => /^de([-_]|$)/i.test(v.lang));
+    if (germanVoice) utterance.voice = germanVoice;
+    status.textContent = 'Wird gesprochen: ' + word;
+    utterance.onend = () => { status.textContent = 'Gehört: ' + word; };
+    utterance.onerror = () => { status.textContent = 'Ton konnte nicht gestartet werden. Bitte erneut klicken.'; };
+    window.speechSynthesis.speak(utterance);
+  }
+
+  document.querySelectorAll('[data-word]').forEach(button => {
+    button.addEventListener('click', () => speak(button.dataset.word));
+  });
+
+  document.getElementById('repeat').addEventListener('click', () => speak(lastWord));
+  document.getElementById('stop').addEventListener('click', () => {
+    if (supported) window.speechSynthesis.cancel();
+    status.textContent = 'Gestoppt.';
+  });
+  rateInput.addEventListener('input', () => {
+    rateValue.textContent = Number(rateInput.value).toFixed(2).replace('.', ',') + '×';
+  });
+  if (supported) window.speechSynthesis.getVoices();
+})();
+</script>
+</body>
+</html>
