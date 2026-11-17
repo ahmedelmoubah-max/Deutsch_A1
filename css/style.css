@@ -6441,3 +6441,11 @@ body:has(.student-results-promo) {
  .a2-lesson-actions{gap:5px;}
  .a2-lesson-actions button{font-size:8px;padding:5px 8px;}
 }
+
+/* Monafassa: explain where the exercise bank for each lesson comes from. */
+.competition-source-hint {
+  margin: 10px 0 14px;
+  color: var(--muted, #64748b);
+  font-size: .89rem;
+  line-height: 1.7;
+}
