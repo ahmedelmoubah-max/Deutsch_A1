@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f7f8fc">
+<title>A2 – Lektion 9 – Test</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:linear-gradient(145deg,#eef4ff,#faf8ff 55%,#f1fbf7);font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;color:#18284b}
+button{font:inherit}
+.test-shell{max-width:900px;margin:0 auto;padding:18px 14px 36px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.brand{display:flex;align-items:center;gap:11px}
+.brand-icon{width:46px;height:46px;display:grid;place-items:center;border-radius:15px;background:linear-gradient(140deg,#e5edff,#eee8ff);font-size:22px}
+.eyebrow{color:#6c7ba0;font-size:10px;font-weight:900}
+h1{margin:2px 0 0;font-size:clamp(20px,3.4vw,28px);line-height:1.25}
+.back{border:1px solid #dfe6f4;border-radius:12px;padding:9px 12px;background:#fff;color:#355bd0;font-size:12px;font-weight:900;cursor:pointer;white-space:nowrap}
+.meta{margin:0 0 14px;color:#687692;font-size:13px;line-height:1.7}
+.card{background:#fff;border:1px solid #e3e9f4;border-radius:22px;padding:clamp(16px,3vw,26px);box-shadow:0 12px 30px rgba(38,58,108,.08)}
+.stats{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:9px;color:#6b7892;font-size:12px;font-weight:850}
+.progress{height:8px;background:#edf1f8;border-radius:20px;overflow:hidden;margin-bottom:23px}
+.progress>span{display:block;height:100%;width:0;background:linear-gradient(90deg,#3568df,#7854d9);border-radius:20px;transition:width .2s}
+.q-number{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;background:#eef2ff;color:#3c5fce;font-size:10px;font-weight:950;margin-bottom:12px}
+.question{font-size:clamp(19px,3vw,25px);font-weight:950;line-height:1.55;margin:0 0 7px;direction:auto}
+.hint{margin:0 0 17px;color:#7c879d;font-size:12px}
+.options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.option{min-height:58px;display:flex;align-items:center;gap:10px;padding:12px;border:1px solid #e2e8f2;border-radius:15px;background:#fff;color:#243451;text-align:start;font-size:14px;font-weight:800;cursor:pointer;transition:.15s}
+.option:hover{border-color:#aebff1;background:#f8faff}
+.option.selected{border-color:#6684e6;background:#f0f4ff;box-shadow:0 0 0 2px rgba(75,106,215,.08)}
+.option.correct{border-color:#63bd8a;background:#effbf4;color:#187348}
+.option.wrong{border-color:#e6a0a0;background:#fff3f3;color:#a43b3b}
+.option-letter{width:27px;height:27px;flex:0 0 27px;display:grid;place-items:center;border-radius:9px;background:#f0f3f9;color:#6b7892;font-size:11px;font-weight:950}
+.feedback{min-height:28px;margin-top:13px;font-size:12px;font-weight:800;line-height:1.6}
+.controls{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:17px}
+.control{min-width:115px;border:0;border-radius:13px;padding:12px 17px;background:#315ed2;color:#fff;font-size:13px;font-weight:950;cursor:pointer}
+.control.secondary{border:1px solid #e1e7f2;background:#fff;color:#53627d}
+.control:disabled{opacity:.38;cursor:not-allowed}
+.result{text-align:center}
+.score-circle{width:116px;height:116px;display:grid;place-items:center;margin:14px auto;border-radius:50%;background:linear-gradient(145deg,#edf2ff,#f2edff);border:8px solid #dbe5ff;color:#315ed2;font-size:27px;font-weight:1000}
+.result h2{margin:8px 0;font-size:24px}
+.result p{color:#697793;font-size:13px;line-height:1.7}
+.review{display:grid;gap:9px;margin-top:20px;text-align:right}
+.review-item{padding:12px;border:1px solid #e5eaf3;border-radius:13px;background:#fbfcff}
+.review-item strong{display:block;font-size:13px;line-height:1.6}
+.review-item small{display:block;margin-top:5px;color:#5c6b87;font-size:12px;line-height:1.6}
+.review-item .ok{color:#16804d;font-weight:900}
+.review-item .no{color:#ad4545;font-weight:900}
+@media(max-width:600px){.test-shell{padding:12px 9px 24px}.top{align-items:flex-start}.back{padding:8px;font-size:10px}.options{grid-template-columns:1fr;gap:8px}.option{min-height:52px}.control{min-width:98px;padding:11px 12px}}
+</style>
+</head>
+<body>
+<main class="test-shell">
+  <header class="top">
+    <div class="brand"><div class="brand-icon">📝</div><div><div class="eyebrow">DEUTSCH A2 · LEKTION 9</div><h1 dir="ltr">Flohmarkt und Wochenende – Test</h1></div></div>
+    <button class="back" type="button" onclick="window.parent.postMessage({type:'deutsch-a2-close-test'},'*')">رجوع للمستوى A2</button>
+  </header>
+  <p class="meta">سوق المستعمل والشراء والمطعم واللقاء مع الأصدقاء · اختار الجواب الصحيح لكل سؤال.</p>
+  <section id="testRoot" class="card" aria-live="polite"></section>
+</main>
+<script>window.A2_TEST_DATA = {"lesson": 9, "title": "Flohmarkt und Wochenende", "questions": [{"q": "Was macht Emma am Wochenende besonders gern?", "options": ["Sie geht auf den Flohmarkt.", "Sie bleibt immer zu Hause.", "Sie arbeitet im Büro.", "Sie fährt jeden Tag Ski."], "a": 0, "why": "إيما تحب الذهاب إلى سوق المستعمل."}, {"q": "Wann treffen sich Emma und ihre Freunde?", "options": ["Um elf Uhr", "Um acht Uhr", "Um drei Uhr morgens", "Um fünf Uhr"], "a": 0, "why": "اتفقوا على اللقاء في الساعة الحادية عشرة."}, {"q": "Wo treffen sie sich vor dem Besuch des Flohmarkts?", "options": ["Vor dem Bahnhof", "Im Restaurant", "Im Park", "Vor der Schule"], "a": 0, "why": "اتفقوا على اللقاء أمام محطة القطار."}, {"q": "Welche Jacke kauft Martha?", "options": ["Eine grüne Winterjacke für fünfzehn Euro", "Eine blaue Jacke für fünfzig Euro", "Eine rote Jacke für zehn Euro", "Keine Jacke"], "a": 0, "why": "وجدت مارثا جاكيتاً شتوياً أخضر بثمن 15 يورو."}, {"q": "Was kauft Paul für seinen Deutschkurs?", "options": ["Zwei Wörterbücher und einen Roman", "Eine Gitarre", "Eine Kaffeemaschine", "Eine Winterjacke"], "a": 0, "why": "اشترى بول قاموسين ورواية."}, {"q": "Was möchte Tom kaufen?", "options": ["Eine gebrauchte Gitarre", "Ein Fahrrad", "Ein Wörterbuch", "Eine Tasche"], "a": 0, "why": "توم مهتم بالموسيقى ويجد غيتاراً مستعملاً."}, {"q": "Was bestellt Martha im Restaurant?", "options": ["Spaghetti mit Gemüse", "Ein Sandwich", "Fisch mit Kartoffeln", "Eine Suppe"], "a": 0, "why": "في نص عطلة نهاية الأسبوع، مارثا تطلب سباغيتي بالخضار."}, {"q": "Um wie viel Uhr treffen sich die Freunde am Sonntag?", "options": ["Um drei Uhr", "Um elf Uhr", "Um acht Uhr", "Um zwölf Uhr"], "a": 0, "why": "اتفق الأصدقاء على اللقاء يوم الأحد في الساعة الثالثة."}]};</script>
+<script src="../../../js/a2-test-engine.js" defer></script>
+</body>
+</html>

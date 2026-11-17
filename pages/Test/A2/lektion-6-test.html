@@ -1,0 +1,2533 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#2457d6">
+<title>Lektion 6 – Interaktiver Test</title>
+<style>
+
+:root{
+  --ink:#172554;--muted:#64748b;--paper:#f7f9ff;--line:#e5eaf5;
+  --blue:#2878e8;--purple:#8154d9;--pink:#e94d91;--green:#16a477;
+  --orange:#f08a25;--yellow:#f3c64e;--red:#e35b62;
+  --shadow:0 12px 35px rgba(29,54,112,.09);--radius:24px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:linear-gradient(180deg,#eaf3ff 0,#f8faff 330px,#f6f8fc 100%);color:var(--ink);font-family:Inter,system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;line-height:1.55}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+a{color:inherit;text-decoration:none}
+.topbar{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.91);backdrop-filter:blur(14px);border-bottom:1px solid #e5ebf5}
+.topbar-inner{max-width:1440px;margin:auto;padding:10px 22px;display:flex;align-items:center;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;white-space:nowrap}
+.brand-mark{width:38px;height:38px;border-radius:13px;background:linear-gradient(135deg,#1e75ed,#8b55dc);display:grid;place-items:center;color:#fff;font-size:20px;box-shadow:0 7px 16px #4b75d83d}
+.top-progress{flex:1;min-width:90px}
+.progress-meta{display:flex;justify-content:space-between;font-size:12px;color:#64748b;font-weight:700;margin-bottom:5px}
+.progress-track{height:8px;background:#e8edf7;border-radius:20px;overflow:hidden}
+.progress-fill{height:100%;width:0;background:linear-gradient(90deg,#2878e8,#a24fdb,#ed5593);border-radius:20px;transition:width .35s}
+.stat-pill{border:1px solid #e4eaf4;background:#fff;padding:8px 12px;border-radius:14px;font-weight:800;font-size:13px;white-space:nowrap}
+.reset-all{border:0;background:#fff1f2;color:#c24152;border-radius:12px;padding:9px 12px;font-weight:800}
+.hero{max-width:1440px;margin:22px auto 18px;padding:0 22px}
+.hero-card{position:relative;overflow:hidden;border-radius:30px;background:linear-gradient(115deg,#173e91 0%,#276fca 48%,#7d52d5 100%);color:#fff;padding:30px 34px;box-shadow:0 18px 45px #244e9c2b}
+.hero-card:before,.hero-card:after{content:"";position:absolute;border-radius:50%;background:#ffffff12}
+.hero-card:before{width:300px;height:300px;right:10%;top:-180px}
+.hero-card:after{width:220px;height:220px;right:-40px;bottom:-150px}
+.hero-content{position:relative;z-index:1;max-width:820px}
+.eyebrow{display:inline-flex;gap:8px;align-items:center;background:#ffffff22;border:1px solid #ffffff35;padding:6px 12px;border-radius:30px;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.hero h1{font-size:clamp(29px,4vw,48px);line-height:1.08;margin:13px 0 8px;letter-spacing:-.04em}
+.hero p{margin:0;color:#e7efff;max-width:670px;font-size:15px}
+.hero-bottom{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+.hero-chip{background:#ffffff1c;border:1px solid #ffffff30;padding:7px 11px;border-radius:12px;font-size:12px;font-weight:750}
+.layout{max-width:1440px;margin:auto;padding:0 22px 60px;display:grid;grid-template-columns:330px minmax(0,1fr);gap:20px;align-items:start}
+.sidebar{position:sticky;top:82px;background:#fff;border:1px solid var(--line);border-radius:22px;padding:15px;box-shadow:var(--shadow);max-height:calc(100vh - 100px);overflow:auto}
+.side-title{font-size:11px;color:#94a3b8;font-weight:900;letter-spacing:.12em;text-transform:uppercase;padding:5px 9px 10px}
+.nav-link{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:12px;color:#52627d;font-size:13px;font-weight:750;margin:2px 0;transition:.2s}
+.nav-link:hover{background:#f2f6ff;color:#2457d6}
+.nav-num{width:25px;height:25px;display:grid;place-items:center;border-radius:8px;background:#eef3fb;color:#49628c;font-size:11px;font-weight:900;flex:none}
+.nav-link.done .nav-num{background:#dcfce9;color:#168458}
+.main{min-width:0}
+.section-heading{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:5px 2px 14px}
+.section-heading h2{font-size:22px;margin:0;letter-spacing:-.03em}
+.section-heading p{margin:3px 0 0;color:var(--muted);font-size:13px}
+.poster-card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:14px;box-shadow:var(--shadow);margin-bottom:18px}
+.poster-card summary{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:850}
+.poster-card summary span:first-child{display:flex;align-items:center;gap:10px}
+.poster-card summary .tag{font-size:11px;background:#edf4ff;color:#2b65c4;border-radius:20px;padding:5px 9px}
+.poster-wrap{padding-top:14px;text-align:center}
+.poster-wrap img{max-width:100%;max-height:650px;object-fit:contain;border-radius:15px;border:1px solid #edf0f7}
+.exercise{position:relative;background:#fff;border:1px solid var(--line);border-radius:26px;padding:22px;margin:0 0 19px;box-shadow:var(--shadow);scroll-margin-top:88px;overflow:hidden}
+.exercise:before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--accent,var(--blue))}
+.exercise-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px}
+.exercise-title-wrap{display:flex;gap:12px;align-items:center;min-width:0}
+.exercise-icon{width:44px;height:44px;border-radius:15px;display:grid;place-items:center;background:var(--soft,#edf4ff);font-size:22px;flex:none}
+.exercise h3{margin:0;font-size:19px;letter-spacing:-.025em}
+.exercise-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.exercise-num{border:1px solid var(--line);background:#f8faff;color:#64748b;padding:6px 10px;border-radius:11px;font-size:11px;font-weight:900;white-space:nowrap}
+.instruction{padding:10px 13px;border-radius:13px;background:var(--soft,#f1f6ff);color:#40516f;font-size:13px;font-weight:700;margin:0 0 15px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.q-item{border:1px solid #e7ecf5;border-radius:15px;padding:12px;background:#fff;min-width:0;transition:.18s}
+.q-item.correct{border-color:#7bd6ad;background:#f0fff7}
+.q-item.incorrect{border-color:#f2a3a3;background:#fff5f5}
+.q-label{font-weight:800;font-size:14px;margin-bottom:8px}
+.small-ar{font-family:Tahoma,Arial,sans-serif;direction:rtl;unicode-bidi:plaintext;color:#64748b;font-size:13px}
+.option-row{display:flex;flex-wrap:wrap;gap:7px}
+.choice{border:1px solid #dfe6f2;background:#fff;border-radius:11px;padding:7px 11px;color:#40516f;font-weight:750;font-size:13px;transition:.15s}
+.choice:hover{border-color:var(--accent,var(--blue));background:var(--soft,#f3f7ff)}
+.choice.selected{background:var(--accent,var(--blue));border-color:var(--accent,var(--blue));color:#fff}
+.choice:disabled{opacity:.6;cursor:default}
+.field,select.field,textarea.field{width:100%;border:1px solid #dce4f0;border-radius:11px;padding:10px 11px;background:#fff;color:#1e293b;outline:none;min-width:0}
+.field:focus{border-color:var(--accent,var(--blue));box-shadow:0 0 0 3px color-mix(in srgb,var(--accent,var(--blue)) 15%,transparent)}
+.field[dir=rtl]{text-align:right}
+.field-wrap{display:grid;gap:7px}
+.field-label{font-size:12px;font-weight:800;color:#52627d}
+.btn-row{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin-top:16px}
+.primary-btn{border:0;background:var(--accent,var(--blue));color:#fff;padding:10px 16px;border-radius:12px;font-weight:850;box-shadow:0 5px 12px color-mix(in srgb,var(--accent,var(--blue)) 22%,transparent)}
+.secondary-btn{border:1px solid #dfe6f1;background:#fff;color:#53627a;padding:9px 13px;border-radius:12px;font-weight:800}
+.next-btn{border:0;background:#edf4ff;color:#255fc2;padding:10px 14px;border-radius:12px;font-weight:850}
+.feedback{display:none;margin-top:13px;border-radius:13px;padding:11px 13px;font-size:13px;font-weight:800}
+.feedback.show{display:block}
+.feedback.good{background:#e9fff3;color:#16734d}
+.feedback.mid{background:#fff7e6;color:#9a5a08}
+.feedback.bad{background:#fff0f0;color:#b23b45}
+.muted{color:var(--muted)}
+/* unique exercise themes */
+.theme-blue{--accent:#2681e8;--soft:#edf6ff}
+.theme-gold{--accent:#e2a51e;--soft:#fff8df}
+.theme-purple{--accent:#8a55dc;--soft:#f4efff}
+.theme-mint{--accent:#16a477;--soft:#eafaf4}
+.theme-coral{--accent:#e66c54;--soft:#fff1eb}
+.theme-navy{--accent:#334b86;--soft:#edf1fb}
+.theme-map{--accent:#18a68a;--soft:#e8fbf5;background:linear-gradient(135deg,#fff 0%,#f4fffb 100%)}
+.theme-orange{--accent:#ed8b2b;--soft:#fff3e5}
+.theme-pink{--accent:#e64e91;--soft:#fff0f7}
+.theme-audio{--accent:#6559d7;--soft:#f0efff}
+.theme-reading{--accent:#b68a43;--soft:#fff9ec}
+.theme-chat{--accent:#2497b9;--soft:#eaf9ff}
+.theme-detective{--accent:#df555c;--soft:#fff0f0}
+.theme-sort{--accent:#5471b8;--soft:#eef3ff}
+.theme-write{--accent:#2d8c74;--soft:#edfaf5}
+.theme-final{--accent:#263b77;--soft:#eaf0ff;background:linear-gradient(145deg,#fff 0%,#f3f6ff 100%)}
+.match-columns{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.match-col{display:grid;gap:8px}
+.match-btn{width:100%;min-height:43px;text-align:left;border:1px solid #e1e8f3;background:#fff;border-radius:12px;padding:9px 12px;font-weight:800;color:#354663;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.match-btn .small-ar{font-size:13px}
+.match-btn.active{outline:2px solid var(--accent);background:var(--soft)}
+.match-btn.matched{background:#eafff3;border-color:#77d6a8;color:#18734e;opacity:.78}
+.match-btn.wrong{border-color:#ed9a9a;background:#fff1f1}
+.pair-counter{font-size:12px;font-weight:850;color:var(--muted);margin:0 0 10px}
+.article-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.article-card{border-radius:16px;padding:12px;border:1px solid #f0e5bc;background:#fffdf6}
+.article-word{font-size:17px;font-weight:900;margin-bottom:9px}
+.article-word small{display:block;color:#8b7b50;font-size:11px;font-weight:650;margin-top:2px}
+.article-buttons{display:flex;gap:5px}
+.article-buttons .choice{flex:1;padding:7px 3px}
+.word-puzzle{background:#fff;border:1px dashed #efb09b;border-radius:14px;padding:12px}
+.scramble{font-size:19px;font-weight:950;letter-spacing:.15em;color:#d05c47}
+.sentence-box{background:#172c5b;color:#fff;padding:16px;border-radius:17px;margin-bottom:12px}
+.sentence-box .q-label{color:#e7edff}
+.word-bank{display:flex;flex-wrap:wrap;gap:7px}
+.word-chip{border:1px solid #ccd7ef;background:#fff;border-radius:10px;padding:7px 10px;font-weight:800;color:#30446f}
+.word-chip.used{opacity:.35;text-decoration:line-through}
+.answer-line{min-height:44px;background:#ffffff16;border:1px dashed #ffffff66;border-radius:12px;padding:8px;display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+.answer-chip{background:#dce8ff;color:#1d3974;padding:5px 9px;border-radius:8px;font-size:13px;font-weight:850}
+.map-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.map-tile{border-radius:16px;background:#fff;border:1px solid #cdeee2;padding:13px;text-align:center}
+.map-emoji{font-size:27px}
+.map-tile select{margin-top:8px}
+.adj-match{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.adj-side{display:grid;gap:8px}
+.adj-card{border-radius:14px;padding:12px;border:1px solid #f3c5d9;background:#fff;font-weight:900;text-align:center}
+.sound-row{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #e1ddff;border-radius:15px;padding:12px}
+.sound-btn{width:44px;height:44px;border:0;border-radius:14px;background:#6559d7;color:#fff;font-size:20px;flex:none}
+.reading-paper{background:#fffdf7;border:1px solid #f1e2bf;border-radius:17px;padding:18px 20px;font-family:Georgia,serif;color:#594a30;font-size:16px;line-height:1.85;box-shadow:inset 0 0 0 5px #fff9eb}
+.chat-line{display:flex;gap:10px;align-items:flex-start;margin:11px 0}
+.avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#dff5ff;flex:none}
+.bubble{background:#fff;border:1px solid #d6edf6;border-radius:4px 16px 16px 16px;padding:11px 13px;max-width:88%;font-weight:700}
+.chat-line.right{flex-direction:row-reverse}
+.chat-line.right .bubble{background:#eafaf3;border-color:#d3f0e2;border-radius:16px 4px 16px 16px}
+.lined{background:repeating-linear-gradient(#fff,#fff 31px,#dce8e2 32px);line-height:32px;min-height:150px}
+.wordbank{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}
+.wordbank span{background:#e8f5ef;color:#26725c;border-radius:9px;padding:6px 9px;font-size:12px;font-weight:850}
+.final-banner{background:#20396f;color:#fff;border-radius:17px;padding:17px;margin-bottom:14px}
+.final-banner strong{font-size:18px}
+.footer{text-align:center;color:#94a3b8;font-size:12px;padding:15px}
+@media(max-width:980px){.layout{grid-template-columns:1fr}.sidebar{position:relative;top:auto;max-height:none;display:flex;gap:5px;overflow-x:auto;padding:10px}.side-title{display:none}.nav-link{flex:none;white-space:nowrap}.nav-num{width:23px;height:23px}.hero{margin-top:14px}.hero-card{padding:24px}}
+@media(max-width:650px){
+ .topbar-inner{padding:8px 12px;gap:8px}.brand{font-size:12px}.brand-mark{width:32px;height:32px}.stat-pill{font-size:11px;padding:7px 8px}.reset-all{font-size:11px;padding:8px}.progress-meta{font-size:10px}
+ .hero{padding:0 12px}.hero-card{padding:22px 19px;border-radius:22px}.hero p{font-size:13px}
+ .layout{padding:0 12px 40px;gap:12px}.sidebar{border-radius:16px}.exercise{padding:16px;border-radius:20px}.exercise h3{font-size:17px}.exercise-icon{width:39px;height:39px}
+ .grid-2,.match-columns{grid-template-columns:1fr}.grid-3,.article-grid,.map-grid{grid-template-columns:repeat(2,1fr)}
+ .adj-match{gap:7px}.match-btn{font-size:12px}.exercise-num{font-size:10px;padding:5px 7px}
+ .section-heading h2{font-size:19px}
+}
+@media(max-width:390px){.grid-3,.article-grid,.map-grid{grid-template-columns:1fr}.stat-pill.points{display:none}.exercise-head{gap:6px}}
+
+/* Duolingo-like roadmap sidebar */
+.duolingo-sidebar{
+  background:linear-gradient(180deg,#fbfdff 0%,#f4f8ff 100%);
+  border:1px solid #e4ebf8;
+  border-radius:28px;
+  padding:16px;
+  box-shadow:0 18px 40px rgba(30,64,175,.08);
+}
+.duo-header-card{
+  background:linear-gradient(135deg,#1d4ed8 0%,#2563eb 50%,#7c3aed 100%);
+  color:#fff;
+  border-radius:24px;
+  padding:16px;
+  margin-bottom:16px;
+  box-shadow:0 16px 30px rgba(37,99,235,.25);
+}
+.duo-mini-label{
+  display:inline-block;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.22);
+}
+.duo-percentage-wrap{
+  display:flex;
+  gap:14px;
+  align-items:center;
+  margin-top:12px;
+}
+.duo-ring{
+  width:94px;height:94px;flex:none;border-radius:50%;
+  background:conic-gradient(#facc15 0 360deg,#ffffff26 360deg 360deg);
+  display:grid;place-items:center;
+  box-shadow:inset 0 0 0 3px rgba(255,255,255,.12);
+}
+.duo-ring-inner{
+  width:72px;height:72px;border-radius:50%;background:#fff;color:#1e3a8a;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-weight:900;
+}
+.duo-ring-inner span{font-size:18px;line-height:1}
+.duo-ring-inner small{font-size:10px;color:#64748b;margin-top:3px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+.duo-head-meta h3{margin:0 0 5px;font-size:20px;letter-spacing:-.03em}
+.duo-head-meta p{margin:0;color:#e5edff;font-size:12px;line-height:1.5}
+.duo-progress-line{
+  height:10px;border-radius:999px;background:rgba(255,255,255,.22);
+  margin-top:14px;overflow:hidden;border:1px solid rgba(255,255,255,.18)
+}
+.duo-progress-fill{
+  height:100%;width:0%;
+  background:linear-gradient(90deg,#facc15,#fde68a);
+  border-radius:999px;
+  transition:width .35s ease;
+}
+.duo-progress-caption{
+  display:flex;justify-content:space-between;gap:10px;
+  font-size:11px;font-weight:800;margin-top:8px;color:#eef4ff
+}
+.duo-stage{
+  position:relative;
+  background:#fff;
+  border:1px solid #e6edf8;
+  border-radius:24px;
+  padding:16px 14px 14px;
+  margin:0 0 14px;
+  box-shadow:0 10px 24px rgba(51,84,160,.07);
+}
+.duo-stage:before{
+  content:"";
+  position:absolute;left:26px;top:-14px;width:2px;height:14px;
+  background:linear-gradient(180deg,#bed6ff,#dbeafe);
+}
+.duo-stage:first-of-type:before{display:none}
+.duo-stage-top{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
+  margin-bottom:12px;
+}
+.duo-stage-kicker{
+  color:#7c8aa5;font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;
+}
+.duo-stage-title{
+  color:#1f3b73;font-size:18px;font-weight:900;letter-spacing:-.02em;margin-top:3px;
+}
+.duo-stars{
+  font-size:14px;
+  background:#fff8db;
+  border:1px solid #fde68a;
+  color:#c48a00;
+  border-radius:999px;
+  padding:6px 10px;
+  white-space:nowrap;
+  box-shadow:inset 0 -2px 0 rgba(250,204,21,.18);
+}
+.duo-stage-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.duo-stage-grid.trio .duo-node:last-child{
+  grid-column:1 / -1;
+}
+.duo-node{
+  display:flex;align-items:center;gap:10px;
+  min-height:62px;
+  border-radius:18px;
+  padding:10px 12px;
+  background:linear-gradient(180deg,#f8fbff 0%,#eef5ff 100%);
+  border:1px solid #dce9fb;
+  color:#40516f;
+  font-weight:850;
+  transition:.18s ease;
+  box-shadow:0 6px 14px rgba(59,130,246,.07);
+}
+.duo-node:hover{
+  transform:translateY(-2px);
+  border-color:#93c5fd;
+  background:linear-gradient(180deg,#ffffff 0%,#eff6ff 100%);
+  color:#1d4ed8;
+}
+.duo-node-num{
+  width:34px;height:34px;flex:none;border-radius:12px;
+  display:grid;place-items:center;
+  background:linear-gradient(180deg,#2563eb 0%,#1d4ed8 100%);
+  color:#fff;font-size:13px;font-weight:900;
+  box-shadow:0 5px 10px rgba(37,99,235,.24);
+}
+.duo-node-label{
+  font-size:13px;line-height:1.2;
+}
+.duo-node.done{
+  background:linear-gradient(180deg,#effdf6 0%,#dcfce7 100%);
+  border-color:#9ae6b4;
+  color:#166534;
+}
+.duo-node.done .duo-node-num{
+  background:linear-gradient(180deg,#22c55e 0%,#16a34a 100%);
+}
+@media(max-width:980px){
+  .duolingo-sidebar{padding:14px}
+  .duo-stage-grid,.duo-stage-grid.trio{grid-template-columns:1fr}
+  .duo-stage-grid.trio .duo-node:last-child{grid-column:auto}
+}
+@media(max-width:650px){
+  .duo-percentage-wrap{flex-direction:column;align-items:flex-start}
+  .duo-ring{width:84px;height:84px}
+  .duo-ring-inner{width:64px;height:64px}
+  .duo-stage-title{font-size:16px}
+  .duo-stage-top{flex-direction:column;align-items:flex-start}
+  .duo-stars{font-size:13px}
+}
+
+
+
+
+/* Stage sidebar + main stage circles + full-page exercise display */
+.layout{max-width:1500px;margin:auto;padding:0 22px 60px;display:grid;grid-template-columns:270px minmax(0,1fr);gap:22px;align-items:start}
+.stage-sidebar{
+  background:linear-gradient(180deg,#fbfdff 0%,#f3f7ff 100%);
+  border:1px solid #e2eaf8;border-radius:26px;padding:15px;box-shadow:0 16px 35px rgba(36,74,144,.09)
+}
+.duo-header-card{
+  border-radius:24px;background:linear-gradient(145deg,#1749a4 0%,#2563eb 58%,#7547d6 100%);
+  padding:16px;box-shadow:0 16px 32px rgba(37,99,235,.24)
+}
+.duo-ring{border-radius:50%;border:4px solid rgba(255,255,255,.24);box-shadow:0 0 0 5px rgba(255,255,255,.08),inset 0 0 0 2px rgba(255,255,255,.15)}
+.duo-ring-inner{border-radius:50%;box-shadow:0 2px 9px rgba(12,35,83,.15)}
+.stage-nav-btn{
+  width:100%;display:flex;align-items:center;gap:11px;text-align:left;
+  border:1px solid #e4ebf7;background:#fff;border-radius:18px;padding:12px 13px;
+  color:#395178;margin:0 0 10px;cursor:pointer;transition:.18s;
+  box-shadow:0 6px 16px rgba(43,73,136,.05)
+}
+.stage-nav-btn:hover{transform:translateY(-2px);border-color:#a8cbff;background:#f6faff}
+.stage-nav-btn.active{background:#edf5ff;border-color:#7fb1ff;color:#1d4ed8}
+.stage-nav-icon{
+  width:38px;height:38px;flex:none;border-radius:50%;display:grid;place-items:center;
+  background:linear-gradient(145deg,#e8f1ff,#dbeafe);font-size:20px;font-weight:900;color:#2563eb
+}
+.stage-nav-btn.active .stage-nav-icon{
+  background:linear-gradient(145deg,#60a5fa,#2563eb);color:#fff
+}
+.stage-nav-copy strong{display:block;font-size:15px;font-weight:900}
+.stage-nav-copy small{display:block;font-size:11px;color:#7a8aa5;font-weight:750}
+
+.stage-screen{
+  display:none;
+  position:relative;
+  padding:28px 24px 34px;
+  border-radius:28px;
+  border:1px solid #dfe8f6;
+  background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);
+  box-shadow:0 16px 34px rgba(33,69,135,.08);
+  margin:0 0 22px;
+}
+.stage-screen.active-stage-screen{display:block;animation:exerciseReveal .28s ease both}
+.stage-screen-head{text-align:center;margin-bottom:18px}
+.stage-screen-mini{
+  display:inline-flex;padding:6px 12px;border-radius:999px;
+  background:#eaf1ff;color:#2864c7;font-size:11px;font-weight:900;letter-spacing:.12em
+}
+.stage-screen h2{
+  margin:11px 0 5px;font-size:30px;letter-spacing:-.03em;color:#20396d
+}
+.stage-screen p{margin:0;color:#6f7e98;font-size:14px}
+.stage-stars-row{
+  text-align:center;color:#f4b530;font-size:21px;letter-spacing:4px;font-weight:900;margin-bottom:24px
+}
+.stage-stars-row .star-off{color:#d7dee9}
+.lesson-circles-row{
+  display:flex;flex-wrap:wrap;gap:26px 20px;min-height:210px;
+  align-items:flex-start
+}
+.lesson-circles-row.right{justify-content:flex-start}
+.lesson-circles-row.left{justify-content:flex-start}
+.lesson-circles-row.right .lesson-circle:nth-child(1){margin-left:0}
+.lesson-circles-row.right .lesson-circle:nth-child(2){margin-left:48px}
+.lesson-circles-row.right .lesson-circle:nth-child(3){margin-left:96px}
+.lesson-circles-row.right .lesson-circle:nth-child(4){margin-left:144px}
+.lesson-circles-row.left .lesson-circle:nth-child(1){margin-left:144px}
+.lesson-circles-row.left .lesson-circle:nth-child(2){margin-left:96px}
+.lesson-circles-row.left .lesson-circle:nth-child(3){margin-left:48px}
+.lesson-circles-row.left .lesson-circle:nth-child(4){margin-left:0}
+.lesson-circles-row.small-set.right .lesson-circle:nth-child(1){margin-left:60px}
+.lesson-circles-row.small-set.right .lesson-circle:nth-child(2){margin-left:130px}
+.lesson-circles-row.small-set.right .lesson-circle:nth-child(3){margin-left:200px}
+.lesson-circles-row.small-set.left .lesson-circle:nth-child(1){margin-left:200px}
+.lesson-circles-row.small-set.left .lesson-circle:nth-child(2){margin-left:130px}
+.lesson-circles-row.small-set.left .lesson-circle:nth-child(3){margin-left:60px}
+.lesson-circle{
+  width:150px;min-height:175px;border:0;background:transparent;padding:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  text-align:center;cursor:pointer;transition:transform .18s
+}
+.lesson-circle:hover{transform:translateY(-5px)}
+.circle-icon{
+  width:98px;height:98px;border-radius:50%;display:grid;place-items:center;
+  background:linear-gradient(145deg,#e6eefb,#f3f6fb);border:6px solid #d8dde6;
+  box-shadow:0 6px 0 #cfd6e0,0 12px 22px rgba(62,84,122,.08);
+  font-size:38px;color:#8393aa;transition:.18s
+}
+.circle-title{
+  margin-top:14px;font-size:13px;font-weight:900;color:#394251;line-height:1.25
+}
+.circle-sub{
+  margin-top:3px;font-size:12px;font-weight:800;color:#8f9aa9
+}
+.lesson-circle.active .circle-icon,
+.lesson-circle.done .circle-icon{
+  background:linear-gradient(145deg,#49a4ff,#1c74df);
+  border-color:#7cc4ff;color:#fff;box-shadow:0 6px 0 #1a64bd,0 12px 22px rgba(28,116,223,.22)
+}
+.lesson-circle.active .circle-title,
+.lesson-circle.done .circle-title{color:#214579}
+.lesson-circle.done .circle-icon{
+  background:linear-gradient(145deg,#5edc8e,#17a65b);
+  border-color:#a8eec0;box-shadow:0 6px 0 #12854a,0 12px 22px rgba(23,166,91,.18)
+}
+.lesson-circle.done .circle-sub{color:#1f8b56}
+.lesson-circle.locked .circle-icon{
+  background:linear-gradient(145deg,#eeeeef,#dddddf);border-color:#e6e6e8;color:#b3b8c1;
+  box-shadow:0 6px 0 #d6d8dc,0 12px 22px rgba(80,88,100,.05)
+}
+.lesson-circle.locked .circle-title{color:#6e7683}
+.lesson-circle.locked .circle-sub{color:#a0a7b2}
+
+.exercise{
+  display:none!important;
+  max-width:none!important;
+  width:100%;
+}
+.exercise.active-exercise{
+  display:block!important;
+  animation:exerciseReveal .28s ease both
+}
+.exercise-head{position:sticky;top:72px;background:#fff;padding-bottom:12px;z-index:5}
+.exercise-back{
+  display:inline-flex;align-items:center;gap:8px;margin:0 0 12px;
+  border:1px solid #d9e5f6;background:#f6faff;color:#225cbd;
+  border-radius:12px;padding:8px 12px;font-size:13px;font-weight:850;cursor:pointer
+}
+.exercise-back:hover{background:#edf5ff}
+.stage-screen-hidden{display:none!important}
+
+@keyframes exerciseReveal{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+@media(max-width:1100px){
+  .lesson-circles-row.right .lesson-circle:nth-child(n),
+  .lesson-circles-row.left .lesson-circle:nth-child(n),
+  .lesson-circles-row.small-set.right .lesson-circle:nth-child(n),
+  .lesson-circles-row.small-set.left .lesson-circle:nth-child(n){margin-left:0}
+  .lesson-circles-row{justify-content:center}
+}
+@media(max-width:980px){
+  .layout{grid-template-columns:1fr}
+  .stage-sidebar{position:relative;top:auto;max-height:none}
+  .exercise-head{top:0}
+}
+@media(max-width:650px){
+  .layout{padding:0 12px 40px;gap:12px}
+  .stage-screen{padding:20px 14px 24px;border-radius:22px}
+  .stage-screen h2{font-size:24px}
+  .stage-stars-row{font-size:18px;letter-spacing:2px}
+  .lesson-circle{width:128px;min-height:162px}
+  .circle-icon{width:86px;height:86px;font-size:33px;border-width:5px}
+  .circle-title{font-size:12px}
+}
+
+
+/* Vertical stage roadmap */
+.stage-sidebar{
+  display:block !important;
+  overflow:visible !important;
+}
+.stage-sidebar .stage-nav-btn{
+  display:flex;
+  width:100%;
+  margin:0 0 10px;
+}
+.lesson-circles-row,
+.lesson-circles-row.right,
+.lesson-circles-row.left{
+  display:flex;
+  flex-direction:column;
+  flex-wrap:nowrap;
+  align-items:center;
+  justify-content:flex-start;
+  gap:22px;
+  min-height:0;
+}
+.lesson-circles-row .lesson-circle,
+.lesson-circles-row.right .lesson-circle,
+.lesson-circles-row.left .lesson-circle,
+.lesson-circles-row.small-set .lesson-circle{
+  margin-left:0 !important;
+}
+@media(max-width:980px){
+  .stage-sidebar{display:block !important;overflow:visible !important}
+  .stage-sidebar .stage-nav-btn{flex:none;width:100%}
+}
+
+
+/* Fullscreen stage view */
+.stage-screen.fullscreen-stage{
+  position:fixed !important; inset:0 !important; z-index:50;
+  width:100vw; height:100vh; max-height:100vh; overflow-y:auto;
+  margin:0 !important; border-radius:0 !important; padding:32px clamp(18px,5vw,80px) 60px !important;
+  background:linear-gradient(180deg,#fff 0%,#f5f8ff 100%);
+}
+.stage-screen.fullscreen-stage .stage-screen-head{padding-top:18px}
+.stage-fullscreen-close{position:fixed;top:18px;right:22px;z-index:60;border:1px solid #d9e5f6;background:#fff;color:#225cbd;border-radius:12px;padding:9px 14px;font-weight:850;box-shadow:0 6px 16px rgba(33,69,135,.12)}
+body.stage-fullscreen-open{overflow:hidden}
+
+
+/* Clean landing page: show only the five stages */
+.layout{
+  max-width:100%;
+  margin:0 auto;
+  padding:28px 20px 50px;
+  display:block;
+}
+.main{
+  width:100%;
+  max-width:860px;
+  margin:0 auto;
+}
+.stage-home{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:14px;
+  width:min(100%,620px);
+  margin:3vh auto 0;
+  padding:8px 0;
+}
+.stage-home .stage-nav-btn{
+  width:100%;
+  min-height:82px;
+  margin:0;
+  padding:16px 20px;
+  border-radius:20px;
+}
+.stage-home .stage-nav-icon{
+  width:48px;
+  height:48px;
+  font-size:22px;
+}
+.stage-home .stage-nav-copy strong{font-size:17px}
+.stage-home .stage-nav-copy small{font-size:12px}
+.stage-screen{display:none}
+.stage-screen.active-stage-screen{display:block}
+@media(max-width:650px){
+  .layout{padding:16px 12px 32px}
+  .stage-home{margin:1vh auto 0;gap:11px}
+  .stage-home .stage-nav-btn{min-height:74px;padding:13px 15px}
+  .stage-home .stage-nav-icon{width:42px;height:42px;font-size:20px}
+}
+
+
+/* Stage accordion: exercise tiles appear horizontally below the selected stage */
+.stage-home{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:13px;
+  width:min(100%, 900px);
+  margin:3vh auto 0;
+  padding:8px 0 30px;
+}
+.stage-item{
+  width:100%;
+  border-radius:22px;
+}
+.stage-home .stage-nav-btn{
+  width:100%;
+  min-height:76px;
+  margin:0;
+  padding:13px 18px;
+  border:1px solid #e1e9f7;
+  border-radius:20px;
+  background:rgba(255,255,255,.96);
+  box-shadow:0 7px 20px rgba(43,73,136,.055);
+  transition:background .2s ease,border-color .2s ease,box-shadow .2s ease,border-radius .2s ease;
+}
+.stage-home .stage-nav-btn:hover{
+  transform:translateY(-1px);
+  border-color:#b7d0fb;
+  background:#fff;
+}
+.stage-home .stage-item.is-open .stage-nav-btn{
+  border-color:#8dbbff;
+  border-radius:20px 20px 13px 13px;
+  background:linear-gradient(100deg,#f6faff,#fff);
+  box-shadow:0 5px 15px rgba(37,99,235,.07);
+}
+.stage-home .stage-nav-icon{
+  width:44px;height:44px;font-size:20px;
+}
+.stage-home .stage-nav-copy strong{font-size:16px}
+.stage-home .stage-nav-copy small{font-size:11px}
+.stage-screen{
+  display:none;
+  width:100%;
+  position:relative;
+  margin:0;
+  padding:17px 18px 19px;
+  border:1px solid #dce8fa;
+  border-top:0;
+  border-radius:0 0 20px 20px;
+  background:linear-gradient(180deg,#fff 0%,#f9fbff 100%);
+  box-shadow:0 10px 22px rgba(43,73,136,.055);
+  animation:exerciseReveal .22s ease both;
+}
+.stage-screen.active-stage-screen{display:block}
+.stage-screen .stage-screen-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:6px 12px;
+  margin:0 0 10px;
+  text-align:left;
+}
+.stage-screen .stage-screen-mini{
+  display:none;
+}
+.stage-screen h2{
+  margin:0;
+  font-size:15px;
+  letter-spacing:0;
+  color:#40577d;
+}
+.stage-screen p{
+  margin:0;
+  font-size:11px;
+  color:#8492a8;
+}
+.stage-screen .stage-stars-row{
+  text-align:right;
+  font-size:14px;
+  letter-spacing:2px;
+  margin:0 0 12px;
+}
+.lesson-circles-row,
+.lesson-circles-row.right,
+.lesson-circles-row.left,
+.lesson-circles-row.small-set{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  align-items:stretch;
+  justify-content:stretch;
+  gap:11px;
+  min-height:0;
+}
+.lesson-circles-row .lesson-circle,
+.lesson-circles-row.right .lesson-circle,
+.lesson-circles-row.left .lesson-circle,
+.lesson-circles-row.small-set .lesson-circle{
+  width:100%;
+  min-width:0;
+  min-height:132px;
+  margin:0 !important;
+  padding:12px 9px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid #e2eaf6;
+  border-radius:17px;
+  background:#fff;
+  box-shadow:0 5px 14px rgba(51,84,160,.055);
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+}
+.lesson-circles-row .lesson-circle:hover{
+  transform:translateY(-3px);
+  border-color:#a8caff;
+  box-shadow:0 9px 18px rgba(37,99,235,.10);
+}
+.lesson-circles-row .circle-icon{
+  width:54px;height:54px;
+  border-width:4px;
+  font-size:25px;
+  box-shadow:0 4px 0 #d3dce9,0 7px 13px rgba(62,84,122,.07);
+}
+.lesson-circles-row .circle-title{
+  margin-top:9px;
+  min-height:30px;
+  font-size:12px;
+  line-height:1.25;
+  color:#3f5273;
+}
+.lesson-circles-row .circle-sub{
+  margin-top:4px;
+  font-size:10px;
+}
+.lesson-circles-row .lesson-circle.done{
+  border-color:#a6e7c2;
+  background:#f5fff9;
+}
+.lesson-circles-row .lesson-circle.done .circle-sub{
+  color:#168653;
+}
+@media(max-width:720px){
+  .stage-home{width:100%;gap:11px;margin:1vh auto 0}
+  .stage-home .stage-nav-btn{min-height:70px;padding:12px 14px}
+  .stage-screen{padding:14px 12px 15px}
+  .lesson-circles-row,
+  .lesson-circles-row.right,
+  .lesson-circles-row.left,
+  .lesson-circles-row.small-set{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:9px;
+  }
+  .lesson-circles-row .lesson-circle,
+  .lesson-circles-row.right .lesson-circle,
+  .lesson-circles-row.left .lesson-circle,
+  .lesson-circles-row.small-set .lesson-circle{
+    min-height:120px;
+  }
+}
+@media(max-width:380px){
+  .lesson-circles-row,
+  .lesson-circles-row.right,
+  .lesson-circles-row.left,
+  .lesson-circles-row.small-set{
+    grid-template-columns:1fr 1fr;
+  }
+  .lesson-circles-row .circle-icon{width:48px;height:48px}
+  .lesson-circles-row .circle-title{font-size:11px}
+}
+
+
+/* Professional matching exercise — Übung 1 */
+#u1 .instruction{
+  border:1px solid #dce9ff;
+  background:linear-gradient(135deg,#f3f8ff,#f8f6ff);
+  color:#36527d;
+  padding:13px 16px;
+  border-radius:15px;
+}
+#u1 .match-progress-card{
+  margin:0 0 16px;
+  padding:15px 17px;
+  border:1px solid #e3ebf8;
+  border-radius:18px;
+  background:linear-gradient(135deg,#fbfdff 0%,#f3f7ff 100%);
+  box-shadow:0 7px 18px rgba(42,75,135,.05);
+}
+#u1 .match-progress-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:12px;
+  margin-bottom:11px;
+}
+#u1 .match-progress-copy{display:grid;gap:3px}
+#u1 .match-progress-kicker{
+  color:#8293ad;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.13em;
+}
+#u1 .match-progress-copy strong{
+  color:#2b426a;
+  font-size:14px;
+  font-weight:900;
+}
+#u1 .match-progress-status{
+  color:#7184a3;
+  font-size:11px;
+  font-weight:800;
+  text-align:right;
+}
+#u1 .match-progress-track{
+  height:9px;
+  overflow:hidden;
+  border-radius:20px;
+  background:#e4ebf6;
+  box-shadow:inset 0 1px 2px rgba(36,61,105,.07);
+}
+#u1 .match-progress-track span{
+  display:block;
+  width:0%;
+  height:100%;
+  border-radius:20px;
+  background:linear-gradient(90deg,#347ff0,#5b9df4,#8a69df);
+  transition:width .35s ease;
+}
+#u1 .match-columns.match-columns-pro{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  align-items:start;
+  gap:14px;
+}
+#u1 .match-panel{
+  min-width:0;
+  padding:12px;
+  border:1px solid #e4ebf6;
+  border-radius:19px;
+  background:#f9fbff;
+}
+#u1 .match-panel-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:2px 2px 11px;
+  margin-bottom:10px;
+  border-bottom:1px solid #e8eef8;
+}
+#u1 .match-panel-head > div{display:grid;gap:2px}
+#u1 .match-panel-eyebrow{
+  color:#93a1b7;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.13em;
+}
+#u1 .match-panel-head h4{
+  margin:0;
+  color:#304a73;
+  font-size:16px;
+  font-weight:900;
+}
+#u1 .match-panel-count{
+  flex:none;
+  padding:5px 8px;
+  border-radius:999px;
+  color:#55709a;
+  background:#edf3ff;
+  font-size:10px;
+  font-weight:850;
+}
+#u1 .match-col{display:grid;gap:7px}
+#u1 .match-btn.match-btn-pro{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  width:100%;
+  min-height:47px;
+  padding:8px 10px;
+  border:1px solid #e0e8f4;
+  border-radius:13px;
+  background:#fff;
+  color:#344b70;
+  text-align:left;
+  font-size:12.5px;
+  font-weight:850;
+  line-height:1.25;
+  box-shadow:0 2px 5px rgba(39,67,117,.025);
+  transition:background .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+#u1 .match-btn.match-btn-pro:hover:not(.matched){
+  transform:translateY(-1px);
+  border-color:#a9c9fb;
+  background:#fafdff;
+  box-shadow:0 5px 12px rgba(47,111,206,.08);
+}
+#u1 .match-btn-pro .match-label{flex:1;min-width:0}
+#u1 .match-btn-pro .match-symbol{
+  display:grid;
+  place-items:center;
+  flex:none;
+  width:29px;
+  height:29px;
+  border-radius:10px;
+  background:#f0f5ff;
+  font-size:16px;
+}
+#u1 .match-btn-pro .small-ar{
+  font-family:Tahoma,Arial,sans-serif;
+  font-size:14px;
+  font-weight:850;
+}
+#u1 .match-btn-pro[dir="rtl"]{text-align:right}
+#u1 .match-btn.match-btn-pro.active{
+  outline:none;
+  border-color:#4e91f4;
+  background:linear-gradient(135deg,#edf5ff,#f5f8ff);
+  color:#205bb4;
+  box-shadow:0 0 0 3px rgba(65,137,235,.13);
+}
+#u1 .match-btn-pro.active .match-symbol{background:#dceaff}
+#u1 .match-btn.match-btn-pro.matched{
+  border-color:#9cddba;
+  background:linear-gradient(135deg,#effdf5,#e7f9ef);
+  color:#18734d;
+  opacity:1;
+  box-shadow:none;
+  cursor:default;
+}
+#u1 .match-btn-pro.matched .match-symbol{display:none}
+#u1 .match-btn-pro.matched::after{
+  content:"✓";
+  display:grid;
+  place-items:center;
+  flex:none;
+  width:25px;
+  height:25px;
+  border-radius:50%;
+  background:#d2f4df;
+  color:#16804e;
+  font-size:14px;
+  font-weight:950;
+}
+#u1 .match-btn.match-btn-pro.wrong{
+  border-color:#ee9a9a;
+  background:#fff1f1;
+  color:#b43c49;
+  animation:matchNudge .24s ease;
+}
+#u1 .match-btn-pro:focus-visible{
+  outline:3px solid rgba(48,126,231,.28);
+  outline-offset:2px;
+}
+#u1 .btn-row{justify-content:space-between}
+@keyframes matchNudge{
+  0%,100%{transform:translateX(0)}
+  30%{transform:translateX(-3px)}
+  70%{transform:translateX(3px)}
+}
+@media(max-width:650px){
+  #u1 .match-columns.match-columns-pro{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  #u1 .match-panel{padding:8px;border-radius:15px}
+  #u1 .match-panel-head{align-items:flex-start;flex-direction:column;gap:5px;padding-bottom:8px}
+  #u1 .match-panel-head h4{font-size:14px}
+  #u1 .match-panel-count{font-size:9px;padding:4px 7px}
+  #u1 .match-btn.match-btn-pro{min-height:43px;padding:7px 7px;font-size:11px;gap:5px}
+  #u1 .match-btn-pro .match-symbol{width:24px;height:24px;border-radius:8px;font-size:14px}
+  #u1 .match-btn-pro .small-ar{font-size:12px}
+  #u1 .match-progress-card{padding:12px}
+  #u1 .match-progress-top{align-items:flex-start;flex-direction:column;gap:5px}
+  #u1 .match-progress-status{text-align:left}
+}
+@media(max-width:360px){
+  #u1 .match-columns.match-columns-pro{gap:6px}
+  #u1 .match-panel{padding:6px}
+  #u1 .match-btn.match-btn-pro{font-size:10px;padding:6px 5px}
+  #u1 .match-btn-pro .match-symbol{width:21px;height:21px;font-size:12px}
+  #u1 .match-btn-pro .small-ar{font-size:11px}
+}
+
+
+/* Smooth feedback reveal; checking never navigates away from the exercise */
+.exercise .feedback.show{
+  animation: feedbackReveal .24s ease-out both;
+}
+@keyframes feedbackReveal{
+  from{opacity:0;transform:translateY(6px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+
+/* Übung 3 — polished translation quiz */
+#u3 .instruction{
+  border:1px solid #e7defb;
+  background:linear-gradient(135deg,#f8f5ff 0%,#f2f6ff 100%);
+  color:#554779;
+  padding:13px 16px;
+  border-radius:15px;
+}
+#u3 .quiz-overview{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:18px;
+  margin:0 0 16px;
+  padding:15px 17px;
+  border:1px solid #e7e2f5;
+  border-radius:18px;
+  background:linear-gradient(120deg,#fcfbff 0%,#f5f7ff 100%);
+  box-shadow:0 7px 18px rgba(79,62,132,.05);
+}
+#u3 .quiz-overview-copy{display:grid;gap:3px;min-width:0}
+#u3 .quiz-overview-kicker{
+  color:#9a8bbd;
+  font-size:9px;
+  font-weight:950;
+  letter-spacing:.15em;
+}
+#u3 .quiz-overview-copy strong{
+  color:#3c3860;
+  font-size:14px;
+  font-weight:900;
+}
+#u3 .quiz-overview-copy small{
+  color:#8993a8;
+  font-size:11px;
+  font-weight:650;
+}
+#u3 .quiz-progress{width:min(220px,38%);display:grid;gap:7px}
+#u3 .quiz-progress > span{
+  color:#71658e;
+  text-align:right;
+  font-size:11px;
+  font-weight:850;
+}
+#u3 .quiz-progress-track{
+  height:8px;
+  overflow:hidden;
+  border-radius:20px;
+  background:#e8e5f1;
+}
+#u3 .quiz-progress-track span{
+  display:block;
+  width:0%;
+  height:100%;
+  border-radius:20px;
+  background:linear-gradient(90deg,#8a65dc,#5c91e8);
+  transition:width .3s ease;
+}
+#u3 .quiz-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:13px;
+}
+#u3 .quiz-question{
+  display:flex;
+  flex-direction:column;
+  gap:13px;
+  min-width:0;
+  margin:0;
+  padding:15px;
+  border:1px solid #e5e9f3;
+  border-radius:18px;
+  background:linear-gradient(180deg,#fff 0%,#fcfcff 100%);
+  box-shadow:0 5px 14px rgba(51,65,110,.045);
+  transition:border-color .2s ease,background .2s ease,box-shadow .2s ease;
+}
+#u3 .quiz-question-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding-bottom:10px;
+  border-bottom:1px solid #edf0f6;
+}
+#u3 .quiz-number{
+  display:grid;
+  place-items:center;
+  flex:none;
+  width:30px;
+  height:30px;
+  border-radius:10px;
+  background:#f0ebfc;
+  color:#7958c5;
+  font-size:11px;
+  font-weight:950;
+}
+#u3 .quiz-question .q-label{
+  margin:0;
+  color:#405579;
+  font-size:15px;
+  font-weight:900;
+  text-align:right;
+}
+#u3 .quiz-options{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+#u3 .quiz-option{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+  min-height:43px;
+  padding:9px 10px;
+  border:1px solid #e2e7f1;
+  border-radius:12px;
+  background:#fff;
+  color:#405273;
+  font-size:12px;
+  font-weight:800;
+  line-height:1.3;
+  cursor:pointer;
+  transition:border-color .16s ease,background .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+#u3 .quiz-option:hover{
+  border-color:#b9a6e9;
+  background:#fbf9ff;
+  transform:translateY(-1px);
+}
+#u3 .quiz-option input{
+  width:16px;
+  height:16px;
+  flex:none;
+  margin:0;
+  accent-color:#805bd1;
+  cursor:pointer;
+}
+#u3 .quiz-option:has(input:checked){
+  border-color:#9879df;
+  background:#f4efff;
+  color:#5b4098;
+  box-shadow:0 0 0 2px rgba(137,103,211,.09);
+}
+#u3 .quiz-question.correct{
+  border-color:#9bdab8;
+  background:linear-gradient(180deg,#fbfffc 0%,#f1fcf5 100%);
+}
+#u3 .quiz-question.incorrect{
+  border-color:#efb0b0;
+  background:linear-gradient(180deg,#fff 0%,#fff8f8 100%);
+}
+#u3 .quiz-option.option-correct{
+  border-color:#8bd3a8;
+  background:#eafaf0;
+  color:#176c46;
+}
+#u3 .quiz-option.option-wrong{
+  border-color:#e99a9a;
+  background:#fff0f0;
+  color:#ad3945;
+}
+#u3 .quiz-question.correct .quiz-number{
+  background:#d9f5e4;
+  color:#16804d;
+}
+#u3 .quiz-question.incorrect .quiz-number{
+  background:#ffe2e2;
+  color:#b3454c;
+}
+#u3 .btn-row{justify-content:flex-start}
+@media(max-width:760px){
+  #u3 .quiz-grid{grid-template-columns:1fr;gap:10px}
+}
+@media(max-width:520px){
+  #u3 .quiz-overview{align-items:stretch;flex-direction:column;gap:12px;padding:13px}
+  #u3 .quiz-progress{width:100%}
+  #u3 .quiz-progress > span{text-align:left}
+  #u3 .quiz-question{padding:13px;border-radius:16px}
+  #u3 .quiz-options{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  #u3 .quiz-option{min-height:42px;padding:8px;font-size:11.5px}
+}
+@media(max-width:360px){
+  #u3 .quiz-options{grid-template-columns:1fr}
+}
+
+
+@media(max-width:520px){
+  #u3 .exercise-head{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    align-items:center;
+    gap:10px;
+  }
+  #u3 .exercise-head .exercise-back{
+    grid-column:1 / -1;
+    justify-self:start;
+    margin:0;
+  }
+  #u3 .exercise-head .exercise-title-wrap{
+    grid-column:1;
+    grid-row:2;
+    min-width:0;
+    gap:9px;
+  }
+  #u3 .exercise-head .exercise-title-wrap h3{
+    font-size:17px;
+    overflow-wrap:anywhere;
+  }
+  #u3 .exercise-head .exercise-num{
+    grid-column:2;
+    grid-row:2;
+    align-self:start;
+  }
+}
+
+
+/* Übung 9 — clean adjective-opposites challenge without pictorial hints */
+#u9 .instruction{
+  border:1px solid #e3e9f5;
+  background:linear-gradient(135deg,#f7f9fd,#f4f6fb);
+  color:#465675;
+  padding:13px 16px;
+  border-radius:15px;
+}
+#u9 .opposites-head{align-items:flex-start}
+#u9 .opposites-title{align-items:flex-start;gap:0}
+#u9 .opposites-kicker{
+  display:block;
+  margin-bottom:4px;
+  color:#8a96aa;
+  font-size:9px;
+  font-weight:950;
+  letter-spacing:.14em;
+}
+#u9 .opposites-title h3{color:#2e405f}
+#u9 .opposites-progress-card{
+  margin:0 0 16px;
+  padding:15px 17px;
+  border:1px solid #e3e9f3;
+  border-radius:18px;
+  background:linear-gradient(135deg,#fbfcff 0%,#f4f7fc 100%);
+  box-shadow:0 7px 18px rgba(41,61,99,.045);
+}
+#u9 .opposites-progress-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:12px;
+  margin-bottom:11px;
+}
+#u9 .opposites-progress-copy{display:grid;gap:3px}
+#u9 .opposites-progress-kicker{
+  color:#8a98ad;
+  font-size:9px;
+  font-weight:950;
+  letter-spacing:.14em;
+}
+#u9 .opposites-progress-copy strong{
+  color:#344765;
+  font-size:14px;
+  font-weight:900;
+}
+#u9 .opposites-progress-status{
+  color:#78869d;
+  font-size:11px;
+  font-weight:800;
+  text-align:right;
+}
+#u9 .opposites-progress-track{
+  height:8px;
+  overflow:hidden;
+  border-radius:20px;
+  background:#e6ebf3;
+}
+#u9 .opposites-progress-track span{
+  display:block;
+  width:0%;
+  height:100%;
+  border-radius:20px;
+  background:linear-gradient(90deg,#6485c8,#7c91b9);
+  transition:width .3s ease;
+}
+#u9 .opposites-board{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+#u9 .opposites-column{
+  min-width:0;
+  padding:12px;
+  border:1px solid #e5eaf2;
+  border-radius:18px;
+  background:#f9fbfe;
+}
+#u9 .opposites-column-head{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:2px 2px 12px;
+  margin-bottom:9px;
+  border-bottom:1px solid #e8edf4;
+}
+#u9 .opposites-column-index{
+  display:grid;
+  place-items:center;
+  width:31px;
+  height:31px;
+  flex:none;
+  border:1px solid #dce4f0;
+  border-radius:10px;
+  background:#fff;
+  color:#586c8c;
+  font-size:12px;
+  font-weight:950;
+}
+#u9 .opposites-column-kicker{
+  display:block;
+  color:#98a3b5;
+  font-size:9px;
+  font-weight:950;
+  letter-spacing:.13em;
+}
+#u9 .opposites-column-head h4{
+  margin:2px 0 0;
+  color:#344967;
+  font-size:14px;
+  font-weight:900;
+}
+#u9 .opposites-word{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  min-height:52px;
+  padding:10px 12px;
+  border:1px solid #dfe6f0;
+  border-radius:13px;
+  background:#fff;
+  color:#354968;
+  font-size:14px;
+  font-weight:850;
+  text-align:left;
+  box-shadow:0 2px 5px rgba(35,55,89,.025);
+  transition:background .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+#u9 .opposites-word:hover:not(.matched){
+  transform:translateY(-1px);
+  border-color:#aebfd8;
+  background:#fcfdff;
+  box-shadow:0 5px 12px rgba(48,70,107,.07);
+}
+#u9 .opposites-word-text{display:block;min-width:0;width:100%}
+#u9 .opposites-word.active{
+  outline:none;
+  border-color:#648bc8;
+  background:#eef4fd;
+  color:#2c5796;
+  box-shadow:0 0 0 3px rgba(91,132,193,.13);
+}
+#u9 .opposites-word.active .opposites-word-mark{
+  background:#dce8f8;
+  color:#456da8;
+}
+#u9 .opposites-word.matched{
+  border-color:#9bd7b6;
+  background:#effaf3;
+  color:#27704e;
+  opacity:1;
+  box-shadow:none;
+  cursor:default;
+}
+#u9 .opposites-word.matched .opposites-word-mark{
+  background:#d9f1e2;
+  color:#27704e;
+}
+#u9 .opposites-word.wrong{
+  border-color:#e5a0a0;
+  background:#fff2f2;
+  color:#ad4249;
+  animation:oppositesNudge .22s ease;
+}
+#u9 .opposites-actions{justify-content:space-between}
+#u9 .opposites-actions .secondary-btn,
+#u9 .opposites-actions .next-btn{min-width:130px}
+@keyframes oppositesNudge{
+  0%,100%{transform:translateX(0)}
+  30%{transform:translateX(-3px)}
+  70%{transform:translateX(3px)}
+}
+@media(max-width:560px){
+  #u9 .opposites-board{gap:8px}
+  #u9 .opposites-column{padding:8px;border-radius:15px}
+  #u9 .opposites-column-head{gap:7px;padding-bottom:9px}
+  #u9 .opposites-column-index{width:27px;height:27px;border-radius:8px}
+  #u9 .opposites-column-head h4{font-size:12px}
+  #u9 .opposites-word{min-height:47px;padding:8px;font-size:12px;gap:5px}
+    #u9 .opposites-progress-card{padding:12px}
+  #u9 .opposites-progress-top{align-items:flex-start;flex-direction:column;gap:5px}
+  #u9 .opposites-progress-status{text-align:left}
+  #u9 .opposites-actions .secondary-btn,
+  #u9 .opposites-actions .next-btn{min-width:0;flex:1}
+}
+@media(max-width:350px){
+  #u9 .opposites-word{font-size:11px;padding:7px 6px}
+  }
+
+
+
+
+.mini-section-title{font-size:14px;font-weight:900;color:#334b86;margin:0 0 10px}
+.exercise .q-item{display:flex;flex-direction:column;gap:7px}
+.exercise .q-label{line-height:1.45}
+.exercise .field{font-size:14px}
+.writing-checklist{margin-top:12px;border:1px solid #dce8e2;background:#f4fbf7;border-radius:14px;padding:12px;color:#315b4d;font-size:13px;font-weight:750}
+.writing-checklist-title{font-weight:950;margin-bottom:7px;color:#1e6a50}
+.writing-check-item{padding:3px 0}
+</style>
+</head>
+<body>
+<div class="layout">
+  <main class="main">
+    <section aria-label="Stages" class="stage-home" id="stageHome">
+  <div class="stage-item" data-stage-item="stage1">
+      <button class="stage-nav-btn" data-show-stage="stage1" aria-expanded="false" type="button">
+        <span class="stage-nav-icon">①</span>
+        <span class="stage-nav-copy"><strong>Stage 1</strong><small>Gefühle</small></span>
+      </button>
+      <div class="stage-screen" data-stage-screen="stage1" id="stage-screen-stage1">
+        <div class="stage-screen-head">
+          <div class="stage-screen-mini">STAGE 1</div>
+          <h2>Gefühle</h2>
+          <p>4 Übungen · Wortschatz und Situationen</p>
+        </div>
+        <div class="stage-stars-row" data-stage-stars-panel="stage1">★ ★ ★ ★ ★</div>
+        <div class="lesson-circles-row right">
+          <button class="lesson-circle" data-open-exercise="u1" type="button">
+          <span class="circle-icon">🙂</span>
+          <span class="circle-title">Gefühle erkennen</span>
+          <span class="circle-sub">ابدأ</span>
+        </button><button class="lesson-circle" data-open-exercise="u2" type="button">
+          <span class="circle-icon">💬</span>
+          <span class="circle-title">Gefühle verbinden</span>
+          <span class="circle-sub">ابدأ</span>
+        </button><button class="lesson-circle" data-open-exercise="u3" type="button">
+          <span class="circle-icon">🔤</span>
+          <span class="circle-title">Synonyme</span>
+          <span class="circle-sub">ابدأ</span>
+        </button><button class="lesson-circle" data-open-exercise="u4" type="button">
+          <span class="circle-icon">🧩</span>
+          <span class="circle-title">Lückensätze</span>
+          <span class="circle-sub">ابدأ</span>
+        </button>
+        </div>
+      </div>
+    </div><div class="stage-item" data-stage-item="stage2">
+      <button class="stage-nav-btn" data-show-stage="stage2" aria-expanded="false" type="button">
+        <span class="stage-nav-icon">②</span>
+        <span class="stage-nav-copy"><strong>Stage 2</strong><small>Streetart</small></span>
+      </button>
+      <div class="stage-screen" data-stage-screen="stage2" id="stage-screen-stage2">
+        <div class="stage-screen-head">
+          <div class="stage-screen-mini">STAGE 2</div>
+          <h2>Streetart</h2>
+          <p>4 Übungen · Lesen, Meinungen und Grammatik</p>
+        </div>
+        <div class="stage-stars-row" data-stage-stars-panel="stage2">★ ★ ★ ★ ★</div>
+        <div class="lesson-circles-row left">
+          <button class="lesson-circle" data-open-exercise="u5" type="button">
+          <span class="circle-icon">🎨</span>
+          <span class="circle-title">Wortschatz</span>
+          <span class="circle-sub">ابدأ</span>
+        </button><button class="lesson-circle" data-open-exercise="u6" type="button">
+          <span class="circle-icon">📖</span>
+          <span class="circle-title">Blog lesen</span>
+          <span class="circle-sub">ابدأ</span>
+        </button><button class="lesson-circle" data-open-exercise="u7" type="button">
+          <span class="circle-icon">👍</span>
+          <span class="circle-title">Meinungen</span>
+          <span class="circle-sub">ابدأ</span>
+        </button><button class="lesson-circle" data-open-exercise="u8" type="button">
+          <span class="circle-icon">🧠</span>
+          <span class="circle-title">dies- & Possessivpronomen</span>
+          <span class="circle-sub">ابدأ</span>
+        </button>
+        </div>
+      </div>
+    </div><div class="stage-item" data-stage-item="stage3">
+      <button class="stage-nav-btn" data-show-stage="stage3" aria-expanded="false" type="button">
+        <span class="stage-nav-icon">③</span>
+        <span class="stage-nav-copy"><strong>Stage 3</strong><small>Reflexive Verben</small></span>
+      </button>
+      <div class="stage-screen" data-stage-screen="stage3" id="stage-screen-stage3">
+        <div class="stage-screen-head">
+          <div class="stage-screen-mini">STAGE 3</div>
+          <h2>Reflexive Verben</h2>
+          <p>3 Übungen · Pronomen und Satzbau</p>
+        </div>
+        <div class="stage-stars-row" data-stage-stars-panel="stage3">★ ★ ★ ★ ★</div>
+        <div class="lesson-circles-row right">
+          <button class="lesson-circle" data-open-exercise="u9" type="button">
+          <span class="circle-icon">🔁</span>
+          <span class="circle-title">Reflexivpronomen</span>
+          <span class="circle-sub">ابدأ</span>
+        </button><button class="lesson-circle" data-open-exercise="u10" type="button">
+          <span class="circle-icon">🗣️</span>
+          <span class="circle-title">Sätze ergänzen</span>
+          <span class="circle-sub">ابدأ</span>
+        </button><button class="lesson-circle" data-open-exercise="u11" type="button">
+          <span class="circle-icon">🔠</span>
+          <span class="circle-title">Wörter ordnen</span>
+          <span class="circle-sub">ابدأ</span>
+        </button>
+        </div>
+      </div>
+    </div><div class="stage-item" data-stage-item="stage4">
+      <button class="stage-nav-btn" data-show-stage="stage4" aria-expanded="false" type="button">
+        <span class="stage-nav-icon">④</span>
+        <span class="stage-nav-copy"><strong>Stage 4</strong><small>Imperativ & Zeit</small></span>
+      </button>
+      <div class="stage-screen" data-stage-screen="stage4" id="stage-screen-stage4">
+        <div class="stage-screen-head">
+          <div class="stage-screen-mini">STAGE 4</div>
+          <h2>Imperativ & Zeit</h2>
+          <p>3 Übungen · Aufforderungen und Kino</p>
+        </div>
+        <div class="stage-stars-row" data-stage-stars-panel="stage4">★ ★ ★ ★ ★</div>
+        <div class="lesson-circles-row left">
+          <button class="lesson-circle" data-open-exercise="u12" type="button">
+          <span class="circle-icon">📣</span>
+          <span class="circle-title">Imperativ</span>
+          <span class="circle-sub">ابدأ</span>
+        </button><button class="lesson-circle" data-open-exercise="u13" type="button">
+          <span class="circle-icon">🎬</span>
+          <span class="circle-title">Open-Air-Kino</span>
+          <span class="circle-sub">ابدأ</span>
+        </button><button class="lesson-circle" data-open-exercise="u14" type="button">
+          <span class="circle-icon">⏳</span>
+          <span class="circle-title">Zeitangaben</span>
+          <span class="circle-sub">ابدأ</span>
+        </button>
+        </div>
+      </div>
+    </div><div class="stage-item" data-stage-item="stage5">
+      <button class="stage-nav-btn" data-show-stage="stage5" aria-expanded="false" type="button">
+        <span class="stage-nav-icon">⑤</span>
+        <span class="stage-nav-copy"><strong>Stage 5</strong><small>Abschlusstest</small></span>
+      </button>
+      <div class="stage-screen" data-stage-screen="stage5" id="stage-screen-stage5">
+        <div class="stage-screen-head">
+          <div class="stage-screen-mini">STAGE 5</div>
+          <h2>Abschlusstest</h2>
+          <p>3 Übungen · Anwenden und überprüfen</p>
+        </div>
+        <div class="stage-stars-row" data-stage-stars-panel="stage5">★ ★ ★ ★ ★</div>
+        <div class="lesson-circles-row right">
+          <button class="lesson-circle" data-open-exercise="u15" type="button">
+          <span class="circle-icon">🔍</span>
+          <span class="circle-title">Reflexive Verben</span>
+          <span class="circle-sub">ابدأ</span>
+        </button><button class="lesson-circle" data-open-exercise="u16" type="button">
+          <span class="circle-icon">✍️</span>
+          <span class="circle-title">Schreiben</span>
+          <span class="circle-sub">ابدأ</span>
+        </button><button class="lesson-circle" data-open-exercise="u17" type="button">
+          <span class="circle-icon">🏆</span>
+          <span class="circle-title">Test</span>
+          <span class="circle-sub">ابدأ</span>
+        </button>
+        </div>
+      </div>
+    </div>
+</section>
+    <section class="exercise theme-blue" id="u1">
+      <div class="exercise-head">
+      <button class="exercise-back" data-back-to-stage type="button">رجوع للمرحلة</button>
+      <div class="exercise-title-wrap">
+        <div class="exercise-icon">🙂</div>
+        <div><h3>Gefühle erkennen</h3><div class="exercise-sub">Gefühle und Ausdrücke · Arbeitsblatt S. 1</div></div>
+      </div>
+      <span class="exercise-num">ÜBUNG 1</span>
+    </div>
+      <p class="instruction">Welche Gefühle passen zu den Gesichtern? Wähle das passende Wort.</p>
+      <div class="grid-2"><div class="q-item" data-field="g1">
+      <div class="q-label">1. 🙂</div>
+      <select class="field" name="g1"><option value="">— Bitte wählen —</option><option value="fröhlich">fröhlich</option><option value="traurig">traurig</option><option value="wütend">wütend</option><option value="überrascht">überrascht</option><option value="müde">müde</option></select>
+    </div><div class="q-item" data-field="g2">
+      <div class="q-label">2. 😢</div>
+      <select class="field" name="g2"><option value="">— Bitte wählen —</option><option value="fröhlich">fröhlich</option><option value="traurig">traurig</option><option value="wütend">wütend</option><option value="überrascht">überrascht</option><option value="müde">müde</option></select>
+    </div><div class="q-item" data-field="g3">
+      <div class="q-label">3. 😠</div>
+      <select class="field" name="g3"><option value="">— Bitte wählen —</option><option value="fröhlich">fröhlich</option><option value="traurig">traurig</option><option value="wütend">wütend</option><option value="überrascht">überrascht</option><option value="müde">müde</option></select>
+    </div><div class="q-item" data-field="g4">
+      <div class="q-label">4. 😲</div>
+      <select class="field" name="g4"><option value="">— Bitte wählen —</option><option value="fröhlich">fröhlich</option><option value="traurig">traurig</option><option value="wütend">wütend</option><option value="überrascht">überrascht</option><option value="müde">müde</option></select>
+    </div><div class="q-item" data-field="g5">
+      <div class="q-label">5. 😴</div>
+      <select class="field" name="g5"><option value="">— Bitte wählen —</option><option value="fröhlich">fröhlich</option><option value="traurig">traurig</option><option value="wütend">wütend</option><option value="überrascht">überrascht</option><option value="müde">müde</option></select>
+    </div></div>
+      <div class="btn-row">
+      <button class="primary-btn" data-check="u1" type="button">Antworten prüfen</button>
+      <button class="secondary-btn" data-reset="u1" type="button">Zurücksetzen</button>
+    </div>
+    <div class="feedback" id="fb-u1" role="status" aria-live="polite"></div>
+    </section><section class="exercise theme-gold" id="u2">
+      <div class="exercise-head">
+      <button class="exercise-back" data-back-to-stage type="button">رجوع للمرحلة</button>
+      <div class="exercise-title-wrap">
+        <div class="exercise-icon">💬</div>
+        <div><h3>Gefühle und Situationen</h3><div class="exercise-sub">Verbinde jedes Gefühl mit der passenden Aussage · S. 1</div></div>
+      </div>
+      <span class="exercise-num">ÜBUNG 2</span>
+    </div>
+      <p class="instruction">Wähle die Aussage, die am besten zum Gefühl passt.</p>
+      <div class="grid-2"><div class="q-item" data-field="m1">
+      <div class="q-label">1. fröhlich</div>
+      <select class="field" name="m1"><option value="">— Bitte wählen —</option><option value="a">Ich habe nicht genug geschlafen.</option><option value="b">Ich bin sehr glücklich.</option><option value="c">Ich habe etwas Unerwartetes gesehen.</option><option value="d">Ich bin nicht zufrieden.</option><option value="e">Ich habe ein Problem.</option></select>
+    </div><div class="q-item" data-field="m2">
+      <div class="q-label">2. traurig</div>
+      <select class="field" name="m2"><option value="">— Bitte wählen —</option><option value="a">Ich habe nicht genug geschlafen.</option><option value="b">Ich bin sehr glücklich.</option><option value="c">Ich habe etwas Unerwartetes gesehen.</option><option value="d">Ich bin nicht zufrieden.</option><option value="e">Ich habe ein Problem.</option></select>
+    </div><div class="q-item" data-field="m3">
+      <div class="q-label">3. wütend</div>
+      <select class="field" name="m3"><option value="">— Bitte wählen —</option><option value="a">Ich habe nicht genug geschlafen.</option><option value="b">Ich bin sehr glücklich.</option><option value="c">Ich habe etwas Unerwartetes gesehen.</option><option value="d">Ich bin nicht zufrieden.</option><option value="e">Ich habe ein Problem.</option></select>
+    </div><div class="q-item" data-field="m4">
+      <div class="q-label">4. überrascht</div>
+      <select class="field" name="m4"><option value="">— Bitte wählen —</option><option value="a">Ich habe nicht genug geschlafen.</option><option value="b">Ich bin sehr glücklich.</option><option value="c">Ich habe etwas Unerwartetes gesehen.</option><option value="d">Ich bin nicht zufrieden.</option><option value="e">Ich habe ein Problem.</option></select>
+    </div><div class="q-item" data-field="m5">
+      <div class="q-label">5. müde</div>
+      <select class="field" name="m5"><option value="">— Bitte wählen —</option><option value="a">Ich habe nicht genug geschlafen.</option><option value="b">Ich bin sehr glücklich.</option><option value="c">Ich habe etwas Unerwartetes gesehen.</option><option value="d">Ich bin nicht zufrieden.</option><option value="e">Ich habe ein Problem.</option></select>
+    </div></div>
+      <div class="btn-row">
+      <button class="primary-btn" data-check="u2" type="button">Antworten prüfen</button>
+      <button class="secondary-btn" data-reset="u2" type="button">Zurücksetzen</button>
+    </div>
+    <div class="feedback" id="fb-u2" role="status" aria-live="polite"></div>
+    </section><section class="exercise theme-purple" id="u3">
+      <div class="exercise-head">
+      <button class="exercise-back" data-back-to-stage type="button">رجوع للمرحلة</button>
+      <div class="exercise-title-wrap">
+        <div class="exercise-icon">🔤</div>
+        <div><h3>Synonyme</h3><div class="exercise-sub">Wortschatz · S. 1</div></div>
+      </div>
+      <span class="exercise-num">ÜBUNG 3</span>
+    </div>
+      <p class="instruction">Wähle für jedes Wort das passende Synonym. Nur eine Antwort ist richtig.</p>
+      <div class="grid-2"><div class="q-item" data-field="s1">
+      <div class="q-label">1. fröhlich</div>
+      <select class="field" name="s1"><option value="">— Bitte wählen —</option><option value="glücklich">glücklich</option><option value="traurig">traurig</option><option value="müde">müde</option></select>
+    </div><div class="q-item" data-field="s2">
+      <div class="q-label">2. traurig</div>
+      <select class="field" name="s2"><option value="">— Bitte wählen —</option><option value="wütend">wütend</option><option value="unglücklich">unglücklich</option><option value="überrascht">überrascht</option></select>
+    </div><div class="q-item" data-field="s3">
+      <div class="q-label">3. wütend</div>
+      <select class="field" name="s3"><option value="">— Bitte wählen —</option><option value="sauer">sauer</option><option value="glücklich">glücklich</option><option value="ruhig">ruhig</option></select>
+    </div><div class="q-item" data-field="s4">
+      <div class="q-label">4. überrascht</div>
+      <select class="field" name="s4"><option value="">— Bitte wählen —</option><option value="erstaunt">erstaunt</option><option value="müde">müde</option><option value="traurig">traurig</option></select>
+    </div><div class="q-item" data-field="s5">
+      <div class="q-label">5. müde</div>
+      <select class="field" name="s5"><option value="">— Bitte wählen —</option><option value="erschöpft">erschöpft</option><option value="wütend">wütend</option><option value="fröhlich">fröhlich</option></select>
+    </div></div>
+      <div class="btn-row">
+      <button class="primary-btn" data-check="u3" type="button">Antworten prüfen</button>
+      <button class="secondary-btn" data-reset="u3" type="button">Zurücksetzen</button>
+    </div>
+    <div class="feedback" id="fb-u3" role="status" aria-live="polite"></div>
+    </section><section class="exercise theme-mint" id="u4">
+      <div class="exercise-head">
+      <button class="exercise-back" data-back-to-stage type="button">رجوع للمرحلة</button>
+      <div class="exercise-title-wrap">
+        <div class="exercise-icon">🧩</div>
+        <div><h3>Lückensätze: Gefühle</h3><div class="exercise-sub">Sätze ergänzen · S. 1</div></div>
+      </div>
+      <span class="exercise-num">ÜBUNG 4</span>
+    </div>
+      <p class="instruction">Ergänze die Sätze mit: fröhlich, traurig, wütend, überrascht oder müde.</p>
+      <div class="grid-2"><div class="q-item" data-field="f1">
+      <div class="q-label">1. Ich bin ___, denn heute ist mein Geburtstag!</div>
+      <select class="field" name="f1"><option value="">— Bitte wählen —</option><option value="fröhlich">fröhlich</option><option value="traurig">traurig</option><option value="wütend">wütend</option><option value="überrascht">überrascht</option><option value="müde">müde</option></select>
+    </div><div class="q-item" data-field="f2">
+      <div class="q-label">2. Er ist ___, weil er eine schlechte Note bekommen hat.</div>
+      <select class="field" name="f2"><option value="">— Bitte wählen —</option><option value="fröhlich">fröhlich</option><option value="traurig">traurig</option><option value="wütend">wütend</option><option value="überrascht">überrascht</option><option value="müde">müde</option></select>
+    </div><div class="q-item" data-field="f3">
+      <div class="q-label">3. Wir sind ___, weil der Film so spannend war.</div>
+      <select class="field" name="f3"><option value="">— Bitte wählen —</option><option value="fröhlich">fröhlich</option><option value="traurig">traurig</option><option value="wütend">wütend</option><option value="überrascht">überrascht</option><option value="müde">müde</option></select>
+    </div><div class="q-item" data-field="f4">
+      <div class="q-label">4. Sie ist ___, denn sie hat lange gelernt.</div>
+      <select class="field" name="f4"><option value="">— Bitte wählen —</option><option value="fröhlich">fröhlich</option><option value="traurig">traurig</option><option value="wütend">wütend</option><option value="überrascht">überrascht</option><option value="müde">müde</option></select>
+    </div><div class="q-item" data-field="f5">
+      <div class="q-label">5. Ich bin ___, weil ich das nicht finde.</div>
+      <select class="field" name="f5"><option value="">— Bitte wählen —</option><option value="fröhlich">fröhlich</option><option value="traurig">traurig</option><option value="wütend">wütend</option><option value="überrascht">überrascht</option><option value="müde">müde</option></select>
+    </div></div>
+      <div class="btn-row">
+      <button class="primary-btn" data-check="u4" type="button">Antworten prüfen</button>
+      <button class="secondary-btn" data-reset="u4" type="button">Zurücksetzen</button>
+    </div>
+    <div class="feedback" id="fb-u4" role="status" aria-live="polite"></div>
+    </section><section class="exercise theme-coral" id="u5">
+      <div class="exercise-head">
+      <button class="exercise-back" data-back-to-stage type="button">رجوع للمرحلة</button>
+      <div class="exercise-title-wrap">
+        <div class="exercise-icon">🎨</div>
+        <div><h3>Streetart-Wortschatz</h3><div class="exercise-sub">Künstler · Protest · Brücken · Gegenteile · S. 2–6</div></div>
+      </div>
+      <span class="exercise-num">ÜBUNG 5</span>
+    </div>
+      <p class="instruction">Ordne die Wörter den Erklärungen zu und wähle das passende Gegenteil.</p>
+      <div class="grid-2"><div class="q-item" data-field="v1">
+      <div class="q-label">1. Künstler</div>
+      <select class="field" name="v1"><option value="">— Bitte wählen —</option><option value="a">Sie machen Kunst.</option><option value="b">Man kann über sie gehen.</option><option value="c">Die Leute sagen: Nein, das machen wir nicht.</option></select>
+    </div><div class="q-item" data-field="v2">
+      <div class="q-label">2. Protest</div>
+      <select class="field" name="v2"><option value="">— Bitte wählen —</option><option value="a">Sie machen Kunst.</option><option value="b">Man kann über sie gehen.</option><option value="c">Die Leute sagen: Nein, das machen wir nicht.</option></select>
+    </div><div class="q-item" data-field="v3">
+      <div class="q-label">3. Brücken</div>
+      <select class="field" name="v3"><option value="">— Bitte wählen —</option><option value="a">Sie machen Kunst.</option><option value="b">Man kann über sie gehen.</option><option value="c">Die Leute sagen: Nein, das machen wir nicht.</option></select>
+    </div><div class="q-item" data-field="v4">
+      <div class="q-label">4. Das Gegenteil von „schmutzig“ ist …</div>
+      <select class="field" name="v4"><option value="">— Bitte wählen —</option><option value="sauber">sauber</option><option value="grau">grau</option><option value="traurig">traurig</option></select>
+    </div><div class="q-item" data-field="v5">
+      <div class="q-label">5. Berlin ist die Hauptstadt der …</div>
+      <select class="field" name="v5"><option value="">— Bitte wählen —</option><option value="Streetart">Streetart</option><option value="Polizei">Polizei</option><option value="Kunstschule">Kunstschule</option></select>
+    </div><div class="q-item" data-field="v6">
+      <div class="q-label">6. Das Gegenteil von „zuerst“ ist …</div>
+      <select class="field" name="v6"><option value="">— Bitte wählen —</option><option value="zum Schluss">zum Schluss</option><option value="Anfang">Anfang</option><option value="schön">schön</option></select>
+    </div><div class="q-item" data-field="v7">
+      <div class="q-label">7. Das Gegenteil von „Ende“ ist …</div>
+      <select class="field" name="v7"><option value="">— Bitte wählen —</option><option value="Anfang">Anfang</option><option value="zum Schluss">zum Schluss</option><option value="hässlich">hässlich</option></select>
+    </div><div class="q-item" data-field="v8">
+      <div class="q-label">8. Das Gegenteil von „schön“ ist …</div>
+      <select class="field" name="v8"><option value="">— Bitte wählen —</option><option value="hässlich">hässlich</option><option value="lustig">lustig</option><option value="sauber">sauber</option></select>
+    </div><div class="q-item" data-field="v9">
+      <div class="q-label">9. Das Gegenteil von „lustig“ ist …</div>
+      <select class="field" name="v9"><option value="">— Bitte wählen —</option><option value="traurig">traurig</option><option value="fröhlich">fröhlich</option><option value="wütend">wütend</option></select>
+    </div><div class="q-item" data-field="v10">
+      <div class="q-label">10. Das Gegenteil von „sich freuen“ ist …</div>
+      <select class="field" name="v10"><option value="">— Bitte wählen —</option><option value="sich ärgern">sich ärgern</option><option value="sich setzen">sich setzen</option><option value="sich erinnern">sich erinnern</option></select>
+    </div><div class="q-item" data-field="v11">
+      <div class="q-label">11. Welche Wörter stehen im Streetart-Wortschatz?</div>
+      <select class="field" name="v11"><option value="">— Bitte wählen —</option><option value="die Kunst, das Graffiti, die Streetart">die Kunst, das Graffiti, die Streetart</option><option value="der Film, das Kino, die Stunde">der Film, das Kino, die Stunde</option><option value="das Haus, die Wohnung, die Stadt">das Haus, die Wohnung, die Stadt</option></select>
+    </div></div>
+      <div class="btn-row">
+      <button class="primary-btn" data-check="u5" type="button">Antworten prüfen</button>
+      <button class="secondary-btn" data-reset="u5" type="button">Zurücksetzen</button>
+    </div>
+    <div class="feedback" id="fb-u5" role="status" aria-live="polite"></div>
+    </section><section class="exercise theme-reading" id="u6">
+      <div class="exercise-head">
+      <button class="exercise-back" data-back-to-stage type="button">رجوع للمرحلة</button>
+      <div class="exercise-title-wrap">
+        <div class="exercise-icon">📖</div>
+        <div><h3>Lesen: Streetart in Berlin</h3><div class="exercise-sub">Blog verstehen und ergänzen · S. 2–3</div></div>
+      </div>
+      <span class="exercise-num">ÜBUNG 6</span>
+    </div>
+      <p class="instruction">Lies den Blog und beantworte die Fragen zu Anna, den Leuten und der Polizei.</p>
+      <div class="reading-paper">
+  <strong>Blog: Streetart in Berlin</strong><br>
+  Berlin ist auch die Hauptstadt der Streetart. <strong>Künstler</strong> kommen aus der ganzen Welt, zeigen ihre Kunst und malen auf Häuser, Mauern und <strong>Brücken</strong>.
+  Manchmal tun die Künstler das aus <strong>Protest</strong>. Lena sagt: „In diesem Land ist alles grau und schmutzig. Man muss doch was tun!“
+  Viele Leute bleiben stehen, lachen und freuen sich. Viele Touristen kommen nach Berlin und wollen die Bilder sehen.
+</div>
+<div class="grid-2" style="margin-top:12px">
+<div class="q-item" data-field="b1">
+      <div class="q-label">1. (1) ___ kommen aus der ganzen Welt.</div>
+      <select class="field" name="b1"><option value="">— Bitte wählen —</option><option value="Künstler">Künstler</option><option value="Brücken">Brücken</option><option value="Protest">Protest</option></select>
+    </div><div class="q-item" data-field="b2">
+      <div class="q-label">2. Sie malen auf Häuser, Mauern und (2) ___.</div>
+      <select class="field" name="b2"><option value="">— Bitte wählen —</option><option value="Künstler">Künstler</option><option value="Brücken">Brücken</option><option value="Protest">Protest</option></select>
+    </div><div class="q-item" data-field="b3">
+      <div class="q-label">3. Manchmal tun sie das aus (3) ___.</div>
+      <select class="field" name="b3"><option value="">— Bitte wählen —</option><option value="Künstler">Künstler</option><option value="Brücken">Brücken</option><option value="Protest">Protest</option></select>
+    </div><div class="q-item" data-field="b4">
+      <div class="q-label">4. Was wollen die Künstler mit Streetart?</div>
+      <select class="field" name="b4"><option value="">— Bitte wählen —</option><option value="Bilder auf die Straße bringen">Bilder auf die Straße bringen</option><option value="Nur im Museum malen">Nur im Museum malen</option><option value="Die Stadt verlassen">Die Stadt verlassen</option></select>
+    </div><div class="q-item" data-field="b5">
+      <div class="q-label">5. Wie reagieren viele Menschen auf die Bilder?</div>
+      <select class="field" name="b5"><option value="">— Bitte wählen —</option><option value="Sie bleiben stehen, lachen und freuen sich">Sie bleiben stehen, lachen und freuen sich</option><option value="Sie schlafen ein">Sie schlafen ein</option><option value="Sie ärgern sich immer">Sie ärgern sich immer</option></select>
+    </div><div class="q-item" data-field="b6">
+      <div class="q-label">6. Warum kommen viele Touristen nach Berlin?</div>
+      <select class="field" name="b6"><option value="">— Bitte wählen —</option><option value="Sie wollen die Bilder sehen">Sie wollen die Bilder sehen</option><option value="Sie wollen Sushi essen">Sie wollen Sushi essen</option><option value="Sie wollen Brücken bauen">Sie wollen Brücken bauen</option></select>
+    </div><div class="q-item" data-field="b7">
+      <div class="q-label">7. Ist Annas Stadt schön?</div>
+      <select class="field" name="b7"><option value="">— Bitte wählen —</option><option value="Nein, sie ist grau, schmutzig und traurig.">Nein, sie ist grau, schmutzig und traurig.</option><option value="Ja, sie ist bunt und sauber.">Ja, sie ist bunt und sauber.</option><option value="Ja, sie ist ruhig und klein.">Ja, sie ist ruhig und klein.</option></select>
+    </div><div class="q-item" data-field="b8">
+      <div class="q-label">8. Sind die Leute zufrieden?</div>
+      <select class="field" name="b8"><option value="">— Bitte wählen —</option><option value="Nein, sie ärgern sich und beschweren sich.">Nein, sie ärgern sich und beschweren sich.</option><option value="Ja, sie freuen sich alle.">Ja, sie freuen sich alle.</option><option value="Sie schlafen während der Show.">Sie schlafen während der Show.</option></select>
+    </div><div class="q-item" data-field="b9">
+      <div class="q-label">9. Wie finden die Leute Streetart?</div>
+      <select class="field" name="b9"><option value="">— Bitte wählen —</option><option value="Sie lieben sie.">Sie lieben sie.</option><option value="Sie hassen sie.">Sie hassen sie.</option><option value="Sie kennen sie nicht.">Sie kennen sie nicht.</option></select>
+    </div><div class="q-item" data-field="b10">
+      <div class="q-label">10. Was sagt die Polizei?</div>
+      <select class="field" name="b10"><option value="">— Bitte wählen —</option><option value="Die Polizei freut sich nicht.">Die Polizei freut sich nicht.</option><option value="Die Polizei malt Bilder.">Die Polizei malt Bilder.</option><option value="Die Polizei kommt aus Berlin.">Die Polizei kommt aus Berlin.</option></select>
+    </div></div>
+      <div class="btn-row">
+      <button class="primary-btn" data-check="u6" type="button">Antworten prüfen</button>
+      <button class="secondary-btn" data-reset="u6" type="button">Zurücksetzen</button>
+    </div>
+    <div class="feedback" id="fb-u6" role="status" aria-live="polite"></div>
+    </section><section class="exercise theme-pink" id="u7">
+      <div class="exercise-head">
+      <button class="exercise-back" data-back-to-stage type="button">رجوع للمرحلة</button>
+      <div class="exercise-title-wrap">
+        <div class="exercise-icon">👍</div>
+        <div><h3>Meinungen ausdrücken</h3><div class="exercise-sub">Nützliche Ausdrücke · S. 5</div></div>
+      </div>
+      <span class="exercise-num">ÜBUNG 7</span>
+    </div>
+      <p class="instruction">Ordne jede Aussage ein: positiv, negativ oder persönliche Vorliebe.</p>
+      <div class="grid-2"><div class="q-item" data-field="o1">
+      <div class="q-label">1. „Ich finde das total cool.“</div>
+      <select class="field" name="o1"><option value="">— Bitte wählen —</option><option value="positiv">positiv</option><option value="negativ">negativ</option><option value="Präferenz">persönliche Vorliebe</option></select>
+    </div><div class="q-item" data-field="o2">
+      <div class="q-label">2. „Ich finde das total langweilig.“</div>
+      <select class="field" name="o2"><option value="">— Bitte wählen —</option><option value="positiv">positiv</option><option value="negativ">negativ</option><option value="Präferenz">persönliche Vorliebe</option></select>
+    </div><div class="q-item" data-field="o3">
+      <div class="q-label">3. „Das gefällt mir nicht.“</div>
+      <select class="field" name="o3"><option value="">— Bitte wählen —</option><option value="positiv">positiv</option><option value="negativ">negativ</option><option value="Präferenz">persönliche Vorliebe</option></select>
+    </div><div class="q-item" data-field="o4">
+      <div class="q-label">4. „Mir gefällt das.“</div>
+      <select class="field" name="o4"><option value="">— Bitte wählen —</option><option value="positiv">positiv</option><option value="negativ">negativ</option><option value="Präferenz">persönliche Vorliebe</option></select>
+    </div><div class="q-item" data-field="o5">
+      <div class="q-label">5. „Ich mag lieber Streetart.“</div>
+      <select class="field" name="o5"><option value="">— Bitte wählen —</option><option value="positiv">positiv</option><option value="negativ">negativ</option><option value="Präferenz">persönliche Vorliebe</option></select>
+    </div></div>
+      <div class="btn-row">
+      <button class="primary-btn" data-check="u7" type="button">Antworten prüfen</button>
+      <button class="secondary-btn" data-reset="u7" type="button">Zurücksetzen</button>
+    </div>
+    <div class="feedback" id="fb-u7" role="status" aria-live="polite"></div>
+    </section><section class="exercise theme-navy" id="u8">
+      <div class="exercise-head">
+      <button class="exercise-back" data-back-to-stage type="button">رجوع للمرحلة</button>
+      <div class="exercise-title-wrap">
+        <div class="exercise-icon">🧠</div>
+        <div><h3>dies- und Possessivpronomen</h3><div class="exercise-sub">in / auf + dies- · Possessivpronomen im Akkusativ · S. 3</div></div>
+      </div>
+      <span class="exercise-num">ÜBUNG 8</span>
+    </div>
+      <p class="instruction">Wähle die richtige Form. Achte auf Genus, Numerus und Kasus.</p>
+      <h4 class="mini-section-title">A. in / auf + diesem / dieser</h4>
+<div class="grid-2"><div class="q-item" data-field="d1">
+      <div class="q-label">1. in ___ Park</div>
+      <select class="field" name="d1"><option value="">— Bitte wählen —</option><option value="diesem">diesem</option><option value="dieser">dieser</option></select>
+    </div><div class="q-item" data-field="d2">
+      <div class="q-label">2. in ___ Land</div>
+      <select class="field" name="d2"><option value="">— Bitte wählen —</option><option value="diesem">diesem</option><option value="dieser">dieser</option></select>
+    </div><div class="q-item" data-field="d3">
+      <div class="q-label">3. in ___ Stadt</div>
+      <select class="field" name="d3"><option value="">— Bitte wählen —</option><option value="diesem">diesem</option><option value="dieser">dieser</option></select>
+    </div><div class="q-item" data-field="d4">
+      <div class="q-label">4. auf ___ Baum</div>
+      <select class="field" name="d4"><option value="">— Bitte wählen —</option><option value="diesem">diesem</option><option value="dieser">dieser</option></select>
+    </div><div class="q-item" data-field="d5">
+      <div class="q-label">5. auf ___ Haus</div>
+      <select class="field" name="d5"><option value="">— Bitte wählen —</option><option value="diesem">diesem</option><option value="dieser">dieser</option></select>
+    </div><div class="q-item" data-field="d6">
+      <div class="q-label">6. auf ___ Welt</div>
+      <select class="field" name="d6"><option value="">— Bitte wählen —</option><option value="diesem">diesem</option><option value="dieser">dieser</option></select>
+    </div></div>
+<h4 class="mini-section-title" style="margin-top:18px">B. Possessivpronomen im Akkusativ</h4>
+<div class="grid-2"><div class="q-item" data-field="p1">
+      <div class="q-label">1. ich → ___</div>
+      <select class="field" name="p1"><option value="">— Bitte wählen —</option><option value="meinen">meinen</option><option value="deinen">deinen</option><option value="unseren">unseren</option></select>
+    </div><div class="q-item" data-field="p2">
+      <div class="q-label">2. du → ___</div>
+      <select class="field" name="p2"><option value="">— Bitte wählen —</option><option value="deinen">deinen</option><option value="seinen">seinen</option><option value="euren">euren</option></select>
+    </div><div class="q-item" data-field="p3">
+      <div class="q-label">3. er → ___</div>
+      <select class="field" name="p3"><option value="">— Bitte wählen —</option><option value="seinen">seinen</option><option value="ihren">ihren</option><option value="Ihren">Ihren</option></select>
+    </div><div class="q-item" data-field="p4">
+      <div class="q-label">4. sie (Singular) → ___</div>
+      <select class="field" name="p4"><option value="">— Bitte wählen —</option><option value="ihren">ihren</option><option value="seinen">seinen</option><option value="unseren">unseren</option></select>
+    </div><div class="q-item" data-field="p5">
+      <div class="q-label">5. es → ___</div>
+      <select class="field" name="p5"><option value="">— Bitte wählen —</option><option value="sein">sein</option><option value="seinen">seinen</option><option value="deinen">deinen</option></select>
+    </div><div class="q-item" data-field="p6">
+      <div class="q-label">6. wir → ___</div>
+      <select class="field" name="p6"><option value="">— Bitte wählen —</option><option value="unseren">unseren</option><option value="euren">euren</option><option value="ihren">ihren</option></select>
+    </div><div class="q-item" data-field="p7">
+      <div class="q-label">7. ihr → ___</div>
+      <select class="field" name="p7"><option value="">— Bitte wählen —</option><option value="euren">euren</option><option value="unseren">unseren</option><option value="meinen">meinen</option></select>
+    </div><div class="q-item" data-field="p8">
+      <div class="q-label">8. sie (Plural) → ___</div>
+      <select class="field" name="p8"><option value="">— Bitte wählen —</option><option value="ihren">ihren</option><option value="Ihren">Ihren</option><option value="seinen">seinen</option></select>
+    </div><div class="q-item" data-field="p9">
+      <div class="q-label">9. Sie (höflich) → ___</div>
+      <select class="field" name="p9"><option value="">— Bitte wählen —</option><option value="Ihren">Ihren</option><option value="ihren">ihren</option><option value="euren">euren</option></select>
+    </div></div>
+      <div class="btn-row">
+      <button class="primary-btn" data-check="u8" type="button">Antworten prüfen</button>
+      <button class="secondary-btn" data-reset="u8" type="button">Zurücksetzen</button>
+    </div>
+    <div class="feedback" id="fb-u8" role="status" aria-live="polite"></div>
+    </section><section class="exercise theme-blue" id="u9">
+      <div class="exercise-head">
+      <button class="exercise-back" data-back-to-stage type="button">رجوع للمرحلة</button>
+      <div class="exercise-title-wrap">
+        <div class="exercise-icon">🔁</div>
+        <div><h3>Reflexivpronomen</h3><div class="exercise-sub">ich, du, er/sie/es, wir, ihr, sie/Sie · S. 6–8</div></div>
+      </div>
+      <span class="exercise-num">ÜBUNG 9</span>
+    </div>
+      <p class="instruction">Ergänze das passende Reflexivpronomen.</p>
+      <div class="grid-3"><div class="q-item" data-field="r1">
+      <div class="q-label">ich →</div>
+      <select class="field" name="r1"><option value="">— Bitte wählen —</option><option value="mich">mich</option><option value="dich">dich</option><option value="sich">sich</option><option value="uns">uns</option><option value="euch">euch</option></select>
+    </div><div class="q-item" data-field="r2">
+      <div class="q-label">du →</div>
+      <select class="field" name="r2"><option value="">— Bitte wählen —</option><option value="mich">mich</option><option value="dich">dich</option><option value="sich">sich</option><option value="uns">uns</option><option value="euch">euch</option></select>
+    </div><div class="q-item" data-field="r3">
+      <div class="q-label">er →</div>
+      <select class="field" name="r3"><option value="">— Bitte wählen —</option><option value="mich">mich</option><option value="dich">dich</option><option value="sich">sich</option><option value="uns">uns</option><option value="euch">euch</option></select>
+    </div><div class="q-item" data-field="r4">
+      <div class="q-label">es →</div>
+      <select class="field" name="r4"><option value="">— Bitte wählen —</option><option value="mich">mich</option><option value="dich">dich</option><option value="sich">sich</option><option value="uns">uns</option><option value="euch">euch</option></select>
+    </div><div class="q-item" data-field="r5">
+      <div class="q-label">sie (Singular) →</div>
+      <select class="field" name="r5"><option value="">— Bitte wählen —</option><option value="mich">mich</option><option value="dich">dich</option><option value="sich">sich</option><option value="uns">uns</option><option value="euch">euch</option></select>
+    </div><div class="q-item" data-field="r6">
+      <div class="q-label">wir →</div>
+      <select class="field" name="r6"><option value="">— Bitte wählen —</option><option value="mich">mich</option><option value="dich">dich</option><option value="sich">sich</option><option value="uns">uns</option><option value="euch">euch</option></select>
+    </div><div class="q-item" data-field="r7">
+      <div class="q-label">ihr →</div>
+      <select class="field" name="r7"><option value="">— Bitte wählen —</option><option value="mich">mich</option><option value="dich">dich</option><option value="sich">sich</option><option value="uns">uns</option><option value="euch">euch</option></select>
+    </div><div class="q-item" data-field="r8">
+      <div class="q-label">sie (Plural) →</div>
+      <select class="field" name="r8"><option value="">— Bitte wählen —</option><option value="mich">mich</option><option value="dich">dich</option><option value="sich">sich</option><option value="uns">uns</option><option value="euch">euch</option></select>
+    </div><div class="q-item" data-field="r9">
+      <div class="q-label">Sie (höflich) →</div>
+      <select class="field" name="r9"><option value="">— Bitte wählen —</option><option value="mich">mich</option><option value="dich">dich</option><option value="sich">sich</option><option value="uns">uns</option><option value="euch">euch</option></select>
+    </div></div>
+      <div class="btn-row">
+      <button class="primary-btn" data-check="u9" type="button">Antworten prüfen</button>
+      <button class="secondary-btn" data-reset="u9" type="button">Zurücksetzen</button>
+    </div>
+    <div class="feedback" id="fb-u9" role="status" aria-live="polite"></div>
+    </section><section class="exercise theme-mint" id="u10">
+      <div class="exercise-head">
+      <button class="exercise-back" data-back-to-stage type="button">رجوع للمرحلة</button>
+      <div class="exercise-title-wrap">
+        <div class="exercise-icon">🗣️</div>
+        <div><h3>Reflexive Verben im Satz</h3><div class="exercise-sub">sich freuen, sich fühlen, sich ärgern, sich setzen … · S. 2 und 7</div></div>
+      </div>
+      <span class="exercise-num">ÜBUNG 10</span>
+    </div>
+      <p class="instruction">Wähle das richtige Reflexivpronomen und ergänze die Konjugation von „sich freuen“.</p>
+      <h4 class="mini-section-title">A. Reflexivpronomen im Satz</h4><div class="grid-2"><div class="q-item" data-field="c1">
+      <div class="q-label">1. Sie freut ___ wirklich sehr.</div>
+      <select class="field" name="c1"><option value="">— Bitte wählen —</option><option value="mich">mich</option><option value="dich">dich</option><option value="sich">sich</option><option value="uns">uns</option><option value="euch">euch</option></select>
+    </div><div class="q-item" data-field="c2">
+      <div class="q-label">2. Tim fühlt ___ schon viel besser.</div>
+      <select class="field" name="c2"><option value="">— Bitte wählen —</option><option value="mich">mich</option><option value="dich">dich</option><option value="sich">sich</option><option value="uns">uns</option><option value="euch">euch</option></select>
+    </div><div class="q-item" data-field="c3">
+      <div class="q-label">3. Wir ärgern ___ ein bisschen.</div>
+      <select class="field" name="c3"><option value="">— Bitte wählen —</option><option value="mich">mich</option><option value="dich">dich</option><option value="sich">sich</option><option value="uns">uns</option><option value="euch">euch</option></select>
+    </div><div class="q-item" data-field="c4">
+      <div class="q-label">4. Freust du ___ denn wirklich?</div>
+      <select class="field" name="c4"><option value="">— Bitte wählen —</option><option value="mich">mich</option><option value="dich">dich</option><option value="sich">sich</option><option value="uns">uns</option><option value="euch">euch</option></select>
+    </div><div class="q-item" data-field="c5">
+      <div class="q-label">5. Komm, wir setzen ___!</div>
+      <select class="field" name="c5"><option value="">— Bitte wählen —</option><option value="mich">mich</option><option value="dich">dich</option><option value="sich">sich</option><option value="uns">uns</option><option value="euch">euch</option></select>
+    </div><div class="q-item" data-field="c6">
+      <div class="q-label">6. Klar, wir erinnern ___!</div>
+      <select class="field" name="c6"><option value="">— Bitte wählen —</option><option value="mich">mich</option><option value="dich">dich</option><option value="sich">sich</option><option value="uns">uns</option><option value="euch">euch</option></select>
+    </div><div class="q-item" data-field="c7">
+      <div class="q-label">7. Sie hat ___ geärgert.</div>
+      <select class="field" name="c7"><option value="">— Bitte wählen —</option><option value="mich">mich</option><option value="dich">dich</option><option value="sich">sich</option><option value="uns">uns</option><option value="euch">euch</option></select>
+    </div><div class="q-item" data-field="c8">
+      <div class="q-label">8. Kommt rein und setzt ___!</div>
+      <select class="field" name="c8"><option value="">— Bitte wählen —</option><option value="mich">mich</option><option value="dich">dich</option><option value="sich">sich</option><option value="uns">uns</option><option value="euch">euch</option></select>
+    </div></div><h4 class="mini-section-title" style="margin-top:18px">B. „sich freuen“ – Konjugation</h4><div class="grid-3"><div class="q-item" data-field="c9">
+      <div class="q-label">ich ___ mich</div>
+      <select class="field" name="c9"><option value="">— Bitte wählen —</option><option value="freue">freue</option><option value="freust">freust</option><option value="freut">freut</option></select>
+    </div><div class="q-item" data-field="c10">
+      <div class="q-label">du ___ dich</div>
+      <select class="field" name="c10"><option value="">— Bitte wählen —</option><option value="freust">freust</option><option value="freue">freue</option><option value="freut">freut</option></select>
+    </div><div class="q-item" data-field="c11">
+      <div class="q-label">er / sie / es ___ sich</div>
+      <select class="field" name="c11"><option value="">— Bitte wählen —</option><option value="freut">freut</option><option value="freuen">freuen</option><option value="freust">freust</option></select>
+    </div><div class="q-item" data-field="c12">
+      <div class="q-label">wir ___ uns</div>
+      <select class="field" name="c12"><option value="">— Bitte wählen —</option><option value="freuen">freuen</option><option value="freut">freut</option><option value="freue">freue</option></select>
+    </div><div class="q-item" data-field="c13">
+      <div class="q-label">ihr ___ euch</div>
+      <select class="field" name="c13"><option value="">— Bitte wählen —</option><option value="freut">freut</option><option value="freuen">freuen</option><option value="freust">freust</option></select>
+    </div><div class="q-item" data-field="c14">
+      <div class="q-label">sie / Sie ___ sich</div>
+      <select class="field" name="c14"><option value="">— Bitte wählen —</option><option value="freuen">freuen</option><option value="freut">freut</option><option value="freue">freue</option></select>
+    </div></div>
+      <div class="btn-row">
+      <button class="primary-btn" data-check="u10" type="button">Antworten prüfen</button>
+      <button class="secondary-btn" data-reset="u10" type="button">Zurücksetzen</button>
+    </div>
+    <div class="feedback" id="fb-u10" role="status" aria-live="polite"></div>
+    </section><section class="exercise theme-orange" id="u11">
+      <div class="exercise-head">
+      <button class="exercise-back" data-back-to-stage type="button">رجوع للمرحلة</button>
+      <div class="exercise-title-wrap">
+        <div class="exercise-icon">🔠</div>
+        <div><h3>Wörter ordnen</h3><div class="exercise-sub">Reflexive Verben richtig schreiben · S. 6</div></div>
+      </div>
+      <span class="exercise-num">ÜBUNG 11</span>
+    </div>
+      <p class="instruction">Bringe die Buchstaben in die richtige Reihenfolge. Schreibe nur das Verb ohne „sich“.</p>
+      <div class="grid-2"><div class="q-item" data-field="w1">
+      <div class="q-label">1. sich EBSCHWREEN</div>
+      <input class="field" type="text" name="w1" placeholder="Antwort schreiben …" autocomplete="off">
+    </div><div class="q-item" data-field="w2">
+      <div class="q-label">2. sich EFUREN</div>
+      <input class="field" type="text" name="w2" placeholder="Antwort schreiben …" autocomplete="off">
+    </div><div class="q-item" data-field="w3">
+      <div class="q-label">3. sich IERNERRN</div>
+      <input class="field" type="text" name="w3" placeholder="Antwort schreiben …" autocomplete="off">
+    </div><div class="q-item" data-field="w4">
+      <div class="q-label">4. sich GARERN</div>
+      <input class="field" type="text" name="w4" placeholder="Antwort schreiben …" autocomplete="off">
+    </div><div class="q-item" data-field="w5">
+      <div class="q-label">5. sich STEZEN</div>
+      <input class="field" type="text" name="w5" placeholder="Antwort schreiben …" autocomplete="off">
+    </div></div>
+      <div class="btn-row">
+      <button class="primary-btn" data-check="u11" type="button">Antworten prüfen</button>
+      <button class="secondary-btn" data-reset="u11" type="button">Zurücksetzen</button>
+    </div>
+    <div class="feedback" id="fb-u11" role="status" aria-live="polite"></div>
+    </section><section class="exercise theme-purple" id="u12">
+      <div class="exercise-head">
+      <button class="exercise-back" data-back-to-stage type="button">رجوع للمرحلة</button>
+      <div class="exercise-title-wrap">
+        <div class="exercise-icon">📣</div>
+        <div><h3>Imperativ mit Reflexivverben</h3><div class="exercise-sub">du · ihr · Sie · S. 6</div></div>
+      </div>
+      <span class="exercise-num">ÜBUNG 12</span>
+    </div>
+      <p class="instruction">Schreibe die Aufforderung vollständig und richtig. Achte auf das Reflexivpronomen.</p>
+      <div class="grid-2"><div class="q-item" data-field="i1">
+      <div class="q-label">1. sich beschweren (du) – ganzer Imperativ</div>
+      <input class="field" type="text" name="i1" placeholder="Antwort schreiben …" autocomplete="off">
+    </div><div class="q-item" data-field="i2">
+      <div class="q-label">2. sich erinnern (ihr) – ganzer Imperativ</div>
+      <input class="field" type="text" name="i2" placeholder="Antwort schreiben …" autocomplete="off">
+    </div><div class="q-item" data-field="i3">
+      <div class="q-label">3. sich freuen (du) – ganzer Imperativ</div>
+      <input class="field" type="text" name="i3" placeholder="Antwort schreiben …" autocomplete="off">
+    </div><div class="q-item" data-field="i4">
+      <div class="q-label">4. sich beschweren (ihr) – ganzer Imperativ</div>
+      <input class="field" type="text" name="i4" placeholder="Antwort schreiben …" autocomplete="off">
+    </div><div class="q-item" data-field="i5">
+      <div class="q-label">5. sich setzen (du) – ganzer Imperativ</div>
+      <input class="field" type="text" name="i5" placeholder="Antwort schreiben …" autocomplete="off">
+    </div><div class="q-item" data-field="i6">
+      <div class="q-label">6. sich ärgern (ihr) – ganzer Imperativ</div>
+      <input class="field" type="text" name="i6" placeholder="Antwort schreiben …" autocomplete="off">
+    </div><div class="q-item" data-field="i7">
+      <div class="q-label">7. sich freuen (Sie) – ganzer Imperativ</div>
+      <input class="field" type="text" name="i7" placeholder="Antwort schreiben …" autocomplete="off">
+    </div><div class="q-item" data-field="i8">
+      <div class="q-label">8. sich beschweren (Sie) – ganzer Imperativ</div>
+      <input class="field" type="text" name="i8" placeholder="Antwort schreiben …" autocomplete="off">
+    </div><div class="q-item" data-field="i9">
+      <div class="q-label">9. sich ärgern (Sie) – ganzer Imperativ</div>
+      <input class="field" type="text" name="i9" placeholder="Antwort schreiben …" autocomplete="off">
+    </div><div class="q-item" data-field="i10">
+      <div class="q-label">10. sich setzen (Sie) – ganzer Imperativ</div>
+      <input class="field" type="text" name="i10" placeholder="Antwort schreiben …" autocomplete="off">
+    </div></div>
+      <div class="btn-row">
+      <button class="primary-btn" data-check="u12" type="button">Antworten prüfen</button>
+      <button class="secondary-btn" data-reset="u12" type="button">Zurücksetzen</button>
+    </div>
+    <div class="feedback" id="fb-u12" role="status" aria-live="polite"></div>
+    </section><section class="exercise theme-chat" id="u13">
+      <div class="exercise-head">
+      <button class="exercise-back" data-back-to-stage type="button">رجوع للمرحلة</button>
+      <div class="exercise-title-wrap">
+        <div class="exercise-icon">🎬</div>
+        <div><h3>Lesen: Open-Air-Kino</h3><div class="exercise-sub">Dialog Michaela und Luca · S. 4</div></div>
+      </div>
+      <span class="exercise-num">ÜBUNG 13</span>
+    </div>
+      <p class="instruction">Lies den Dialog und beantworte die Fragen.</p>
+      <div class="reading-paper">
+  <strong>Dialog: Michaela und Luca</strong><br>
+  <b>Luca:</b> Hallo Michaela. Da bist du ja endlich. Ich habe Sushi bestellt. Das kommt so in fünf Minuten. Und dann gehen wir ins Kino. Okay? Open Air. Es ist so schön draußen!<br>
+  <b>Michaela:</b> Cool, gute Idee! Und was sehen wir? Was schlägst du vor?<br>
+  <b>Luca:</b> Am Potsdamer Platz gibt's Jason Bourne … in einer Stunde.
+</div>
+<div class="grid-2" style="margin-top:12px"><div class="q-item" data-field="k1">
+      <div class="q-label">1. Was hat Luca bestellt?</div>
+      <select class="field" name="k1"><option value="">— Bitte wählen —</option><option value="Sushi">Sushi</option><option value="Popcorn">Popcorn</option><option value="Pizza">Pizza</option></select>
+    </div><div class="q-item" data-field="k2">
+      <div class="q-label">2. Wann kommt das Essen?</div>
+      <select class="field" name="k2"><option value="">— Bitte wählen —</option><option value="in fünf Minuten">in fünf Minuten</option><option value="in einer Stunde">in einer Stunde</option><option value="morgen">morgen</option></select>
+    </div><div class="q-item" data-field="k3">
+      <div class="q-label">3. Wohin gehen sie danach?</div>
+      <select class="field" name="k3"><option value="">— Bitte wählen —</option><option value="ins Kino">ins Kino</option><option value="in die Schule">in die Schule</option><option value="nach Hause">nach Hause</option></select>
+    </div><div class="q-item" data-field="k4">
+      <div class="q-label">4. Welchen Film gibt es?</div>
+      <select class="field" name="k4"><option value="">— Bitte wählen —</option><option value="Jason Bourne">Jason Bourne</option><option value="einen James-Bond-Film">einen James-Bond-Film</option><option value="keinen Film">keinen Film</option></select>
+    </div><div class="q-item" data-field="k5">
+      <div class="q-label">5. Wann beginnt der Film?</div>
+      <select class="field" name="k5"><option value="">— Bitte wählen —</option><option value="in einer Stunde">in einer Stunde</option><option value="in fünf Minuten">in fünf Minuten</option><option value="während des Films">während des Films</option></select>
+    </div></div>
+      <div class="btn-row">
+      <button class="primary-btn" data-check="u13" type="button">Antworten prüfen</button>
+      <button class="secondary-btn" data-reset="u13" type="button">Zurücksetzen</button>
+    </div>
+    <div class="feedback" id="fb-u13" role="status" aria-live="polite"></div>
+    </section><section class="exercise theme-gold" id="u14">
+      <div class="exercise-head">
+      <button class="exercise-back" data-back-to-stage type="button">رجوع للمرحلة</button>
+      <div class="exercise-title-wrap">
+        <div class="exercise-icon">⏳</div>
+        <div><h3>Zeitangaben und Dativ</h3><div class="exercise-sub">in + Dativ · während + Genitiv · S. 4 und 7</div></div>
+      </div>
+      <span class="exercise-num">ÜBUNG 14</span>
+    </div>
+      <p class="instruction">Wähle die passende Präposition bzw. die richtige Dativform.</p>
+      <div class="grid-2"><div class="q-item" data-field="t1">
+      <div class="q-label">1. ___ einem Monat</div>
+      <select class="field" name="t1"><option value="">— Bitte wählen —</option><option value="in">in</option><option value="während">während</option></select>
+    </div><div class="q-item" data-field="t2">
+      <div class="q-label">2. ___ einem Jahr</div>
+      <select class="field" name="t2"><option value="">— Bitte wählen —</option><option value="in">in</option><option value="während">während</option></select>
+    </div><div class="q-item" data-field="t3">
+      <div class="q-label">3. ___ einer Stunde</div>
+      <select class="field" name="t3"><option value="">— Bitte wählen —</option><option value="in">in</option><option value="während">während</option></select>
+    </div><div class="q-item" data-field="t4">
+      <div class="q-label">4. ___ zehn Tagen</div>
+      <select class="field" name="t4"><option value="">— Bitte wählen —</option><option value="in">in</option><option value="während">während</option></select>
+    </div><div class="q-item" data-field="t5">
+      <div class="q-label">5. ___ des Films</div>
+      <select class="field" name="t5"><option value="">— Bitte wählen —</option><option value="während">während</option><option value="in">in</option></select>
+    </div><div class="q-item" data-field="t6">
+      <div class="q-label">6. ___ des Konzerts</div>
+      <select class="field" name="t6"><option value="">— Bitte wählen —</option><option value="während">während</option><option value="in">in</option></select>
+    </div><div class="q-item" data-field="t7">
+      <div class="q-label">7. ___ der Show</div>
+      <select class="field" name="t7"><option value="">— Bitte wählen —</option><option value="während">während</option><option value="in">in</option></select>
+    </div><div class="q-item" data-field="t8">
+      <div class="q-label">8. ___ der Konzerte</div>
+      <select class="field" name="t8"><option value="">— Bitte wählen —</option><option value="während">während</option><option value="in">in</option></select>
+    </div><div class="q-item" data-field="t9">
+      <div class="q-label">9. in ___ Haus (Dativ)</div>
+      <select class="field" name="t9"><option value="">— Bitte wählen —</option><option value="diesem">diesem</option><option value="dieser">dieser</option><option value="diesen">diesen</option></select>
+    </div><div class="q-item" data-field="t10">
+      <div class="q-label">10. in ___ Stadt (Dativ)</div>
+      <select class="field" name="t10"><option value="">— Bitte wählen —</option><option value="dieser">dieser</option><option value="diesem">diesem</option><option value="diesen">diesen</option></select>
+    </div><div class="q-item" data-field="t11">
+      <div class="q-label">11. in ___ Wohnung (Dativ)</div>
+      <select class="field" name="t11"><option value="">— Bitte wählen —</option><option value="dieser">dieser</option><option value="diesem">diesem</option><option value="diesen">diesen</option></select>
+    </div><div class="q-item" data-field="t12">
+      <div class="q-label">12. in ___ Städten (Dativ, Plural)</div>
+      <select class="field" name="t12"><option value="">— Bitte wählen —</option><option value="diesen">diesen</option><option value="dieser">dieser</option><option value="diesem">diesem</option></select>
+    </div></div><div style="margin-top:12px"><div class="q-item" data-field="t13">
+      <div class="q-label">13. Marina ist schon einmal ___ Deutschkurses eingeschlafen.</div>
+      <select class="field" name="t13"><option value="">— Bitte wählen —</option><option value="während des">während des</option><option value="in einem">in einem</option><option value="auf dem">auf dem</option></select>
+    </div></div>
+      <div class="btn-row">
+      <button class="primary-btn" data-check="u14" type="button">Antworten prüfen</button>
+      <button class="secondary-btn" data-reset="u14" type="button">Zurücksetzen</button>
+    </div>
+    <div class="feedback" id="fb-u14" role="status" aria-live="polite"></div>
+    </section><section class="exercise theme-detective" id="u15">
+      <div class="exercise-head">
+      <button class="exercise-back" data-back-to-stage type="button">رجوع للمرحلة</button>
+      <div class="exercise-title-wrap">
+        <div class="exercise-icon">🔍</div>
+        <div><h3>Reflexivpronomen im Kontext</h3><div class="exercise-sub">Perfekt · reziproke Verben · Nebensatz · S. 7–8</div></div>
+      </div>
+      <span class="exercise-num">ÜBUNG 15</span>
+    </div>
+      <p class="instruction">Ergänze die Pronomen und prüfe die Grammatikregeln.</p>
+      <div class="instruction" style="margin-top:0">Ergänze die Reflexivpronomen. Achte auf ich, du, er, wir und ihr.</div>
+<div class="grid-2"><div class="q-item" data-field="z1">
+      <div class="q-label">1. Wann treffen wir ___?</div>
+      <select class="field" name="z1"><option value="">— Bitte wählen —</option><option value="mich">mich</option><option value="dich">dich</option><option value="sich">sich</option><option value="uns">uns</option><option value="euch">euch</option></select>
+    </div><div class="q-item" data-field="z2">
+      <div class="q-label">2. Ich muss ___ noch umziehen.</div>
+      <select class="field" name="z2"><option value="">— Bitte wählen —</option><option value="mich">mich</option><option value="dich">dich</option><option value="sich">sich</option><option value="uns">uns</option><option value="euch">euch</option></select>
+    </div><div class="q-item" data-field="z3">
+      <div class="q-label">3. Dann beeil ___!</div>
+      <select class="field" name="z3"><option value="">— Bitte wählen —</option><option value="mich">mich</option><option value="dich">dich</option><option value="sich">sich</option><option value="uns">uns</option><option value="euch">euch</option></select>
+    </div><div class="q-item" data-field="z4">
+      <div class="q-label">4. Ich freue ___ schon auf die Party.</div>
+      <select class="field" name="z4"><option value="">— Bitte wählen —</option><option value="mich">mich</option><option value="dich">dich</option><option value="sich">sich</option><option value="uns">uns</option><option value="euch">euch</option></select>
+    </div><div class="q-item" data-field="z5">
+      <div class="q-label">5. Er hat ___ verletzt.</div>
+      <select class="field" name="z5"><option value="">— Bitte wählen —</option><option value="mich">mich</option><option value="dich">dich</option><option value="sich">sich</option><option value="uns">uns</option><option value="euch">euch</option></select>
+    </div><div class="q-item" data-field="z6">
+      <div class="q-label">6. Er muss ___ jetzt ausruhen.</div>
+      <select class="field" name="z6"><option value="">— Bitte wählen —</option><option value="mich">mich</option><option value="dich">dich</option><option value="sich">sich</option><option value="uns">uns</option><option value="euch">euch</option></select>
+    </div><div class="q-item" data-field="z7">
+      <div class="q-label">7. Wir haben ___ schon so auf ihn gefreut.</div>
+      <select class="field" name="z7"><option value="">— Bitte wählen —</option><option value="mich">mich</option><option value="dich">dich</option><option value="sich">sich</option><option value="uns">uns</option><option value="euch">euch</option></select>
+    </div><div class="q-item" data-field="z8">
+      <div class="q-label">8. Er hat ___ auch sehr geärgert.</div>
+      <select class="field" name="z8"><option value="">— Bitte wählen —</option><option value="mich">mich</option><option value="dich">dich</option><option value="sich">sich</option><option value="uns">uns</option><option value="euch">euch</option></select>
+    </div></div>
+<div class="grid-2" style="margin-top:14px"><div class="q-item" data-field="z9">
+      <div class="q-label">9. Reflexive Verben bilden das Perfekt mit …</div>
+      <select class="field" name="z9"><option value="">— Bitte wählen —</option><option value="haben">haben</option><option value="sein">sein</option><option value="werden">werden</option></select>
+    </div><div class="q-item" data-field="z10">
+      <div class="q-label">10. „Sie grüßen sich“ bedeutet …</div>
+      <select class="field" name="z10"><option value="">— Bitte wählen —</option><option value="reziprok – gegenseitig">reziprok – gegenseitig</option><option value="nur eine Person">nur eine Person</option><option value="Vergangenheit">Vergangenheit</option></select>
+    </div><div class="q-item" data-field="z11">
+      <div class="q-label">11. In „Sie wäscht sich“ ist „sich“ …</div>
+      <select class="field" name="z11"><option value="">— Bitte wählen —</option><option value="reflexiv">reflexiv</option><option value="ein Artikel">ein Artikel</option><option value="ein Possessivpronomen">ein Possessivpronomen</option></select>
+    </div><div class="q-item" data-field="z12">
+      <div class="q-label">12. Im Nebensatz bleibt das Reflexivpronomen …</div>
+      <select class="field" name="z12"><option value="">— Bitte wählen —</option><option value="beim Subjekt">beim Subjekt</option><option value="immer am Satzende">immer am Satzende</option><option value="vor dem Subjekt">vor dem Subjekt</option></select>
+    </div></div><div style="margin-top:12px"><div class="q-item" data-field="z13">
+      <div class="q-label">13. Sie wäscht ___ (das Baby).</div>
+      <select class="field" name="z13"><option value="">— Bitte wählen —</option><option value="es">es</option><option value="sich">sich</option><option value="ihr">ihr</option></select>
+    </div></div>
+      <div class="btn-row">
+      <button class="primary-btn" data-check="u15" type="button">Antworten prüfen</button>
+      <button class="secondary-btn" data-reset="u15" type="button">Zurücksetzen</button>
+    </div>
+    <div class="feedback" id="fb-u15" role="status" aria-live="polite"></div>
+    </section><section class="exercise theme-write" id="u16">
+      <div class="exercise-head">
+      <button class="exercise-back" data-back-to-stage type="button">رجوع للمرحلة</button>
+      <div class="exercise-title-wrap">
+        <div class="exercise-icon">✍️</div>
+        <div><h3>Schreibwerkstatt</h3><div class="exercise-sub">Mein Lieblingsfilm / Meine Meinung · S. 4–5</div></div>
+      </div>
+      <span class="exercise-num">ÜBUNG 16</span>
+    </div>
+      <p class="instruction">Schreibe einen kurzen Text und prüfe die wichtigsten Kriterien.</p>
+      <div class="reading-paper">
+  <strong>Schreibaufgabe – Mein Lieblingsfilm / Meine Meinung</strong><br>
+  Schreibe 4–6 Sätze. Du kannst über einen Film, ein Open-Air-Kino oder Streetart schreiben.
+  Verwende mindestens zwei Gefühlswörter, ein reflexives Verb und eine Zeitangabe.
+</div>
+<div class="field-wrap" style="margin-top:14px">
+  <label class="field-label" for="writingTask">Dein Text</label>
+  <textarea class="field lined" id="writingTask" name="writingTask" rows="6" placeholder="Mein Lieblingsfilm ist … Ich freue mich … Während des Films …"></textarea>
+</div>
+<div class="btn-row">
+  <button class="primary-btn" data-check-writing type="button">Text prüfen</button>
+  <button class="secondary-btn" data-reset="u16" type="button">Zurücksetzen</button>
+</div>
+<div class="feedback" id="fb-u16" role="status" aria-live="polite"></div>
+<div class="writing-checklist" id="writingChecklist"></div>
+      
+    </section><section class="exercise theme-final" id="u17">
+      <div class="exercise-head">
+      <button class="exercise-back" data-back-to-stage type="button">رجوع للمرحلة</button>
+      <div class="exercise-title-wrap">
+        <div class="exercise-icon">🏆</div>
+        <div><h3>Abschlusstest</h3><div class="exercise-sub">12 gemischte Fragen aus der ganzen Lektion · S. 1–8</div></div>
+      </div>
+      <span class="exercise-num">ÜBUNG 17</span>
+    </div>
+      <p class="instruction">Zeige, was du gelernt hast! Jede Frage zählt einen Punkt.</p>
+      <div class="grid-2"><div class="q-item" data-field="e1">
+      <div class="q-label">1. Synonym für „fröhlich“</div>
+      <select class="field" name="e1"><option value="">— Bitte wählen —</option><option value="glücklich">glücklich</option><option value="unglücklich">unglücklich</option><option value="erschöpft">erschöpft</option></select>
+    </div><div class="q-item" data-field="e2">
+      <div class="q-label">2. Synonym für „traurig“</div>
+      <select class="field" name="e2"><option value="">— Bitte wählen —</option><option value="unglücklich">unglücklich</option><option value="sauer">sauer</option><option value="erstaunt">erstaunt</option></select>
+    </div><div class="q-item" data-field="e3">
+      <div class="q-label">3. Wer macht Kunst?</div>
+      <select class="field" name="e3"><option value="">— Bitte wählen —</option><option value="Künstler">Künstler</option><option value="Brücken">Brücken</option><option value="Polizei">Polizei</option></select>
+    </div><div class="q-item" data-field="e4">
+      <div class="q-label">4. „in ___ Stadt“</div>
+      <select class="field" name="e4"><option value="">— Bitte wählen —</option><option value="dieser">dieser</option><option value="diesem">diesem</option><option value="diesen">diesen</option></select>
+    </div><div class="q-item" data-field="e5">
+      <div class="q-label">5. Wir ärgern ___ ein bisschen.</div>
+      <select class="field" name="e5"><option value="">— Bitte wählen —</option><option value="uns">uns</option><option value="sich">sich</option><option value="euch">euch</option></select>
+    </div><div class="q-item" data-field="e6">
+      <div class="q-label">6. Freust du ___?</div>
+      <select class="field" name="e6"><option value="">— Bitte wählen —</option><option value="dich">dich</option><option value="mich">mich</option><option value="uns">uns</option></select>
+    </div><div class="q-item" data-field="e7">
+      <div class="q-label">7. Imperativ (du): sich setzen</div>
+      <select class="field" name="e7"><option value="">— Bitte wählen —</option><option value="Setz dich bitte!">Setz dich bitte!</option><option value="Setzen Sie sich bitte!">Setzen Sie sich bitte!</option><option value="Setzt euch bitte!">Setzt euch bitte!</option></select>
+    </div><div class="q-item" data-field="e8">
+      <div class="q-label">8. ___ des Films</div>
+      <select class="field" name="e8"><option value="">— Bitte wählen —</option><option value="während">während</option><option value="in">in</option><option value="auf">auf</option></select>
+    </div><div class="q-item" data-field="e9">
+      <div class="q-label">9. in ___ Stunde</div>
+      <select class="field" name="e9"><option value="">— Bitte wählen —</option><option value="einer">einer</option><option value="einem">einem</option><option value="einen">einen</option></select>
+    </div><div class="q-item" data-field="e10">
+      <div class="q-label">10. Tim fühlt ___ schon viel besser.</div>
+      <select class="field" name="e10"><option value="">— Bitte wählen —</option><option value="sich">sich</option><option value="dich">dich</option><option value="uns">uns</option></select>
+    </div><div class="q-item" data-field="e11">
+      <div class="q-label">11. Er hat ___ verletzt.</div>
+      <select class="field" name="e11"><option value="">— Bitte wählen —</option><option value="sich">sich</option><option value="mich">mich</option><option value="euch">euch</option></select>
+    </div><div class="q-item" data-field="e12">
+      <div class="q-label">12. Das Gegenteil von „schmutzig“</div>
+      <select class="field" name="e12"><option value="">— Bitte wählen —</option><option value="sauber">sauber</option><option value="traurig">traurig</option><option value="laut">laut</option></select>
+    </div></div>
+      <div class="btn-row">
+      <button class="primary-btn" data-check="u17" type="button">Antworten prüfen</button>
+      <button class="secondary-btn" data-reset="u17" type="button">Zurücksetzen</button>
+    </div>
+    <div class="feedback" id="fb-u17" role="status" aria-live="polite"></div>
+    </section>
+  </main>
+</div>
+<script>
+
+const exerciseIds = ['u1','u2','u3','u4','u5','u6','u7','u8','u9','u10','u11','u12','u13','u14','u15','u16','u17'];
+const stageMap = {
+  stage1:['u1','u2','u3','u4'],
+  stage2:['u5','u6','u7','u8'],
+  stage3:['u9','u10','u11'],
+  stage4:['u12','u13','u14'],
+  stage5:['u15','u16','u17']
+};
+const stageByExercise = {};
+Object.entries(stageMap).forEach(([stage, ids]) => ids.forEach(id => stageByExercise[id] = stage));
+
+const definitions = {"u1": [{"name": "g1", "answer": "fröhlich"}, {"name": "g2", "answer": "traurig"}, {"name": "g3", "answer": "wütend"}, {"name": "g4", "answer": "überrascht"}, {"name": "g5", "answer": "müde"}], "u2": [{"name": "m1", "answer": "b"}, {"name": "m2", "answer": "d"}, {"name": "m3", "answer": "e"}, {"name": "m4", "answer": "c"}, {"name": "m5", "answer": "a"}], "u3": [{"name": "s1", "answer": "glücklich"}, {"name": "s2", "answer": "unglücklich"}, {"name": "s3", "answer": "sauer"}, {"name": "s4", "answer": "erstaunt"}, {"name": "s5", "answer": "erschöpft"}], "u4": [{"name": "f1", "answer": "fröhlich"}, {"name": "f2", "answer": "traurig"}, {"name": "f3", "answer": "überrascht"}, {"name": "f4", "answer": "müde"}, {"name": "f5", "answer": "wütend"}], "u5": [{"name": "v1", "answer": "a"}, {"name": "v2", "answer": "c"}, {"name": "v3", "answer": "b"}, {"name": "v4", "answer": "sauber"}, {"name": "v5", "answer": "Streetart"}, {"name": "v6", "answer": "zum Schluss"}, {"name": "v7", "answer": "Anfang"}, {"name": "v8", "answer": "hässlich"}, {"name": "v9", "answer": "traurig"}, {"name": "v10", "answer": "sich ärgern"}, {"name": "v11", "answer": "die Kunst, das Graffiti, die Streetart"}], "u6": [{"name": "b1", "answer": "Künstler"}, {"name": "b2", "answer": "Brücken"}, {"name": "b3", "answer": "Protest"}, {"name": "b4", "answer": "Bilder auf die Straße bringen"}, {"name": "b5", "answer": "Sie bleiben stehen, lachen und freuen sich"}, {"name": "b6", "answer": "Sie wollen die Bilder sehen"}, {"name": "b7", "answer": "Nein, sie ist grau, schmutzig und traurig."}, {"name": "b8", "answer": "Nein, sie ärgern sich und beschweren sich."}, {"name": "b9", "answer": "Sie lieben sie."}, {"name": "b10", "answer": "Die Polizei freut sich nicht."}], "u7": [{"name": "o1", "answer": "positiv"}, {"name": "o2", "answer": "negativ"}, {"name": "o3", "answer": "negativ"}, {"name": "o4", "answer": "positiv"}, {"name": "o5", "answer": "Präferenz"}], "u8": [{"name": "d1", "answer": "diesem"}, {"name": "d2", "answer": "diesem"}, {"name": "d3", "answer": "dieser"}, {"name": "d4", "answer": "diesem"}, {"name": "d5", "answer": "diesem"}, {"name": "d6", "answer": "dieser"}, {"name": "p1", "answer": "meinen"}, {"name": "p2", "answer": "deinen"}, {"name": "p3", "answer": "seinen"}, {"name": "p4", "answer": "ihren"}, {"name": "p5", "answer": "sein"}, {"name": "p6", "answer": "unseren"}, {"name": "p7", "answer": "euren"}, {"name": "p8", "answer": "ihren"}, {"name": "p9", "answer": "Ihren"}], "u9": [{"name": "r1", "answer": "mich"}, {"name": "r2", "answer": "dich"}, {"name": "r3", "answer": "sich"}, {"name": "r4", "answer": "sich"}, {"name": "r5", "answer": "sich"}, {"name": "r6", "answer": "uns"}, {"name": "r7", "answer": "euch"}, {"name": "r8", "answer": "sich"}, {"name": "r9", "answer": "sich"}], "u10": [{"name": "c1", "answer": "sich"}, {"name": "c2", "answer": "sich"}, {"name": "c3", "answer": "uns"}, {"name": "c4", "answer": "dich"}, {"name": "c5", "answer": "uns"}, {"name": "c6", "answer": "uns"}, {"name": "c7", "answer": "sich"}, {"name": "c8", "answer": "euch"}, {"name": "c9", "answer": "freue"}, {"name": "c10", "answer": "freust"}, {"name": "c11", "answer": "freut"}, {"name": "c12", "answer": "freuen"}, {"name": "c13", "answer": "freut"}, {"name": "c14", "answer": "freuen"}], "u11": [{"name": "w1", "answer": "beschweren"}, {"name": "w2", "answer": "freuen"}, {"name": "w3", "answer": "erinnern"}, {"name": "w4", "answer": "ärgern", "accept": ["ärgern", "argern"]}, {"name": "w5", "answer": "setzen"}], "u12": [{"name": "i1", "answer": "Beschwer dich doch!"}, {"name": "i2", "answer": "Erinnert euch doch bitte!"}, {"name": "i3", "answer": "Freu dich doch!"}, {"name": "i4", "answer": "Beschwert euch doch nicht!"}, {"name": "i5", "answer": "Setz dich bitte!"}, {"name": "i6", "answer": "Ärgert euch nicht!", "accept": ["Ärgert euch nicht!", "Argert euch nicht!"]}, {"name": "i7", "answer": "Freuen Sie sich doch!"}, {"name": "i8", "answer": "Beschweren Sie sich doch einfach!"}, {"name": "i9", "answer": "Ärgern Sie sich doch nicht!", "accept": ["Ärgern Sie sich doch nicht!", "Argern Sie sich doch nicht!"]}, {"name": "i10", "answer": "Setzen Sie sich bitte!"}], "u13": [{"name": "k1", "answer": "Sushi"}, {"name": "k2", "answer": "in fünf Minuten"}, {"name": "k3", "answer": "ins Kino"}, {"name": "k4", "answer": "Jason Bourne"}, {"name": "k5", "answer": "in einer Stunde"}], "u14": [{"name": "t1", "answer": "in"}, {"name": "t2", "answer": "in"}, {"name": "t3", "answer": "in"}, {"name": "t4", "answer": "in"}, {"name": "t5", "answer": "während"}, {"name": "t6", "answer": "während"}, {"name": "t7", "answer": "während"}, {"name": "t8", "answer": "während"}, {"name": "t9", "answer": "diesem"}, {"name": "t10", "answer": "dieser"}, {"name": "t11", "answer": "dieser"}, {"name": "t12", "answer": "diesen"}, {"name": "t13", "answer": "während des"}], "u15": [{"name": "z1", "answer": "uns"}, {"name": "z2", "answer": "mich"}, {"name": "z3", "answer": "dich"}, {"name": "z4", "answer": "mich"}, {"name": "z5", "answer": "sich"}, {"name": "z6", "answer": "sich"}, {"name": "z7", "answer": "uns"}, {"name": "z8", "answer": "sich"}, {"name": "z9", "answer": "haben"}, {"name": "z10", "answer": "reziprok – gegenseitig", "accept": ["reziprok – gegenseitig"]}, {"name": "z11", "answer": "reflexiv"}, {"name": "z12", "answer": "beim Subjekt"}, {"name": "z13", "answer": "es"}], "u17": [{"name": "e1", "answer": "glücklich"}, {"name": "e2", "answer": "unglücklich"}, {"name": "e3", "answer": "Künstler"}, {"name": "e4", "answer": "dieser"}, {"name": "e5", "answer": "uns"}, {"name": "e6", "answer": "dich"}, {"name": "e7", "answer": "Setz dich bitte!"}, {"name": "e8", "answer": "während"}, {"name": "e9", "answer": "einer"}, {"name": "e10", "answer": "sich"}, {"name": "e11", "answer": "sich"}, {"name": "e12", "answer": "sauber"}]};
+
+let completed = {};
+let scoreMap = {};
+let currentExercise = null;
+try {
+  const saved = JSON.parse(localStorage.getItem('lektion6_test_v1') || '{}');
+  completed = saved.completed || {};
+  scoreMap = saved.scoreMap || {};
+} catch (e) {
+  completed = {};
+  scoreMap = {};
+}
+
+function persist() {
+  try {
+    localStorage.setItem('lektion6_test_v1', JSON.stringify({completed, scoreMap}));
+  } catch (e) {}
+}
+
+function normalize(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[.!?،,;:]/g, '')
+    .replace(/\s+/g, ' ');
+}
+
+function updateDashboard() {
+  const done = exerciseIds.filter(id => completed[id]).length;
+  const totalScore = Object.values(scoreMap).reduce((sum, value) => sum + (Number(value) || 0), 0);
+  const percent = Math.round(done / exerciseIds.length * 100);
+
+  const percentNode = document.getElementById('duoPercentValue');
+  const bar = document.getElementById('duoProgressFill');
+  const text = document.getElementById('duoProgressText');
+  const ring = document.querySelector('.duo-ring');
+  const scoreNode = document.getElementById('scoreText');
+
+  if (percentNode) percentNode.textContent = percent + '%';
+  if (bar) bar.style.width = percent + '%';
+  if (text) text.textContent = done + ' / ' + exerciseIds.length + ' Übungen abgeschlossen';
+  if (scoreNode) scoreNode.textContent = totalScore + ' Punkte';
+  if (ring) ring.style.background = 'conic-gradient(#facc15 0 ' + (percent * 3.6) + 'deg, #ffffff26 ' + (percent * 3.6) + 'deg 360deg)';
+
+  Object.entries(stageMap).forEach(([stage, ids]) => {
+    const stageDone = ids.filter(id => completed[id]).length;
+    const stars = Math.round(stageDone / ids.length * 5);
+    document.querySelectorAll('[data-stage-stars-panel="' + stage + '"]').forEach(node => {
+      node.innerHTML = Array.from({length:5}, (_, i) =>
+        '<span class="' + (i < stars ? '' : 'star-off') + '">★</span>'
+      ).join(' ');
+    });
+  });
+
+  document.querySelectorAll('.lesson-circle').forEach(button => {
+    const id = button.dataset.openExercise;
+    const isDone = !!completed[id];
+    button.classList.toggle('done', isDone);
+    const sub = button.querySelector('.circle-sub');
+    if (sub) sub.textContent = isDone ? 'مكتمل' : 'ابدأ';
+  });
+
+  exerciseIds.forEach(id => {
+    const badge = document.querySelector('#' + id + ' .exercise-num');
+    if (badge) badge.textContent = completed[id] ? '✓ ERLEDIGT' : ('ÜBUNG ' + id.slice(1));
+  });
+}
+
+function finish(id, correct, total) {
+  completed[id] = true;
+  scoreMap[id] = Math.max(Number(scoreMap[id] || 0), correct);
+  persist();
+  updateDashboard();
+
+  const feedback = document.getElementById('fb-' + id);
+  if (!feedback) return;
+  const percent = total ? correct / total : 0;
+  const kind = correct === total ? 'good' : (percent >= 0.6 ? 'mid' : 'bad');
+  feedback.className = 'feedback show ' + kind;
+  feedback.textContent = (correct === total ? '🎉 Sehr gut! ' : percent >= 0.6 ? '👍 Gut gemacht! ' : '💪 Weiter üben! ')
+    + correct + ' von ' + total + ' richtig. '
+    + (correct === total ? 'Alles richtig!' : 'Du kannst die Antworten zurücksetzen und es noch einmal versuchen.');
+}
+
+function checkExercise(id) {
+  const defs = definitions[id] || [];
+  const section = document.getElementById(id);
+  if (!section) return;
+  let correct = 0;
+
+  defs.forEach(def => {
+    const field = section.querySelector('[name="' + def.name + '"]');
+    const value = field ? field.value : '';
+    const accepted = def.accept || [def.answer];
+    const ok = accepted.some(answer => normalize(answer) === normalize(value));
+    if (ok) correct++;
+
+    const item = section.querySelector('[data-field="' + def.name + '"]');
+    if (item) {
+      item.classList.toggle('correct', ok);
+      item.classList.toggle('incorrect', !ok);
+    }
+  });
+
+  finish(id, correct, defs.length);
+}
+
+function resetExercise(id) {
+  const section = document.getElementById(id);
+  if (!section) return;
+  section.querySelectorAll('input, select, textarea').forEach(field => {
+    if (field.type === 'checkbox' || field.type === 'radio') field.checked = false;
+    else field.value = '';
+  });
+  section.querySelectorAll('.q-item').forEach(item => item.classList.remove('correct','incorrect'));
+  const feedback = document.getElementById('fb-' + id);
+  if (feedback) feedback.className = 'feedback';
+  if (id === 'u16') {
+    const list = document.getElementById('writingChecklist');
+    if (list) list.innerHTML = '';
+  }
+  completed[id] = false;
+  delete scoreMap[id];
+  persist();
+  updateDashboard();
+}
+
+function resetAll() {
+  if (!confirm('Möchtest du alle Antworten und den Fortschritt löschen?')) return;
+  exerciseIds.forEach(resetExercise);
+  completed = {};
+  scoreMap = {};
+  persist();
+  updateDashboard();
+  showHome();
+}
+
+function showHome() {
+  const home = document.getElementById('stageHome');
+  if (home) home.style.display = '';
+  document.querySelectorAll('.stage-screen').forEach(screen => screen.classList.remove('active-stage-screen'));
+  document.querySelectorAll('.stage-nav-btn').forEach(button => {
+    button.classList.remove('active');
+    button.setAttribute('aria-expanded', 'false');
+  });
+  document.querySelectorAll('.exercise').forEach(section => section.classList.remove('active-exercise'));
+  currentExercise = null;
+}
+
+function showStage(stageId, shouldScroll = true) {
+  const home = document.getElementById('stageHome');
+  if (home) home.style.display = '';
+  document.querySelectorAll('.stage-screen').forEach(screen => {
+    screen.classList.toggle('active-stage-screen', screen.dataset.stageScreen === stageId);
+  });
+  document.querySelectorAll('.stage-item').forEach(item => {
+    item.classList.toggle('is-open', item.dataset.stageItem === stageId);
+  });
+  document.querySelectorAll('.stage-nav-btn').forEach(button => {
+    const active = button.dataset.showStage === stageId;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-expanded', active ? 'true' : 'false');
+  });
+  document.querySelectorAll('.exercise').forEach(section => section.classList.remove('active-exercise'));
+  currentExercise = null;
+  if (shouldScroll) {
+    const item = document.querySelector('[data-stage-item="' + stageId + '"]');
+    if (item) setTimeout(() => item.scrollIntoView({behavior:'smooth', block:'nearest'}), 40);
+  }
+}
+
+function openExercise(id, shouldScroll = true) {
+  const section = document.getElementById(id);
+  if (!section) return;
+  const home = document.getElementById('stageHome');
+  if (home) home.style.display = 'none';
+  document.querySelectorAll('.stage-screen').forEach(screen => screen.classList.remove('active-stage-screen'));
+  document.querySelectorAll('.exercise').forEach(node => node.classList.remove('active-exercise'));
+  section.classList.add('active-exercise');
+
+  const stageId = stageByExercise[id];
+  document.querySelectorAll('.stage-nav-btn').forEach(button => {
+    button.classList.toggle('active', button.dataset.showStage === stageId);
+  });
+  document.querySelectorAll('.lesson-circle').forEach(button => {
+    button.classList.toggle('active', button.dataset.openExercise === id);
+  });
+  currentExercise = id;
+  if (shouldScroll) setTimeout(() => section.scrollIntoView({behavior:'smooth', block:'start'}), 60);
+}
+
+function checkWriting() {
+  const text = (document.getElementById('writingTask')?.value || '').trim();
+  const lower = text.toLowerCase();
+  const sentenceCount = (text.match(/[.!?]+/g) || []).length;
+  const criteria = [
+    ['4–6 vollständige Sätze', sentenceCount >= 4 && sentenceCount <= 6],
+    ['Mindestens zwei Gefühlswörter', ['fröhlich','traurig','wütend','überrascht','müde'].filter(word => lower.includes(word)).length >= 2],
+    ['Ein reflexives Verb', /(freue|ärgere|fühle|erinnere|beschwere|setze|interessiere|langweile).{0,18}(mich|dich|sich|uns|euch)/.test(lower)],
+    ['Eine Zeitangabe mit „in“ oder „während“', /\b(in einem|in einer|in zehn|während des|während der)\b/.test(lower)]
+  ];
+  const correct = criteria.filter(item => item[1]).length;
+  const list = document.getElementById('writingChecklist');
+  if (list) {
+    list.innerHTML = '<div class="writing-checklist-title">Kriterien</div>' + criteria.map(item =>
+      '<div class="writing-check-item">' + (item[1] ? '✓ ' : '○ ') + item[0] + '</div>'
+    ).join('');
+  }
+  finish('u16', correct, criteria.length);
+  const feedback = document.getElementById('fb-u16');
+  if (feedback) feedback.textContent = (correct >= 3 ? 'Guter Text! ' : 'Weiterarbeiten! ')
+    + correct + ' / 4 Kriterien erkannt. Lies deinen Text noch einmal durch.';
+}
+
+document.addEventListener('click', event => {
+  const stageButton = event.target.closest('[data-show-stage]');
+  if (stageButton) {
+    showStage(stageButton.dataset.showStage);
+    return;
+  }
+  const circle = event.target.closest('.lesson-circle[data-open-exercise]');
+  if (circle) {
+    openExercise(circle.dataset.openExercise);
+    return;
+  }
+  const back = event.target.closest('[data-back-to-stage]');
+  if (back) {
+    showStage(stageByExercise[currentExercise] || 'stage1');
+    return;
+  }
+  const check = event.target.closest('[data-check]');
+  if (check) {
+    checkExercise(check.dataset.check);
+    return;
+  }
+  const reset = event.target.closest('[data-reset]');
+  if (reset) {
+    resetExercise(reset.dataset.reset);
+    return;
+  }
+  if (event.target.closest('[data-check-writing]')) {
+    checkWriting();
+    return;
+  }
+  if (event.target.closest('[data-reset-all]')) {
+    resetAll();
+  }
+});
+
+updateDashboard();
+
+</script>
+</body>
+</html>

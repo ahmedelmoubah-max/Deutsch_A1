@@ -1,0 +1,2088 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#2457d6">
+<title>Gut aussehen – Kleidung | Interaktive Übungen</title>
+<style>
+:root{
+  --ink:#172554;--muted:#64748b;--paper:#f7f9ff;--line:#e5eaf5;
+  --blue:#2878e8;--purple:#8154d9;--pink:#e94d91;--green:#16a477;
+  --orange:#f08a25;--yellow:#f3c64e;--red:#e35b62;
+  --shadow:0 12px 35px rgba(29,54,112,.09);--radius:24px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:linear-gradient(180deg,#eaf3ff 0,#f8faff 330px,#f6f8fc 100%);color:var(--ink);font-family:Inter,system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;line-height:1.55}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+a{color:inherit;text-decoration:none}
+.topbar{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.91);backdrop-filter:blur(14px);border-bottom:1px solid #e5ebf5}
+.topbar-inner{max-width:1440px;margin:auto;padding:10px 22px;display:flex;align-items:center;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;white-space:nowrap}
+.brand-mark{width:38px;height:38px;border-radius:13px;background:linear-gradient(135deg,#1e75ed,#8b55dc);display:grid;place-items:center;color:#fff;font-size:20px;box-shadow:0 7px 16px #4b75d83d}
+.top-progress{flex:1;min-width:90px}
+.progress-meta{display:flex;justify-content:space-between;font-size:12px;color:#64748b;font-weight:700;margin-bottom:5px}
+.progress-track{height:8px;background:#e8edf7;border-radius:20px;overflow:hidden}
+.progress-fill{height:100%;width:0;background:linear-gradient(90deg,#2878e8,#a24fdb,#ed5593);border-radius:20px;transition:width .35s}
+.stat-pill{border:1px solid #e4eaf4;background:#fff;padding:8px 12px;border-radius:14px;font-weight:800;font-size:13px;white-space:nowrap}
+.reset-all{border:0;background:#fff1f2;color:#c24152;border-radius:12px;padding:9px 12px;font-weight:800}
+.hero{max-width:1440px;margin:22px auto 18px;padding:0 22px}
+.hero-card{position:relative;overflow:hidden;border-radius:30px;background:linear-gradient(115deg,#173e91 0%,#276fca 48%,#7d52d5 100%);color:#fff;padding:30px 34px;box-shadow:0 18px 45px #244e9c2b}
+.hero-card:before,.hero-card:after{content:"";position:absolute;border-radius:50%;background:#ffffff12}
+.hero-card:before{width:300px;height:300px;right:10%;top:-180px}
+.hero-card:after{width:220px;height:220px;right:-40px;bottom:-150px}
+.hero-content{position:relative;z-index:1;max-width:820px}
+.eyebrow{display:inline-flex;gap:8px;align-items:center;background:#ffffff22;border:1px solid #ffffff35;padding:6px 12px;border-radius:30px;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.hero h1{font-size:clamp(29px,4vw,48px);line-height:1.08;margin:13px 0 8px;letter-spacing:-.04em}
+.hero p{margin:0;color:#e7efff;max-width:670px;font-size:15px}
+.hero-bottom{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+.hero-chip{background:#ffffff1c;border:1px solid #ffffff30;padding:7px 11px;border-radius:12px;font-size:12px;font-weight:750}
+.layout{max-width:1440px;margin:auto;padding:0 22px 60px;display:grid;grid-template-columns:330px minmax(0,1fr);gap:20px;align-items:start}
+.sidebar{position:sticky;top:82px;background:#fff;border:1px solid var(--line);border-radius:22px;padding:15px;box-shadow:var(--shadow);max-height:calc(100vh - 100px);overflow:auto}
+.side-title{font-size:11px;color:#94a3b8;font-weight:900;letter-spacing:.12em;text-transform:uppercase;padding:5px 9px 10px}
+.nav-link{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:12px;color:#52627d;font-size:13px;font-weight:750;margin:2px 0;transition:.2s}
+.nav-link:hover{background:#f2f6ff;color:#2457d6}
+.nav-num{width:25px;height:25px;display:grid;place-items:center;border-radius:8px;background:#eef3fb;color:#49628c;font-size:11px;font-weight:900;flex:none}
+.nav-link.done .nav-num{background:#dcfce9;color:#168458}
+.main{min-width:0}
+.section-heading{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:5px 2px 14px}
+.section-heading h2{font-size:22px;margin:0;letter-spacing:-.03em}
+.section-heading p{margin:3px 0 0;color:var(--muted);font-size:13px}
+.poster-card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:14px;box-shadow:var(--shadow);margin-bottom:18px}
+.poster-card summary{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:850}
+.poster-card summary span:first-child{display:flex;align-items:center;gap:10px}
+.poster-card summary .tag{font-size:11px;background:#edf4ff;color:#2b65c4;border-radius:20px;padding:5px 9px}
+.poster-wrap{padding-top:14px;text-align:center}
+.poster-wrap img{max-width:100%;max-height:650px;object-fit:contain;border-radius:15px;border:1px solid #edf0f7}
+.exercise{position:relative;background:#fff;border:1px solid var(--line);border-radius:26px;padding:22px;margin:0 0 19px;box-shadow:var(--shadow);scroll-margin-top:88px;overflow:hidden}
+.exercise:before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--accent,var(--blue))}
+.exercise-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px}
+.exercise-title-wrap{display:flex;gap:12px;align-items:center;min-width:0}
+.exercise-icon{width:44px;height:44px;border-radius:15px;display:grid;place-items:center;background:var(--soft,#edf4ff);font-size:22px;flex:none}
+.exercise h3{margin:0;font-size:19px;letter-spacing:-.025em}
+.exercise-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.exercise-num{border:1px solid var(--line);background:#f8faff;color:#64748b;padding:6px 10px;border-radius:11px;font-size:11px;font-weight:900;white-space:nowrap}
+.instruction{padding:10px 13px;border-radius:13px;background:var(--soft,#f1f6ff);color:#40516f;font-size:13px;font-weight:700;margin:0 0 15px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.q-item{border:1px solid #e7ecf5;border-radius:15px;padding:12px;background:#fff;min-width:0;transition:.18s}
+.q-item.correct{border-color:#7bd6ad;background:#f0fff7}
+.q-item.incorrect{border-color:#f2a3a3;background:#fff5f5}
+.q-label{font-weight:800;font-size:14px;margin-bottom:8px}
+.small-ar{font-family:Tahoma,Arial,sans-serif;direction:rtl;unicode-bidi:plaintext;color:#64748b;font-size:13px}
+.option-row{display:flex;flex-wrap:wrap;gap:7px}
+.choice{border:1px solid #dfe6f2;background:#fff;border-radius:11px;padding:7px 11px;color:#40516f;font-weight:750;font-size:13px;transition:.15s}
+.choice:hover{border-color:var(--accent,var(--blue));background:var(--soft,#f3f7ff)}
+.choice.selected{background:var(--accent,var(--blue));border-color:var(--accent,var(--blue));color:#fff}
+.choice:disabled{opacity:.6;cursor:default}
+.field,select.field,textarea.field{width:100%;border:1px solid #dce4f0;border-radius:11px;padding:10px 11px;background:#fff;color:#1e293b;outline:none;min-width:0}
+.field:focus{border-color:var(--accent,var(--blue));box-shadow:0 0 0 3px color-mix(in srgb,var(--accent,var(--blue)) 15%,transparent)}
+.field[dir=rtl]{text-align:right}
+.field-wrap{display:grid;gap:7px}
+.field-label{font-size:12px;font-weight:800;color:#52627d}
+.btn-row{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin-top:16px}
+.primary-btn{border:0;background:var(--accent,var(--blue));color:#fff;padding:10px 16px;border-radius:12px;font-weight:850;box-shadow:0 5px 12px color-mix(in srgb,var(--accent,var(--blue)) 22%,transparent)}
+.secondary-btn{border:1px solid #dfe6f1;background:#fff;color:#53627a;padding:9px 13px;border-radius:12px;font-weight:800}
+.next-btn{border:0;background:#edf4ff;color:#255fc2;padding:10px 14px;border-radius:12px;font-weight:850}
+.feedback{display:none;margin-top:13px;border-radius:13px;padding:11px 13px;font-size:13px;font-weight:800}
+.feedback.show{display:block}
+.feedback.good{background:#e9fff3;color:#16734d}
+.feedback.mid{background:#fff7e6;color:#9a5a08}
+.feedback.bad{background:#fff0f0;color:#b23b45}
+.muted{color:var(--muted)}
+/* unique exercise themes */
+.theme-blue{--accent:#2681e8;--soft:#edf6ff}
+.theme-gold{--accent:#e2a51e;--soft:#fff8df}
+.theme-purple{--accent:#8a55dc;--soft:#f4efff}
+.theme-mint{--accent:#16a477;--soft:#eafaf4}
+.theme-coral{--accent:#e66c54;--soft:#fff1eb}
+.theme-navy{--accent:#334b86;--soft:#edf1fb}
+.theme-map{--accent:#18a68a;--soft:#e8fbf5;background:linear-gradient(135deg,#fff 0%,#f4fffb 100%)}
+.theme-orange{--accent:#ed8b2b;--soft:#fff3e5}
+.theme-pink{--accent:#e64e91;--soft:#fff0f7}
+.theme-audio{--accent:#6559d7;--soft:#f0efff}
+.theme-reading{--accent:#b68a43;--soft:#fff9ec}
+.theme-chat{--accent:#2497b9;--soft:#eaf9ff}
+.theme-detective{--accent:#df555c;--soft:#fff0f0}
+.theme-sort{--accent:#5471b8;--soft:#eef3ff}
+.theme-write{--accent:#2d8c74;--soft:#edfaf5}
+.theme-final{--accent:#263b77;--soft:#eaf0ff;background:linear-gradient(145deg,#fff 0%,#f3f6ff 100%)}
+.match-columns{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.match-col{display:grid;gap:8px}
+.match-btn{width:100%;min-height:43px;text-align:left;border:1px solid #e1e8f3;background:#fff;border-radius:12px;padding:9px 12px;font-weight:800;color:#354663;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.match-btn .small-ar{font-size:13px}
+.match-btn.active{outline:2px solid var(--accent);background:var(--soft)}
+.match-btn.matched{background:#eafff3;border-color:#77d6a8;color:#18734e;opacity:.78}
+.match-btn.wrong{border-color:#ed9a9a;background:#fff1f1}
+.pair-counter{font-size:12px;font-weight:850;color:var(--muted);margin:0 0 10px}
+.article-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.article-card{border-radius:16px;padding:12px;border:1px solid #f0e5bc;background:#fffdf6}
+.article-word{font-size:17px;font-weight:900;margin-bottom:9px}
+.article-word small{display:block;color:#8b7b50;font-size:11px;font-weight:650;margin-top:2px}
+.article-buttons{display:flex;gap:5px}
+.article-buttons .choice{flex:1;padding:7px 3px}
+.word-puzzle{background:#fff;border:1px dashed #efb09b;border-radius:14px;padding:12px}
+.scramble{font-size:19px;font-weight:950;letter-spacing:.15em;color:#d05c47}
+.sentence-box{background:#172c5b;color:#fff;padding:16px;border-radius:17px;margin-bottom:12px}
+.sentence-box .q-label{color:#e7edff}
+.word-bank{display:flex;flex-wrap:wrap;gap:7px}
+.word-chip{border:1px solid #ccd7ef;background:#fff;border-radius:10px;padding:7px 10px;font-weight:800;color:#30446f}
+.word-chip.used{opacity:.35;text-decoration:line-through}
+.answer-line{min-height:44px;background:#ffffff16;border:1px dashed #ffffff66;border-radius:12px;padding:8px;display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+.answer-chip{background:#dce8ff;color:#1d3974;padding:5px 9px;border-radius:8px;font-size:13px;font-weight:850}
+.map-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.map-tile{border-radius:16px;background:#fff;border:1px solid #cdeee2;padding:13px;text-align:center}
+.map-emoji{font-size:27px}
+.map-tile select{margin-top:8px}
+.adj-match{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.adj-side{display:grid;gap:8px}
+.adj-card{border-radius:14px;padding:12px;border:1px solid #f3c5d9;background:#fff;font-weight:900;text-align:center}
+.sound-row{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #e1ddff;border-radius:15px;padding:12px}
+.sound-btn{width:44px;height:44px;border:0;border-radius:14px;background:#6559d7;color:#fff;font-size:20px;flex:none}
+.reading-paper{background:#fffdf7;border:1px solid #f1e2bf;border-radius:17px;padding:18px 20px;font-family:Georgia,serif;color:#594a30;font-size:16px;line-height:1.85;box-shadow:inset 0 0 0 5px #fff9eb}
+.chat-line{display:flex;gap:10px;align-items:flex-start;margin:11px 0}
+.avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#dff5ff;flex:none}
+.bubble{background:#fff;border:1px solid #d6edf6;border-radius:4px 16px 16px 16px;padding:11px 13px;max-width:88%;font-weight:700}
+.chat-line.right{flex-direction:row-reverse}
+.chat-line.right .bubble{background:#eafaf3;border-color:#d3f0e2;border-radius:16px 4px 16px 16px}
+.lined{background:repeating-linear-gradient(#fff,#fff 31px,#dce8e2 32px);line-height:32px;min-height:150px}
+.wordbank{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}
+.wordbank span{background:#e8f5ef;color:#26725c;border-radius:9px;padding:6px 9px;font-size:12px;font-weight:850}
+.final-banner{background:#20396f;color:#fff;border-radius:17px;padding:17px;margin-bottom:14px}
+.final-banner strong{font-size:18px}
+.footer{text-align:center;color:#94a3b8;font-size:12px;padding:15px}
+@media(max-width:980px){.layout{grid-template-columns:1fr}.sidebar{position:relative;top:auto;max-height:none;display:flex;gap:5px;overflow-x:auto;padding:10px}.side-title{display:none}.nav-link{flex:none;white-space:nowrap}.nav-num{width:23px;height:23px}.hero{margin-top:14px}.hero-card{padding:24px}}
+@media(max-width:650px){
+ .topbar-inner{padding:8px 12px;gap:8px}.brand{font-size:12px}.brand-mark{width:32px;height:32px}.stat-pill{font-size:11px;padding:7px 8px}.reset-all{font-size:11px;padding:8px}.progress-meta{font-size:10px}
+ .hero{padding:0 12px}.hero-card{padding:22px 19px;border-radius:22px}.hero p{font-size:13px}
+ .layout{padding:0 12px 40px;gap:12px}.sidebar{border-radius:16px}.exercise{padding:16px;border-radius:20px}.exercise h3{font-size:17px}.exercise-icon{width:39px;height:39px}
+ .grid-2,.match-columns{grid-template-columns:1fr}.grid-3,.article-grid,.map-grid{grid-template-columns:repeat(2,1fr)}
+ .adj-match{gap:7px}.match-btn{font-size:12px}.exercise-num{font-size:10px;padding:5px 7px}
+ .section-heading h2{font-size:19px}
+}
+@media(max-width:390px){.grid-3,.article-grid,.map-grid{grid-template-columns:1fr}.stat-pill.points{display:none}.exercise-head{gap:6px}}
+
+/* Duolingo-like roadmap sidebar */
+.duolingo-sidebar{
+  background:linear-gradient(180deg,#fbfdff 0%,#f4f8ff 100%);
+  border:1px solid #e4ebf8;
+  border-radius:28px;
+  padding:16px;
+  box-shadow:0 18px 40px rgba(30,64,175,.08);
+}
+.duo-header-card{
+  background:linear-gradient(135deg,#1d4ed8 0%,#2563eb 50%,#7c3aed 100%);
+  color:#fff;
+  border-radius:24px;
+  padding:16px;
+  margin-bottom:16px;
+  box-shadow:0 16px 30px rgba(37,99,235,.25);
+}
+.duo-mini-label{
+  display:inline-block;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.22);
+}
+.duo-percentage-wrap{
+  display:flex;
+  gap:14px;
+  align-items:center;
+  margin-top:12px;
+}
+.duo-ring{
+  width:94px;height:94px;flex:none;border-radius:50%;
+  background:conic-gradient(#facc15 0 360deg,#ffffff26 360deg 360deg);
+  display:grid;place-items:center;
+  box-shadow:inset 0 0 0 3px rgba(255,255,255,.12);
+}
+.duo-ring-inner{
+  width:72px;height:72px;border-radius:50%;background:#fff;color:#1e3a8a;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-weight:900;
+}
+.duo-ring-inner span{font-size:18px;line-height:1}
+.duo-ring-inner small{font-size:10px;color:#64748b;margin-top:3px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+.duo-head-meta h3{margin:0 0 5px;font-size:20px;letter-spacing:-.03em}
+.duo-head-meta p{margin:0;color:#e5edff;font-size:12px;line-height:1.5}
+.duo-progress-line{
+  height:10px;border-radius:999px;background:rgba(255,255,255,.22);
+  margin-top:14px;overflow:hidden;border:1px solid rgba(255,255,255,.18)
+}
+.duo-progress-fill{
+  height:100%;width:0%;
+  background:linear-gradient(90deg,#facc15,#fde68a);
+  border-radius:999px;
+  transition:width .35s ease;
+}
+.duo-progress-caption{
+  display:flex;justify-content:space-between;gap:10px;
+  font-size:11px;font-weight:800;margin-top:8px;color:#eef4ff
+}
+.duo-stage{
+  position:relative;
+  background:#fff;
+  border:1px solid #e6edf8;
+  border-radius:24px;
+  padding:16px 14px 14px;
+  margin:0 0 14px;
+  box-shadow:0 10px 24px rgba(51,84,160,.07);
+}
+.duo-stage:before{
+  content:"";
+  position:absolute;left:26px;top:-14px;width:2px;height:14px;
+  background:linear-gradient(180deg,#bed6ff,#dbeafe);
+}
+.duo-stage:first-of-type:before{display:none}
+.duo-stage-top{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
+  margin-bottom:12px;
+}
+.duo-stage-kicker{
+  color:#7c8aa5;font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;
+}
+.duo-stage-title{
+  color:#1f3b73;font-size:18px;font-weight:900;letter-spacing:-.02em;margin-top:3px;
+}
+.duo-stars{
+  font-size:14px;
+  background:#fff8db;
+  border:1px solid #fde68a;
+  color:#c48a00;
+  border-radius:999px;
+  padding:6px 10px;
+  white-space:nowrap;
+  box-shadow:inset 0 -2px 0 rgba(250,204,21,.18);
+}
+.duo-stage-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.duo-stage-grid.trio .duo-node:last-child{
+  grid-column:1 / -1;
+}
+.duo-node{
+  display:flex;align-items:center;gap:10px;
+  min-height:62px;
+  border-radius:18px;
+  padding:10px 12px;
+  background:linear-gradient(180deg,#f8fbff 0%,#eef5ff 100%);
+  border:1px solid #dce9fb;
+  color:#40516f;
+  font-weight:850;
+  transition:.18s ease;
+  box-shadow:0 6px 14px rgba(59,130,246,.07);
+}
+.duo-node:hover{
+  transform:translateY(-2px);
+  border-color:#93c5fd;
+  background:linear-gradient(180deg,#ffffff 0%,#eff6ff 100%);
+  color:#1d4ed8;
+}
+.duo-node-num{
+  width:34px;height:34px;flex:none;border-radius:12px;
+  display:grid;place-items:center;
+  background:linear-gradient(180deg,#2563eb 0%,#1d4ed8 100%);
+  color:#fff;font-size:13px;font-weight:900;
+  box-shadow:0 5px 10px rgba(37,99,235,.24);
+}
+.duo-node-label{
+  font-size:13px;line-height:1.2;
+}
+.duo-node.done{
+  background:linear-gradient(180deg,#effdf6 0%,#dcfce7 100%);
+  border-color:#9ae6b4;
+  color:#166534;
+}
+.duo-node.done .duo-node-num{
+  background:linear-gradient(180deg,#22c55e 0%,#16a34a 100%);
+}
+@media(max-width:980px){
+  .duolingo-sidebar{padding:14px}
+  .duo-stage-grid,.duo-stage-grid.trio{grid-template-columns:1fr}
+  .duo-stage-grid.trio .duo-node:last-child{grid-column:auto}
+}
+@media(max-width:650px){
+  .duo-percentage-wrap{flex-direction:column;align-items:flex-start}
+  .duo-ring{width:84px;height:84px}
+  .duo-ring-inner{width:64px;height:64px}
+  .duo-stage-title{font-size:16px}
+  .duo-stage-top{flex-direction:column;align-items:flex-start}
+  .duo-stars{font-size:13px}
+}
+
+
+
+
+/* Stage sidebar + main stage circles + full-page exercise display */
+.layout{max-width:1500px;margin:auto;padding:0 22px 60px;display:grid;grid-template-columns:270px minmax(0,1fr);gap:22px;align-items:start}
+.stage-sidebar{
+  background:linear-gradient(180deg,#fbfdff 0%,#f3f7ff 100%);
+  border:1px solid #e2eaf8;border-radius:26px;padding:15px;box-shadow:0 16px 35px rgba(36,74,144,.09)
+}
+.duo-header-card{
+  border-radius:24px;background:linear-gradient(145deg,#1749a4 0%,#2563eb 58%,#7547d6 100%);
+  padding:16px;box-shadow:0 16px 32px rgba(37,99,235,.24)
+}
+.duo-ring{border-radius:50%;border:4px solid rgba(255,255,255,.24);box-shadow:0 0 0 5px rgba(255,255,255,.08),inset 0 0 0 2px rgba(255,255,255,.15)}
+.duo-ring-inner{border-radius:50%;box-shadow:0 2px 9px rgba(12,35,83,.15)}
+.stage-nav-btn{
+  width:100%;display:flex;align-items:center;gap:11px;text-align:left;
+  border:1px solid #e4ebf7;background:#fff;border-radius:18px;padding:12px 13px;
+  color:#395178;margin:0 0 10px;cursor:pointer;transition:.18s;
+  box-shadow:0 6px 16px rgba(43,73,136,.05)
+}
+.stage-nav-btn:hover{transform:translateY(-2px);border-color:#a8cbff;background:#f6faff}
+.stage-nav-btn.active{background:#edf5ff;border-color:#7fb1ff;color:#1d4ed8}
+.stage-nav-icon{
+  width:38px;height:38px;flex:none;border-radius:50%;display:grid;place-items:center;
+  background:linear-gradient(145deg,#e8f1ff,#dbeafe);font-size:20px;font-weight:900;color:#2563eb
+}
+.stage-nav-btn.active .stage-nav-icon{
+  background:linear-gradient(145deg,#60a5fa,#2563eb);color:#fff
+}
+.stage-nav-copy strong{display:block;font-size:15px;font-weight:900}
+.stage-nav-copy small{display:block;font-size:11px;color:#7a8aa5;font-weight:750}
+
+.stage-screen{
+  display:none;
+  position:relative;
+  padding:28px 24px 34px;
+  border-radius:28px;
+  border:1px solid #dfe8f6;
+  background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);
+  box-shadow:0 16px 34px rgba(33,69,135,.08);
+  margin:0 0 22px;
+}
+.stage-screen.active-stage-screen{display:block;animation:exerciseReveal .28s ease both}
+.stage-screen-head{text-align:center;margin-bottom:18px}
+.stage-screen-mini{
+  display:inline-flex;padding:6px 12px;border-radius:999px;
+  background:#eaf1ff;color:#2864c7;font-size:11px;font-weight:900;letter-spacing:.12em
+}
+.stage-screen h2{
+  margin:11px 0 5px;font-size:30px;letter-spacing:-.03em;color:#20396d
+}
+.stage-screen p{margin:0;color:#6f7e98;font-size:14px}
+.stage-stars-row{
+  text-align:center;color:#f4b530;font-size:21px;letter-spacing:4px;font-weight:900;margin-bottom:24px
+}
+.stage-stars-row .star-off{color:#d7dee9}
+.lesson-circles-row{
+  display:flex;flex-wrap:wrap;gap:26px 20px;min-height:210px;
+  align-items:flex-start
+}
+.lesson-circles-row.right{justify-content:flex-start}
+.lesson-circles-row.left{justify-content:flex-start}
+.lesson-circles-row.right .lesson-circle:nth-child(1){margin-left:0}
+.lesson-circles-row.right .lesson-circle:nth-child(2){margin-left:48px}
+.lesson-circles-row.right .lesson-circle:nth-child(3){margin-left:96px}
+.lesson-circles-row.right .lesson-circle:nth-child(4){margin-left:144px}
+.lesson-circles-row.left .lesson-circle:nth-child(1){margin-left:144px}
+.lesson-circles-row.left .lesson-circle:nth-child(2){margin-left:96px}
+.lesson-circles-row.left .lesson-circle:nth-child(3){margin-left:48px}
+.lesson-circles-row.left .lesson-circle:nth-child(4){margin-left:0}
+.lesson-circles-row.small-set.right .lesson-circle:nth-child(1){margin-left:60px}
+.lesson-circles-row.small-set.right .lesson-circle:nth-child(2){margin-left:130px}
+.lesson-circles-row.small-set.right .lesson-circle:nth-child(3){margin-left:200px}
+.lesson-circles-row.small-set.left .lesson-circle:nth-child(1){margin-left:200px}
+.lesson-circles-row.small-set.left .lesson-circle:nth-child(2){margin-left:130px}
+.lesson-circles-row.small-set.left .lesson-circle:nth-child(3){margin-left:60px}
+.lesson-circle{
+  width:150px;min-height:175px;border:0;background:transparent;padding:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  text-align:center;cursor:pointer;transition:transform .18s
+}
+.lesson-circle:hover{transform:translateY(-5px)}
+.circle-icon{
+  width:98px;height:98px;border-radius:50%;display:grid;place-items:center;
+  background:linear-gradient(145deg,#e6eefb,#f3f6fb);border:6px solid #d8dde6;
+  box-shadow:0 6px 0 #cfd6e0,0 12px 22px rgba(62,84,122,.08);
+  font-size:38px;color:#8393aa;transition:.18s
+}
+.circle-title{
+  margin-top:14px;font-size:13px;font-weight:900;color:#394251;line-height:1.25
+}
+.circle-sub{
+  margin-top:3px;font-size:12px;font-weight:800;color:#8f9aa9
+}
+.lesson-circle.active .circle-icon,
+.lesson-circle.done .circle-icon{
+  background:linear-gradient(145deg,#49a4ff,#1c74df);
+  border-color:#7cc4ff;color:#fff;box-shadow:0 6px 0 #1a64bd,0 12px 22px rgba(28,116,223,.22)
+}
+.lesson-circle.active .circle-title,
+.lesson-circle.done .circle-title{color:#214579}
+.lesson-circle.done .circle-icon{
+  background:linear-gradient(145deg,#5edc8e,#17a65b);
+  border-color:#a8eec0;box-shadow:0 6px 0 #12854a,0 12px 22px rgba(23,166,91,.18)
+}
+.lesson-circle.done .circle-sub{color:#1f8b56}
+.lesson-circle.locked .circle-icon{
+  background:linear-gradient(145deg,#eeeeef,#dddddf);border-color:#e6e6e8;color:#b3b8c1;
+  box-shadow:0 6px 0 #d6d8dc,0 12px 22px rgba(80,88,100,.05)
+}
+.lesson-circle.locked .circle-title{color:#6e7683}
+.lesson-circle.locked .circle-sub{color:#a0a7b2}
+
+.exercise{
+  display:none!important;
+  max-width:none!important;
+  width:100%;
+}
+.exercise.active-exercise{
+  display:block!important;
+  animation:exerciseReveal .28s ease both
+}
+.exercise-head{position:sticky;top:72px;background:#fff;padding-bottom:12px;z-index:5}
+.exercise-back{
+  display:inline-flex;align-items:center;gap:8px;margin:0 0 12px;
+  border:1px solid #d9e5f6;background:#f6faff;color:#225cbd;
+  border-radius:12px;padding:8px 12px;font-size:13px;font-weight:850;cursor:pointer
+}
+.exercise-back:hover{background:#edf5ff}
+.stage-screen-hidden{display:none!important}
+
+@keyframes exerciseReveal{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+@media(max-width:1100px){
+  .lesson-circles-row.right .lesson-circle:nth-child(n),
+  .lesson-circles-row.left .lesson-circle:nth-child(n),
+  .lesson-circles-row.small-set.right .lesson-circle:nth-child(n),
+  .lesson-circles-row.small-set.left .lesson-circle:nth-child(n){margin-left:0}
+  .lesson-circles-row{justify-content:center}
+}
+@media(max-width:980px){
+  .layout{grid-template-columns:1fr}
+  .stage-sidebar{position:relative;top:auto;max-height:none}
+  .exercise-head{top:0}
+}
+@media(max-width:650px){
+  .layout{padding:0 12px 40px;gap:12px}
+  .stage-screen{padding:20px 14px 24px;border-radius:22px}
+  .stage-screen h2{font-size:24px}
+  .stage-stars-row{font-size:18px;letter-spacing:2px}
+  .lesson-circle{width:128px;min-height:162px}
+  .circle-icon{width:86px;height:86px;font-size:33px;border-width:5px}
+  .circle-title{font-size:12px}
+}
+
+
+/* Vertical stage roadmap */
+.stage-sidebar{
+  display:block !important;
+  overflow:visible !important;
+}
+.stage-sidebar .stage-nav-btn{
+  display:flex;
+  width:100%;
+  margin:0 0 10px;
+}
+.lesson-circles-row,
+.lesson-circles-row.right,
+.lesson-circles-row.left{
+  display:flex;
+  flex-direction:column;
+  flex-wrap:nowrap;
+  align-items:center;
+  justify-content:flex-start;
+  gap:22px;
+  min-height:0;
+}
+.lesson-circles-row .lesson-circle,
+.lesson-circles-row.right .lesson-circle,
+.lesson-circles-row.left .lesson-circle,
+.lesson-circles-row.small-set .lesson-circle{
+  margin-left:0 !important;
+}
+@media(max-width:980px){
+  .stage-sidebar{display:block !important;overflow:visible !important}
+  .stage-sidebar .stage-nav-btn{flex:none;width:100%}
+}
+
+
+/* Fullscreen stage view */
+.stage-screen.fullscreen-stage{
+  position:fixed !important; inset:0 !important; z-index:50;
+  width:100vw; height:100vh; max-height:100vh; overflow-y:auto;
+  margin:0 !important; border-radius:0 !important; padding:32px clamp(18px,5vw,80px) 60px !important;
+  background:linear-gradient(180deg,#fff 0%,#f5f8ff 100%);
+}
+.stage-screen.fullscreen-stage .stage-screen-head{padding-top:18px}
+.stage-fullscreen-close{position:fixed;top:18px;right:22px;z-index:60;border:1px solid #d9e5f6;background:#fff;color:#225cbd;border-radius:12px;padding:9px 14px;font-weight:850;box-shadow:0 6px 16px rgba(33,69,135,.12)}
+body.stage-fullscreen-open{overflow:hidden}
+
+
+/* Clean landing page: show only the five stages */
+.layout{
+  max-width:100%;
+  margin:0 auto;
+  padding:28px 20px 50px;
+  display:block;
+}
+.main{
+  width:100%;
+  max-width:860px;
+  margin:0 auto;
+}
+.stage-home{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:14px;
+  width:min(100%,620px);
+  margin:3vh auto 0;
+  padding:8px 0;
+}
+.stage-home .stage-nav-btn{
+  width:100%;
+  min-height:82px;
+  margin:0;
+  padding:16px 20px;
+  border-radius:20px;
+}
+.stage-home .stage-nav-icon{
+  width:48px;
+  height:48px;
+  font-size:22px;
+}
+.stage-home .stage-nav-copy strong{font-size:17px}
+.stage-home .stage-nav-copy small{font-size:12px}
+.stage-screen{display:none}
+.stage-screen.active-stage-screen{display:block}
+@media(max-width:650px){
+  .layout{padding:16px 12px 32px}
+  .stage-home{margin:1vh auto 0;gap:11px}
+  .stage-home .stage-nav-btn{min-height:74px;padding:13px 15px}
+  .stage-home .stage-nav-icon{width:42px;height:42px;font-size:20px}
+}
+
+
+/* Stage accordion: exercise tiles appear horizontally below the selected stage */
+.stage-home{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:13px;
+  width:min(100%, 900px);
+  margin:3vh auto 0;
+  padding:8px 0 30px;
+}
+.stage-item{
+  width:100%;
+  border-radius:22px;
+}
+.stage-home .stage-nav-btn{
+  width:100%;
+  min-height:76px;
+  margin:0;
+  padding:13px 18px;
+  border:1px solid #e1e9f7;
+  border-radius:20px;
+  background:rgba(255,255,255,.96);
+  box-shadow:0 7px 20px rgba(43,73,136,.055);
+  transition:background .2s ease,border-color .2s ease,box-shadow .2s ease,border-radius .2s ease;
+}
+.stage-home .stage-nav-btn:hover{
+  transform:translateY(-1px);
+  border-color:#b7d0fb;
+  background:#fff;
+}
+.stage-home .stage-item.is-open .stage-nav-btn{
+  border-color:#8dbbff;
+  border-radius:20px 20px 13px 13px;
+  background:linear-gradient(100deg,#f6faff,#fff);
+  box-shadow:0 5px 15px rgba(37,99,235,.07);
+}
+.stage-home .stage-nav-icon{
+  width:44px;height:44px;font-size:20px;
+}
+.stage-home .stage-nav-copy strong{font-size:16px}
+.stage-home .stage-nav-copy small{font-size:11px}
+.stage-screen{
+  display:none;
+  width:100%;
+  position:relative;
+  margin:0;
+  padding:17px 18px 19px;
+  border:1px solid #dce8fa;
+  border-top:0;
+  border-radius:0 0 20px 20px;
+  background:linear-gradient(180deg,#fff 0%,#f9fbff 100%);
+  box-shadow:0 10px 22px rgba(43,73,136,.055);
+  animation:exerciseReveal .22s ease both;
+}
+.stage-screen.active-stage-screen{display:block}
+.stage-screen .stage-screen-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:6px 12px;
+  margin:0 0 10px;
+  text-align:left;
+}
+.stage-screen .stage-screen-mini{
+  display:none;
+}
+.stage-screen h2{
+  margin:0;
+  font-size:15px;
+  letter-spacing:0;
+  color:#40577d;
+}
+.stage-screen p{
+  margin:0;
+  font-size:11px;
+  color:#8492a8;
+}
+.stage-screen .stage-stars-row{
+  text-align:right;
+  font-size:14px;
+  letter-spacing:2px;
+  margin:0 0 12px;
+}
+.lesson-circles-row,
+.lesson-circles-row.right,
+.lesson-circles-row.left,
+.lesson-circles-row.small-set{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  align-items:stretch;
+  justify-content:stretch;
+  gap:11px;
+  min-height:0;
+}
+.lesson-circles-row .lesson-circle,
+.lesson-circles-row.right .lesson-circle,
+.lesson-circles-row.left .lesson-circle,
+.lesson-circles-row.small-set .lesson-circle{
+  width:100%;
+  min-width:0;
+  min-height:132px;
+  margin:0 !important;
+  padding:12px 9px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid #e2eaf6;
+  border-radius:17px;
+  background:#fff;
+  box-shadow:0 5px 14px rgba(51,84,160,.055);
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+}
+.lesson-circles-row .lesson-circle:hover{
+  transform:translateY(-3px);
+  border-color:#a8caff;
+  box-shadow:0 9px 18px rgba(37,99,235,.10);
+}
+.lesson-circles-row .circle-icon{
+  width:54px;height:54px;
+  border-width:4px;
+  font-size:25px;
+  box-shadow:0 4px 0 #d3dce9,0 7px 13px rgba(62,84,122,.07);
+}
+.lesson-circles-row .circle-title{
+  margin-top:9px;
+  min-height:30px;
+  font-size:12px;
+  line-height:1.25;
+  color:#3f5273;
+}
+.lesson-circles-row .circle-sub{
+  margin-top:4px;
+  font-size:10px;
+}
+.lesson-circles-row .lesson-circle.done{
+  border-color:#a6e7c2;
+  background:#f5fff9;
+}
+.lesson-circles-row .lesson-circle.done .circle-sub{
+  color:#168653;
+}
+@media(max-width:720px){
+  .stage-home{width:100%;gap:11px;margin:1vh auto 0}
+  .stage-home .stage-nav-btn{min-height:70px;padding:12px 14px}
+  .stage-screen{padding:14px 12px 15px}
+  .lesson-circles-row,
+  .lesson-circles-row.right,
+  .lesson-circles-row.left,
+  .lesson-circles-row.small-set{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:9px;
+  }
+  .lesson-circles-row .lesson-circle,
+  .lesson-circles-row.right .lesson-circle,
+  .lesson-circles-row.left .lesson-circle,
+  .lesson-circles-row.small-set .lesson-circle{
+    min-height:120px;
+  }
+}
+@media(max-width:380px){
+  .lesson-circles-row,
+  .lesson-circles-row.right,
+  .lesson-circles-row.left,
+  .lesson-circles-row.small-set{
+    grid-template-columns:1fr 1fr;
+  }
+  .lesson-circles-row .circle-icon{width:48px;height:48px}
+  .lesson-circles-row .circle-title{font-size:11px}
+}
+
+
+/* Professional matching exercise — Übung 1 */
+#u1 .instruction{
+  border:1px solid #dce9ff;
+  background:linear-gradient(135deg,#f3f8ff,#f8f6ff);
+  color:#36527d;
+  padding:13px 16px;
+  border-radius:15px;
+}
+#u1 .match-progress-card{
+  margin:0 0 16px;
+  padding:15px 17px;
+  border:1px solid #e3ebf8;
+  border-radius:18px;
+  background:linear-gradient(135deg,#fbfdff 0%,#f3f7ff 100%);
+  box-shadow:0 7px 18px rgba(42,75,135,.05);
+}
+#u1 .match-progress-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:12px;
+  margin-bottom:11px;
+}
+#u1 .match-progress-copy{display:grid;gap:3px}
+#u1 .match-progress-kicker{
+  color:#8293ad;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.13em;
+}
+#u1 .match-progress-copy strong{
+  color:#2b426a;
+  font-size:14px;
+  font-weight:900;
+}
+#u1 .match-progress-status{
+  color:#7184a3;
+  font-size:11px;
+  font-weight:800;
+  text-align:right;
+}
+#u1 .match-progress-track{
+  height:9px;
+  overflow:hidden;
+  border-radius:20px;
+  background:#e4ebf6;
+  box-shadow:inset 0 1px 2px rgba(36,61,105,.07);
+}
+#u1 .match-progress-track span{
+  display:block;
+  width:0%;
+  height:100%;
+  border-radius:20px;
+  background:linear-gradient(90deg,#347ff0,#5b9df4,#8a69df);
+  transition:width .35s ease;
+}
+#u1 .match-columns.match-columns-pro{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  align-items:start;
+  gap:14px;
+}
+#u1 .match-panel{
+  min-width:0;
+  padding:12px;
+  border:1px solid #e4ebf6;
+  border-radius:19px;
+  background:#f9fbff;
+}
+#u1 .match-panel-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:2px 2px 11px;
+  margin-bottom:10px;
+  border-bottom:1px solid #e8eef8;
+}
+#u1 .match-panel-head > div{display:grid;gap:2px}
+#u1 .match-panel-eyebrow{
+  color:#93a1b7;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.13em;
+}
+#u1 .match-panel-head h4{
+  margin:0;
+  color:#304a73;
+  font-size:16px;
+  font-weight:900;
+}
+#u1 .match-panel-count{
+  flex:none;
+  padding:5px 8px;
+  border-radius:999px;
+  color:#55709a;
+  background:#edf3ff;
+  font-size:10px;
+  font-weight:850;
+}
+#u1 .match-col{display:grid;gap:7px}
+#u1 .match-btn.match-btn-pro{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  width:100%;
+  min-height:47px;
+  padding:8px 10px;
+  border:1px solid #e0e8f4;
+  border-radius:13px;
+  background:#fff;
+  color:#344b70;
+  text-align:left;
+  font-size:12.5px;
+  font-weight:850;
+  line-height:1.25;
+  box-shadow:0 2px 5px rgba(39,67,117,.025);
+  transition:background .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+#u1 .match-btn.match-btn-pro:hover:not(.matched){
+  transform:translateY(-1px);
+  border-color:#a9c9fb;
+  background:#fafdff;
+  box-shadow:0 5px 12px rgba(47,111,206,.08);
+}
+#u1 .match-btn-pro .match-label{flex:1;min-width:0}
+#u1 .match-btn-pro .match-symbol{
+  display:grid;
+  place-items:center;
+  flex:none;
+  width:29px;
+  height:29px;
+  border-radius:10px;
+  background:#f0f5ff;
+  font-size:16px;
+}
+#u1 .match-btn-pro .small-ar{
+  font-family:Tahoma,Arial,sans-serif;
+  font-size:14px;
+  font-weight:850;
+}
+#u1 .match-btn-pro[dir="rtl"]{text-align:right}
+#u1 .match-btn.match-btn-pro.active{
+  outline:none;
+  border-color:#4e91f4;
+  background:linear-gradient(135deg,#edf5ff,#f5f8ff);
+  color:#205bb4;
+  box-shadow:0 0 0 3px rgba(65,137,235,.13);
+}
+#u1 .match-btn-pro.active .match-symbol{background:#dceaff}
+#u1 .match-btn.match-btn-pro.matched{
+  border-color:#9cddba;
+  background:linear-gradient(135deg,#effdf5,#e7f9ef);
+  color:#18734d;
+  opacity:1;
+  box-shadow:none;
+  cursor:default;
+}
+#u1 .match-btn-pro.matched .match-symbol{display:none}
+#u1 .match-btn-pro.matched::after{
+  content:"✓";
+  display:grid;
+  place-items:center;
+  flex:none;
+  width:25px;
+  height:25px;
+  border-radius:50%;
+  background:#d2f4df;
+  color:#16804e;
+  font-size:14px;
+  font-weight:950;
+}
+#u1 .match-btn.match-btn-pro.wrong{
+  border-color:#ee9a9a;
+  background:#fff1f1;
+  color:#b43c49;
+  animation:matchNudge .24s ease;
+}
+#u1 .match-btn-pro:focus-visible{
+  outline:3px solid rgba(48,126,231,.28);
+  outline-offset:2px;
+}
+#u1 .btn-row{justify-content:space-between}
+@keyframes matchNudge{
+  0%,100%{transform:translateX(0)}
+  30%{transform:translateX(-3px)}
+  70%{transform:translateX(3px)}
+}
+@media(max-width:650px){
+  #u1 .match-columns.match-columns-pro{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  #u1 .match-panel{padding:8px;border-radius:15px}
+  #u1 .match-panel-head{align-items:flex-start;flex-direction:column;gap:5px;padding-bottom:8px}
+  #u1 .match-panel-head h4{font-size:14px}
+  #u1 .match-panel-count{font-size:9px;padding:4px 7px}
+  #u1 .match-btn.match-btn-pro{min-height:43px;padding:7px 7px;font-size:11px;gap:5px}
+  #u1 .match-btn-pro .match-symbol{width:24px;height:24px;border-radius:8px;font-size:14px}
+  #u1 .match-btn-pro .small-ar{font-size:12px}
+  #u1 .match-progress-card{padding:12px}
+  #u1 .match-progress-top{align-items:flex-start;flex-direction:column;gap:5px}
+  #u1 .match-progress-status{text-align:left}
+}
+@media(max-width:360px){
+  #u1 .match-columns.match-columns-pro{gap:6px}
+  #u1 .match-panel{padding:6px}
+  #u1 .match-btn.match-btn-pro{font-size:10px;padding:6px 5px}
+  #u1 .match-btn-pro .match-symbol{width:21px;height:21px;font-size:12px}
+  #u1 .match-btn-pro .small-ar{font-size:11px}
+}
+
+
+/* Smooth feedback reveal; checking never navigates away from the exercise */
+.exercise .feedback.show{
+  animation: feedbackReveal .24s ease-out both;
+}
+@keyframes feedbackReveal{
+  from{opacity:0;transform:translateY(6px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+
+/* Übung 3 — polished translation quiz */
+#u3 .instruction{
+  border:1px solid #e7defb;
+  background:linear-gradient(135deg,#f8f5ff 0%,#f2f6ff 100%);
+  color:#554779;
+  padding:13px 16px;
+  border-radius:15px;
+}
+#u3 .quiz-overview{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:18px;
+  margin:0 0 16px;
+  padding:15px 17px;
+  border:1px solid #e7e2f5;
+  border-radius:18px;
+  background:linear-gradient(120deg,#fcfbff 0%,#f5f7ff 100%);
+  box-shadow:0 7px 18px rgba(79,62,132,.05);
+}
+#u3 .quiz-overview-copy{display:grid;gap:3px;min-width:0}
+#u3 .quiz-overview-kicker{
+  color:#9a8bbd;
+  font-size:9px;
+  font-weight:950;
+  letter-spacing:.15em;
+}
+#u3 .quiz-overview-copy strong{
+  color:#3c3860;
+  font-size:14px;
+  font-weight:900;
+}
+#u3 .quiz-overview-copy small{
+  color:#8993a8;
+  font-size:11px;
+  font-weight:650;
+}
+#u3 .quiz-progress{width:min(220px,38%);display:grid;gap:7px}
+#u3 .quiz-progress > span{
+  color:#71658e;
+  text-align:right;
+  font-size:11px;
+  font-weight:850;
+}
+#u3 .quiz-progress-track{
+  height:8px;
+  overflow:hidden;
+  border-radius:20px;
+  background:#e8e5f1;
+}
+#u3 .quiz-progress-track span{
+  display:block;
+  width:0%;
+  height:100%;
+  border-radius:20px;
+  background:linear-gradient(90deg,#8a65dc,#5c91e8);
+  transition:width .3s ease;
+}
+#u3 .quiz-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:13px;
+}
+#u3 .quiz-question{
+  display:flex;
+  flex-direction:column;
+  gap:13px;
+  min-width:0;
+  margin:0;
+  padding:15px;
+  border:1px solid #e5e9f3;
+  border-radius:18px;
+  background:linear-gradient(180deg,#fff 0%,#fcfcff 100%);
+  box-shadow:0 5px 14px rgba(51,65,110,.045);
+  transition:border-color .2s ease,background .2s ease,box-shadow .2s ease;
+}
+#u3 .quiz-question-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding-bottom:10px;
+  border-bottom:1px solid #edf0f6;
+}
+#u3 .quiz-number{
+  display:grid;
+  place-items:center;
+  flex:none;
+  width:30px;
+  height:30px;
+  border-radius:10px;
+  background:#f0ebfc;
+  color:#7958c5;
+  font-size:11px;
+  font-weight:950;
+}
+#u3 .quiz-question .q-label{
+  margin:0;
+  color:#405579;
+  font-size:15px;
+  font-weight:900;
+  text-align:right;
+}
+#u3 .quiz-options{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+#u3 .quiz-option{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+  min-height:43px;
+  padding:9px 10px;
+  border:1px solid #e2e7f1;
+  border-radius:12px;
+  background:#fff;
+  color:#405273;
+  font-size:12px;
+  font-weight:800;
+  line-height:1.3;
+  cursor:pointer;
+  transition:border-color .16s ease,background .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+#u3 .quiz-option:hover{
+  border-color:#b9a6e9;
+  background:#fbf9ff;
+  transform:translateY(-1px);
+}
+#u3 .quiz-option input{
+  width:16px;
+  height:16px;
+  flex:none;
+  margin:0;
+  accent-color:#805bd1;
+  cursor:pointer;
+}
+#u3 .quiz-option:has(input:checked){
+  border-color:#9879df;
+  background:#f4efff;
+  color:#5b4098;
+  box-shadow:0 0 0 2px rgba(137,103,211,.09);
+}
+#u3 .quiz-question.correct{
+  border-color:#9bdab8;
+  background:linear-gradient(180deg,#fbfffc 0%,#f1fcf5 100%);
+}
+#u3 .quiz-question.incorrect{
+  border-color:#efb0b0;
+  background:linear-gradient(180deg,#fff 0%,#fff8f8 100%);
+}
+#u3 .quiz-option.option-correct{
+  border-color:#8bd3a8;
+  background:#eafaf0;
+  color:#176c46;
+}
+#u3 .quiz-option.option-wrong{
+  border-color:#e99a9a;
+  background:#fff0f0;
+  color:#ad3945;
+}
+#u3 .quiz-question.correct .quiz-number{
+  background:#d9f5e4;
+  color:#16804d;
+}
+#u3 .quiz-question.incorrect .quiz-number{
+  background:#ffe2e2;
+  color:#b3454c;
+}
+#u3 .btn-row{justify-content:flex-start}
+@media(max-width:760px){
+  #u3 .quiz-grid{grid-template-columns:1fr;gap:10px}
+}
+@media(max-width:520px){
+  #u3 .quiz-overview{align-items:stretch;flex-direction:column;gap:12px;padding:13px}
+  #u3 .quiz-progress{width:100%}
+  #u3 .quiz-progress > span{text-align:left}
+  #u3 .quiz-question{padding:13px;border-radius:16px}
+  #u3 .quiz-options{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  #u3 .quiz-option{min-height:42px;padding:8px;font-size:11.5px}
+}
+@media(max-width:360px){
+  #u3 .quiz-options{grid-template-columns:1fr}
+}
+
+
+@media(max-width:520px){
+  #u3 .exercise-head{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    align-items:center;
+    gap:10px;
+  }
+  #u3 .exercise-head .exercise-back{
+    grid-column:1 / -1;
+    justify-self:start;
+    margin:0;
+  }
+  #u3 .exercise-head .exercise-title-wrap{
+    grid-column:1;
+    grid-row:2;
+    min-width:0;
+    gap:9px;
+  }
+  #u3 .exercise-head .exercise-title-wrap h3{
+    font-size:17px;
+    overflow-wrap:anywhere;
+  }
+  #u3 .exercise-head .exercise-num{
+    grid-column:2;
+    grid-row:2;
+    align-self:start;
+  }
+}
+
+
+/* Übung 9 — clean adjective-opposites challenge without pictorial hints */
+#u9 .instruction{
+  border:1px solid #e3e9f5;
+  background:linear-gradient(135deg,#f7f9fd,#f4f6fb);
+  color:#465675;
+  padding:13px 16px;
+  border-radius:15px;
+}
+#u9 .opposites-head{align-items:flex-start}
+#u9 .opposites-title{align-items:flex-start;gap:0}
+#u9 .opposites-kicker{
+  display:block;
+  margin-bottom:4px;
+  color:#8a96aa;
+  font-size:9px;
+  font-weight:950;
+  letter-spacing:.14em;
+}
+#u9 .opposites-title h3{color:#2e405f}
+#u9 .opposites-progress-card{
+  margin:0 0 16px;
+  padding:15px 17px;
+  border:1px solid #e3e9f3;
+  border-radius:18px;
+  background:linear-gradient(135deg,#fbfcff 0%,#f4f7fc 100%);
+  box-shadow:0 7px 18px rgba(41,61,99,.045);
+}
+#u9 .opposites-progress-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:12px;
+  margin-bottom:11px;
+}
+#u9 .opposites-progress-copy{display:grid;gap:3px}
+#u9 .opposites-progress-kicker{
+  color:#8a98ad;
+  font-size:9px;
+  font-weight:950;
+  letter-spacing:.14em;
+}
+#u9 .opposites-progress-copy strong{
+  color:#344765;
+  font-size:14px;
+  font-weight:900;
+}
+#u9 .opposites-progress-status{
+  color:#78869d;
+  font-size:11px;
+  font-weight:800;
+  text-align:right;
+}
+#u9 .opposites-progress-track{
+  height:8px;
+  overflow:hidden;
+  border-radius:20px;
+  background:#e6ebf3;
+}
+#u9 .opposites-progress-track span{
+  display:block;
+  width:0%;
+  height:100%;
+  border-radius:20px;
+  background:linear-gradient(90deg,#6485c8,#7c91b9);
+  transition:width .3s ease;
+}
+#u9 .opposites-board{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+#u9 .opposites-column{
+  min-width:0;
+  padding:12px;
+  border:1px solid #e5eaf2;
+  border-radius:18px;
+  background:#f9fbfe;
+}
+#u9 .opposites-column-head{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:2px 2px 12px;
+  margin-bottom:9px;
+  border-bottom:1px solid #e8edf4;
+}
+#u9 .opposites-column-index{
+  display:grid;
+  place-items:center;
+  width:31px;
+  height:31px;
+  flex:none;
+  border:1px solid #dce4f0;
+  border-radius:10px;
+  background:#fff;
+  color:#586c8c;
+  font-size:12px;
+  font-weight:950;
+}
+#u9 .opposites-column-kicker{
+  display:block;
+  color:#98a3b5;
+  font-size:9px;
+  font-weight:950;
+  letter-spacing:.13em;
+}
+#u9 .opposites-column-head h4{
+  margin:2px 0 0;
+  color:#344967;
+  font-size:14px;
+  font-weight:900;
+}
+#u9 .opposites-word{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  min-height:52px;
+  padding:10px 12px;
+  border:1px solid #dfe6f0;
+  border-radius:13px;
+  background:#fff;
+  color:#354968;
+  font-size:14px;
+  font-weight:850;
+  text-align:left;
+  box-shadow:0 2px 5px rgba(35,55,89,.025);
+  transition:background .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+#u9 .opposites-word:hover:not(.matched){
+  transform:translateY(-1px);
+  border-color:#aebfd8;
+  background:#fcfdff;
+  box-shadow:0 5px 12px rgba(48,70,107,.07);
+}
+#u9 .opposites-word-text{display:block;min-width:0;width:100%}
+#u9 .opposites-word.active{
+  outline:none;
+  border-color:#648bc8;
+  background:#eef4fd;
+  color:#2c5796;
+  box-shadow:0 0 0 3px rgba(91,132,193,.13);
+}
+#u9 .opposites-word.active .opposites-word-mark{
+  background:#dce8f8;
+  color:#456da8;
+}
+#u9 .opposites-word.matched{
+  border-color:#9bd7b6;
+  background:#effaf3;
+  color:#27704e;
+  opacity:1;
+  box-shadow:none;
+  cursor:default;
+}
+#u9 .opposites-word.matched .opposites-word-mark{
+  background:#d9f1e2;
+  color:#27704e;
+}
+#u9 .opposites-word.wrong{
+  border-color:#e5a0a0;
+  background:#fff2f2;
+  color:#ad4249;
+  animation:oppositesNudge .22s ease;
+}
+#u9 .opposites-actions{justify-content:space-between}
+#u9 .opposites-actions .secondary-btn,
+#u9 .opposites-actions .next-btn{min-width:130px}
+@keyframes oppositesNudge{
+  0%,100%{transform:translateX(0)}
+  30%{transform:translateX(-3px)}
+  70%{transform:translateX(3px)}
+}
+@media(max-width:560px){
+  #u9 .opposites-board{gap:8px}
+  #u9 .opposites-column{padding:8px;border-radius:15px}
+  #u9 .opposites-column-head{gap:7px;padding-bottom:9px}
+  #u9 .opposites-column-index{width:27px;height:27px;border-radius:8px}
+  #u9 .opposites-column-head h4{font-size:12px}
+  #u9 .opposites-word{min-height:47px;padding:8px;font-size:12px;gap:5px}
+    #u9 .opposites-progress-card{padding:12px}
+  #u9 .opposites-progress-top{align-items:flex-start;flex-direction:column;gap:5px}
+  #u9 .opposites-progress-status{text-align:left}
+  #u9 .opposites-actions .secondary-btn,
+  #u9 .opposites-actions .next-btn{min-width:0;flex:1}
+}
+@media(max-width:350px){
+  #u9 .opposites-word{font-size:11px;padding:7px 6px}
+  }
+
+
+
+/* Active exercise: match the original full-screen lesson sheet. */
+.exercise.active-exercise{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:100 !important;
+  width:100vw !important;
+  height:100vh !important;
+  max-height:100vh !important;
+  overflow-y:auto !important;
+  margin:0 !important;
+  padding:14px 22px 26px 13px !important;
+  border:0 !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  background:#fff !important;
+  scroll-margin-top:0 !important;
+}
+.exercise.active-exercise:before{
+  left:0 !important;
+  width:3px !important;
+}
+.exercise.active-exercise .exercise-head{
+  top:0 !important;
+  margin-bottom:14px;
+}
+.exercise.active-exercise .exercise-back{
+  padding:9px 9px;
+  font-size:12px;
+  transform:translateY(-3px);
+}
+.exercise.active-exercise .exercise-num{padding-left:11px;padding-right:11px;}
+#u2 .instruction{font-size:14px;line-height:1.42;}
+
+
+/* L6 exercise layouts applied across the clothing test */
+#u13 .chat-line{align-items:flex-start}
+#u13 .bubble{line-height:1.55}
+#u13 .bubble select.field{font-size:14px;max-width:100%}
+#u12 .reading-paper{margin-bottom:14px}
+#u12 .grid-2 .q-item{min-width:0}
+#u8 .map-tile b{display:block;line-height:1.45}
+#u8 .map-tile .field{margin-top:9px}
+#u9 .word-puzzle,#u11 .word-puzzle{min-height:112px}
+#u16 .writing-area{width:100%;min-height:190px}
+@media(max-width:650px){
+  #u13 .chat-line{gap:8px}
+  #u13 .bubble{max-width:calc(100% - 42px);font-size:14px;padding:10px 11px}
+  #u13 .bubble select.field{font-size:13px;min-width:100px!important}
+  #u1 .match-columns.match-columns-pro{grid-template-columns:1fr 1fr;gap:8px}
+  #u1 .match-btn.match-btn-pro{font-size:12px;padding:8px 9px}
+}
+
+</style>
+</head>
+<body>
+<div class="layout">
+ <main class="main">
+  <section class="stage-home" id="stageHome" aria-label="Stages"></section>
+  <div id="exerciseHost"></div>
+ </main>
+</div>
+<script>
+
+const stages = [
+  {id:"stage1", num:"①", title:"Kleidung & Farben", ar:"المفردات والألوان", desc:"Wortschatz · Kleidung und Farben", row:"right"},
+  {id:"stage2", num:"②", title:"Grammatik", ar:"القواعد", desc:"Akkusativ · tragen · hat oder haben · Wo?", row:"left"},
+  {id:"stage3", num:"③", title:"Komparativ", ar:"المقارنة", desc:"Adjektive · Vergleichssätze · Superlativ", row:"right small-set"},
+  {id:"stage4", num:"④", title:"Lesen & Dialoge", ar:"الفهم والحوار", desc:"Lesetext · Boutique-Dialog · Wortschatz", row:"left small-set"},
+  {id:"stage5", num:"⑤", title:"Anwenden & Test", ar:"التطبيق والاختبار", desc:"Als oder wie · Schreiben · Abschlusstest", row:"right small-set"}
+];
+
+const exercises = [
+ {id:"u1",stage:"stage1",title:"Kleidungsstücke verbinden",icon:"👕",theme:"theme-blue",sub:"Wortschatz · Kleidung",instruction:"اختار الترجمة العربية الصحيحة لكل كلمة بالألمانية.",type:"select",questions:[
+  {p:"die Mütze",opts:["قبعة صوفية","بدلة","قميص","معطف"],a:"قبعة صوفية"},
+  {p:"der Anzug",opts:["حذاء","بدلة","تنورة","وشاح"],a:"بدلة"},
+  {p:"das Hemd",opts:["قميص","فستان","جوارب","قبعة"],a:"قميص"},
+  {p:"die Jacke",opts:["ربطة عنق","سترة","بنطال","قفازات"],a:"سترة"},
+  {p:"das Kleid",opts:["تنورة","قميص","فستان","معطف"],a:"فستان"},
+  {p:"der Rock",opts:["تنورة","حذاء","قبعة","قميص"],a:"تنورة"},
+  {p:"der Mantel",opts:["وشاح","معطف","جوارب","سترة"],a:"معطف"},
+  {p:"die Schuhe",opts:["أحذية","قفازات","شورت","قميص"],a:"أحذية"},
+  {p:"die Krawatte",opts:["قبعة","ربطة عنق","وشاح","سترة"],a:"ربطة عنق"},
+  {p:"die Hose",opts:["بنطال","فستان","معطف","تنورة"],a:"بنطال"},
+  {p:"der Pullover",opts:["كنزة","قميص","حذاء","قبعة"],a:"كنزة"},
+  {p:"die Stiefel",opts:["صنادل","جوارب","أحذية طويلة","قفازات"],a:"أحذية طويلة"}
+ ]},
+ {id:"u2",stage:"stage1",title:"Artikel-Detektiv",icon:"🕵️",theme:"theme-gold",sub:"Welcher Artikel passt? der, die oder das?",instruction:"Wähle für jedes Nomen den richtigen Artikel. Achte auf das grammatische Geschlecht.",type:"choice",questions:[
+  {p:"___ Mantel",ar:"المعطف",opts:["der","die","das"],a:"der"},
+  {p:"___ Bluse",ar:"البلوزة",opts:["der","die","das"],a:"die"},
+  {p:"___ Pullover",ar:"الكنزة",opts:["der","die","das"],a:"der"},
+  {p:"___ Rock",ar:"التنورة",opts:["der","die","das"],a:"der"},
+  {p:"___ Jacke",ar:"السترة",opts:["der","die","das"],a:"die"},
+  {p:"___ Kleid",ar:"الفستان",opts:["der","die","das"],a:"das"},
+  {p:"___ Schal",ar:"الوشاح",opts:["der","die","das"],a:"der"},
+  {p:"___ Gürtel",ar:"الحزام",opts:["der","die","das"],a:"der"},
+  {p:"___ Kappe",ar:"القبعة",opts:["der","die","das"],a:"die"},
+  {p:"___ Jeans",ar:"جينز",opts:["der","die","das"],a:"die"}
+ ]},
+ {id:"u3",stage:"stage1",title:"Farben-Quiz",icon:"🎨",theme:"theme-gold",sub:"Wortschatz · Farben",instruction:"قرا اللون بالعربية واختار الكلمة الألمانية المناسبة.",type:"choice",questions:[
+  {p:"أحمر",opts:["rot","blau","gelb","grün"],a:"rot"},
+  {p:"أزرق",opts:["rosa","blau","braun","grau"],a:"blau"},
+  {p:"أصفر",opts:["gelb","schwarz","orange","weiß"],a:"gelb"},
+  {p:"أخضر",opts:["braun","rot","grün","rosa"],a:"grün"},
+  {p:"رمادي",opts:["grau","weiß","blau","gelb"],a:"grau"},
+  {p:"وردي",opts:["orange","rosa","schwarz","braun"],a:"rosa"},
+  {p:"بني",opts:["braun","grün","rot","weiß"],a:"braun"},
+  {p:"أسود",opts:["gelb","schwarz","rosa","blau"],a:"schwarz"},
+  {p:"برتقالي",opts:["weiß","orange","grau","grün"],a:"orange"},
+  {p:"أبيض",opts:["rot","braun","weiß","schwarz"],a:"weiß"}
+ ]},
+ {id:"u4",stage:"stage1",title:"Welche Kleidung passt?",icon:"🧥",theme:"theme-coral",sub:"Kleidung im Alltag",instruction:"اختار قطعة الملابس المناسبة حسب الجملة، كما في التمرين الموجود في الصفحة الأولى من PDF.",type:"choice",questions:[
+  {p:"Im Winter trage ich eine ___.",opts:["Jacke","Rock"],a:"Jacke"},
+  {p:"Zur Schule ziehe ich eine ___ an.",opts:["Hose","Kleid"],a:"Hose"},
+  {p:"Bei einer Hochzeit trage ich einen ___.",opts:["Anzug","Pullover"],a:"Anzug"},
+  {p:"Im Sommer trage ich ein ___.",opts:["Mantel","Kleid"],a:"Kleid"}
+ ]},
+
+ {id:"u5",stage:"stage2",title:"Akkusativ – Was trage ich?",icon:"🎯",theme:"theme-mint",sub:"Grammatik · Akkusativ",instruction:"كمّل الجملة بالأداة الصحيحة في Akkusativ.",type:"choice",questions:[
+  {p:"Ich trage ___ Pullover.",opts:["einen","eine","ein"],a:"einen"},
+  {p:"Ich trage ___ Mantel.",opts:["ein","einen","eine"],a:"einen"},
+  {p:"Ich trage ___ Hose.",opts:["einen","eine","ein"],a:"eine"},
+  {p:"Ich trage ___ Schuhe.",opts:["einen","eine","—"],a:"—"},
+  {p:"Ich trage ___ Hemd.",opts:["ein","einen","eine"],a:"ein"},
+  {p:"Ich trage ___ Jacke.",opts:["ein","einen","eine"],a:"eine"},
+  {p:"Ich trage ___ Mütze.",opts:["einen","eine","ein"],a:"eine"},
+  {p:"Ich trage ___ Kleid.",opts:["ein","eine","einen"],a:"ein"}
+ ]},
+ {id:"u6",stage:"stage2",title:"Das Verb tragen",icon:"🧍",theme:"theme-orange",sub:"Verben konjugieren",instruction:"اختار التصريف الصحيح للفعل tragen حسب الفاعل.",type:"choice",questions:[
+  {p:"Nina ___ einen Rock.",opts:["trägt","trage","tragen"],a:"trägt"},
+  {p:"David ___ Stiefel.",opts:["tragen","trägt","tragt"],a:"trägt"},
+  {p:"Ich ___ Jeans und ein Hemd.",opts:["trägst","trägt","trage"],a:"trage"},
+  {p:"Du ___ eine Bluse.",opts:["trägst","tragt","tragen"],a:"trägst"},
+  {p:"Emma und Paul ___ Mützen.",opts:["trägt","tragen","tragt"],a:"tragen"},
+  {p:"Laura und ich ___ Kleider.",opts:["tragen","trage","tragt"],a:"tragen"},
+  {p:"Ihr ___ Blusen und Röcke.",opts:["trägt","tragt","tragen"],a:"tragt"}
+ ]},
+ {id:"u7",stage:"stage2",title:"Hat oder haben?",icon:"🧩",theme:"theme-navy",sub:"Grammatik · Singular / Plural",instruction:"اختار hat أو haben حسب الاسم.",type:"choice",questions:[
+  {p:"Welche Farbe ___ das T-Shirt?",opts:["hat","haben"],a:"hat"},
+  {p:"Welche Farbe ___ die Blusen?",opts:["hat","haben"],a:"haben"},
+  {p:"Welche Farbe ___ der Mantel?",opts:["hat","haben"],a:"hat"},
+  {p:"Welche Farbe ___ die Jacken hier?",opts:["hat","haben"],a:"haben"}
+ ]},
+ {id:"u8",stage:"stage2",title:"Wo? – Präpositionen",icon:"📍",theme:"theme-map",sub:"Wo befinden wir uns?",instruction:"اختار التعبير الصحيح للمكان: auf dem / im / in der.",type:"choice",questions:[
+  {p:"Der Kleiderstand ist ___ Markt.",opts:["auf dem","im","in der"],a:"auf dem"},
+  {p:"Wir essen ___ Restaurant.",opts:["in der","im","auf dem"],a:"im"},
+  {p:"Die Kleidung ist ___ Geschäft.",opts:["im","auf dem","in der"],a:"im"},
+  {p:"Die Kinder sind ___ Schule.",opts:["im","auf dem","in der"],a:"in der"}
+ ]},
+
+ {id:"u9",stage:"stage3",title:"Komparativ bilden",icon:"📈",theme:"theme-purple",sub:"Adjektive · Vergleichsform",instruction:"كتب صيغة المقارنة (Komparativ) للكلمة. انتبه إلى Umlaut في بعض الكلمات.",type:"text",questions:[
+  {p:"schön →",answers:["schöner"]},
+  {p:"groß →",answers:["größer"]},
+  {p:"klein →",answers:["kleiner"]},
+  {p:"lang →",answers:["länger"]},
+  {p:"kurz →",answers:["kürzer"]},
+  {p:"teuer →",answers:["teurer"]},
+  {p:"billig →",answers:["billiger"]},
+  {p:"alt →",answers:["älter"]},
+  {p:"neu →",answers:["neuer"]},
+  {p:"gut →",answers:["besser"]},
+  {p:"hoch →",answers:["höher"]},
+  {p:"viel →",answers:["mehr"]}
+ ]},
+ {id:"u10",stage:"stage3",title:"Vergleichssätze",icon:"⚖️",theme:"theme-blue",sub:"Komparativ + als",instruction:"كمّل الجمل بصيغة المقارنة الصحيحة. استعمل als للمقارنة.",type:"choice",questions:[
+  {p:"Der Mantel ist ___ als die Jacke. (teuer)",opts:["teurer","teure","teuerer"],a:"teurer"},
+  {p:"Die Jeans ist ___ als der Rock. (lang)",opts:["langer","länger","lange"],a:"länger"},
+  {p:"Der Pullover ist ___ als die Bluse. (warm)",opts:["wärmer","warmer","warm"],a:"wärmer"},
+  {p:"Die Schuhe sind ___ als die Stiefel. (bequem)",opts:["bequemer","bequem","bequeme"],a:"bequemer"},
+  {p:"Die blaue Jacke ist ___ als der rote Pullover. (schön)",opts:["schön","schöner","schöne"],a:"schöner"},
+  {p:"Der Rock ist ___ als die Shorts. (lang)",opts:["länger","lang","lange"],a:"länger"}
+ ]},
+ {id:"u11",stage:"stage3",title:"Gut, viel und gern",icon:"⭐",theme:"theme-gold",sub:"Steigerung · gut / viel / gern",instruction:"كمّل درجات المقارنة والتفضيل كما في جدول الصفحة الرابعة.",type:"text",questions:[
+  {p:"gut → besser →",answers:["am besten"]},
+  {p:"viel → mehr →",answers:["am meisten"]},
+  {p:"gern → lieber →",answers:["am liebsten"]}
+ ]},
+
+ {id:"u12",stage:"stage4",title:"Lesen und verstehen",icon:"📖",theme:"theme-reading",sub:"Lesetext · Anna in der Boutique",instruction:"قرا النص وجاوب على الأسئلة. النص مأخوذ من فقرة القراءة في PDF (الصفحة 3).",type:"choice",reading:"Anna geht in eine Boutique. Sie probiert einen roten Pullover und eine blaue Jacke. Der rote Pullover ist schön, aber die blaue Jacke ist noch schöner. Der Pullover ist auch billiger als die Jacke. Die Jacke ist teurer, aber sie ist moderner und die Farbe gefällt Anna besser. Die Jacke ist größer als der Pullover und passt Anna besser. Der Pullover ist ein bisschen kleiner, aber auch sehr bequem. Am Ende kauft Anna die blaue Jacke, weil sie schöner ist und besser passt.",questions:[
+  {p:"Welche Kleidungsstücke probiert Anna an?",opts:["Einen Pullover und eine Jacke","Ein Kleid und einen Rock","Eine Bluse und Jeans"],a:"Einen Pullover und eine Jacke"},
+  {p:"Welche Farbe hat der Pullover?",opts:["blau","rot","schwarz"],a:"rot"},
+  {p:"Was ist billiger?",opts:["der Pullover","die Jacke"],a:"der Pullover"},
+  {p:"Was passt Anna besser?",opts:["der Pullover","die blaue Jacke"],a:"die blaue Jacke"},
+  {p:"Was kauft Anna am Ende?",opts:["die blaue Jacke","den roten Pullover"],a:"die blaue Jacke"}
+ ]},
+ {id:"u13",stage:"stage4",title:"Dialog in einer Boutique",icon:"💬",theme:"theme-chat",sub:"Sprechen · Einkaufen",instruction:"اختار العبارة اللي كتكمّل الحوار بشكل صحيح.",type:"choice",questions:[
+  {p:"Kundin: „Entschuldigung, ich finde dieses T-Shirt sehr schön. Gibt es auch ___?“",opts:["in einer anderen Farbe","eine Nummer größer","im Restaurant"],a:"in einer anderen Farbe"},
+  {p:"Verkäuferin: „Ja, natürlich. Es gibt es auch in ___ und ___.“",opts:["Blau und Grün","Mantel und Rock","teuer und billig"],a:"Blau und Grün"},
+  {p:"Kundin: „Super! ___ ich es anprobieren?“",opts:["Darf","Hat","Trägt"],a:"Darf"},
+  {p:"Kundin: „Ich ___ die Jeans sehen, bitte.“",opts:["möchte","haben","bin"],a:"möchte"},
+  {p:"Verkäuferin: „Welche Größe ___ Sie?“",opts:["brauchen","trägt","gefällt"],a:"brauchen"}
+ ]},
+ {id:"u14",stage:"stage4",title:"Wortschatz sortieren",icon:"🗂️",theme:"theme-sort",sub:"Kleidung · Farben · Adjektive / Verben",instruction:"صنّف كل كلمة في الخانة المناسبة: Kleidung أو Farben أو Adjektive / Verben.",type:"select",questions:[
+  {p:"der Mantel",opts:["Kleidung","Farben","Adjektive / Verben"],a:"Kleidung"},
+  {p:"die Jacke",opts:["Kleidung","Farben","Adjektive / Verben"],a:"Kleidung"},
+  {p:"der Rock",opts:["Kleidung","Farben","Adjektive / Verben"],a:"Kleidung"},
+  {p:"die Bluse",opts:["Kleidung","Farben","Adjektive / Verben"],a:"Kleidung"},
+  {p:"die Jeans",opts:["Kleidung","Farben","Adjektive / Verben"],a:"Kleidung"},
+  {p:"rot",opts:["Kleidung","Farben","Adjektive / Verben"],a:"Farben"},
+  {p:"blau",opts:["Kleidung","Farben","Adjektive / Verben"],a:"Farben"},
+  {p:"modern",opts:["Kleidung","Farben","Adjektive / Verben"],a:"Adjektive / Verben"},
+  {p:"bequem",opts:["Kleidung","Farben","Adjektive / Verben"],a:"Adjektive / Verben"},
+  {p:"teuer",opts:["Kleidung","Farben","Adjektive / Verben"],a:"Adjektive / Verben"},
+  {p:"gefallen",opts:["Kleidung","Farben","Adjektive / Verben"],a:"Adjektive / Verben"},
+  {p:"anprobieren",opts:["Kleidung","Farben","Adjektive / Verben"],a:"Adjektive / Verben"}
+ ]},
+
+ {id:"u15",stage:"stage5",title:"Als oder wie?",icon:"🔀",theme:"theme-orange",sub:"Vergleichssätze",instruction:"اختار als أو wie. تذكّر: genauso ... wie، وKomparativ + als.",type:"choice",questions:[
+  {p:"Ich trinke lieber Kaffee ___ Tee.",opts:["als","wie"],a:"als"},
+  {p:"Meine Tochter liebe ich genauso sehr ___ meinen Sohn.",opts:["als","wie"],a:"wie"},
+  {p:"Deutsch lernen macht so viel Spaß ___ Sport treiben.",opts:["als","wie"],a:"wie"},
+  {p:"Ich kann das genauso gut ___ du.",opts:["als","wie"],a:"wie"},
+  {p:"Ich kenne den Sohn besser ___ den Vater.",opts:["als","wie"],a:"als"},
+  {p:"Mezut und Sami laufen genauso schnell ___",opts:["als","wie"],a:"wie"},
+  {p:"Marco läuft schneller ___ Mezut und Sami.",opts:["als","wie"],a:"als"},
+  {p:"Der Pullover ist schöner ___ die Jacke.",opts:["als","wie"],a:"als"}
+ ]},
+ {id:"u16",stage:"stage5",title:"Schreibaufgabe",icon:"✍️",theme:"theme-write",sub:"Deine Kleidung",instruction:"كتب 4 حتى 6 جمل بالألمانية على الملابس ديالك. استعمل على الأقل 3 كلمات ديال الملابس، لون واحد، وجملة فيها Komparativ.",type:"writing",prompt:"Beispiel: Ich trage gern Jeans und einen Pullover. Im Winter trage ich eine warme Jacke. Meine blaue Jacke ist schöner als mein alter Mantel.",minSentences:4},
+ {id:"u17",stage:"stage5",title:"Abschlusstest",icon:"🏆",theme:"theme-final",sub:"12 Fragen · Alles zusammen",instruction:"الاختبار النهائي: 12 سؤال من جميع محاور الدرس. جاوب ومن بعد ضغط على Prüfen.",type:"choice",questions:[
+  {p:"___ Mantel ist braun.",opts:["Der","Die","Das"],a:"Der"},
+  {p:"Im Winter trage ich eine ___.",opts:["Jacke","Rock","Krawatte"],a:"Jacke"},
+  {p:"Welche Farbe ___ das T-Shirt?",opts:["hat","haben"],a:"hat"},
+  {p:"Ich trage ___ Pullover.",opts:["einen","eine","ein"],a:"einen"},
+  {p:"schön →",opts:["schöner","schönste","schön"],a:"schöner"},
+  {p:"gut →",opts:["guter","besser","mehr"],a:"besser"},
+  {p:"Die Jeans ist ___ als der Rock.",opts:["länger","lang","lange"],a:"länger"},
+  {p:"genauso schnell ___",opts:["als","wie"],a:"wie"},
+  {p:"Der Mantel ist ___ als die Jacke. (teuer)",opts:["teurer","teure","teuerer"],a:"teurer"},
+  {p:"Nina ___ einen Rock.",opts:["trage","trägt","tragen"],a:"trägt"},
+  {p:"Wir essen ___ Restaurant.",opts:["im","auf dem","in der"],a:"im"},
+  {p:"Ich trinke lieber Kaffee ___ Tee.",opts:["wie","als"],a:"als"}
+ ]}
+];
+
+const stageTitles = Object.fromEntries(stages.map(s=>[s.id,s.title]));
+const completed = {};
+const scoreMap = {};
+const totalPossible = exercises.reduce((sum,e)=>sum+(e.type==="writing"?3:e.questions.length),0);
+let currentExercise = null;
+const vocabMatchState = { left: null, done: new Set() };
+
+function esc(value){
+ return String(value).replace(/[&<>"']/g, ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+}
+function renderStages(){
+ const home=document.getElementById("stageHome");
+ home.innerHTML=stages.map((stage,si)=>{
+   const list=exercises.filter(e=>e.stage===stage.id);
+   const tiles=list.map((e,ei)=>`<button class="lesson-circle ${completed[e.id]?"done":""} ${si===0&&ei===0?"active":""}" type="button" data-open-exercise="${e.id}">
+     <span class="circle-icon">${e.icon}</span>
+     <span class="circle-title">${esc(e.title)}</span>
+     <span class="circle-sub" id="sub-${e.id}">${completed[e.id]?"✓ مكتمل":"ابدأ"}</span>
+   </button>`).join("");
+   return `<div class="stage-item ${si===0?"is-open":""}" data-stage-item="${stage.id}">
+     <button class="stage-nav-btn ${si===0?"active":""}" type="button" data-show-stage="${stage.id}" aria-expanded="${si===0}">
+       <span class="stage-nav-icon">${stage.num}</span>
+       <span class="stage-nav-copy"><strong>Stage ${si+1}</strong><small>${esc(stage.ar)}</small></span>
+     </button>
+     <div class="stage-screen ${si===0?"active-stage-screen":""}" id="stage-screen-${stage.id}" data-stage-screen="${stage.id}">
+       <div class="stage-screen-head">
+         <div class="stage-screen-mini">STAGE ${si+1}</div>
+         <h2>${esc(stage.title)}</h2>
+         <p>${esc(stage.desc)}</p>
+       </div>
+       <div class="stage-stars-row" id="stars-${stage.id}" data-stage-stars-panel="${stage.id}">★ ★ ★ ★ ★</div>
+       <div class="lesson-circles-row ${stage.row}">${tiles}</div>
+     </div>
+   </div>`;
+ }).join("");
+}
+function renderExercise(e){
+ const section=document.getElementById(e.id);
+ const number=exercises.indexOf(e)+1;
+ const head=`<div class="exercise-head">
+   <button class="exercise-back" type="button" data-back-to-stage>رجوع للمرحلة</button>
+   <div class="exercise-title-wrap">
+     <div class="exercise-icon">${e.icon}</div>
+     <div>
+       <h3>${esc(e.title)}</h3>
+       <div class="exercise-sub">${esc(e.sub)}</div>
+     </div>
+   </div>
+   <span class="exercise-num">ÜBUNG ${number}</span>
+ </div>
+ <p class="instruction">${esc(e.instruction)}</p>`;
+
+ const radioOptions=(q,i)=>`<div class="option-row quiz-options">${q.opts.map((o,j)=>`
+   <label class="quiz-option">
+     <input type="radio" name="${e.id}-${i}" value="${esc(o)}" data-answer-radio="${i}">
+     <span>${esc(o)}</span>
+   </label>`).join("")}</div>`;
+
+ const selectOptions=(q,i,placeholder="Bitte wählen …")=>`
+   <select class="field" data-answer-select="${i}">
+     <option value="">${esc(placeholder)}</option>
+     ${q.opts.map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join("")}
+   </select>`;
+
+ let content="";
+
+ // Übung 1 – match the words, following the original L6 matching-board layout.
+ if(e.id==="u1"){
+   const order=[4,9,2,7,0,10,5,1,11,3,8,6];
+   const symbols=["🧢","🤵","👔","🧥","👗","👚","🧥","👟","👖","🧶","👢","🧣"];
+   content=`<div class="match-progress-card">
+     <div class="match-progress-top">
+       <div class="match-progress-copy">
+         <span class="match-progress-kicker">DEIN FORTSCHRITT</span>
+         <strong id="matchCount1">0 / ${e.questions.length} Paare gefunden</strong>
+       </div>
+       <span class="match-progress-status" id="matchProgressStatus1">Wähle ein Kleidungswort zum Starten</span>
+     </div>
+     <div class="match-progress-track" role="progressbar" aria-label="Gefundene Wortpaare" aria-valuemin="0" aria-valuemax="${e.questions.length}" aria-valuenow="0">
+       <span id="matchProgressFill1"></span>
+     </div>
+   </div>
+   <div class="match-columns match-columns-pro">
+     <div class="match-panel">
+       <div class="match-panel-head"><div><span class="match-panel-eyebrow">SPRACHE 01</span><h4>Deutsch</h4></div><span class="match-panel-count">${e.questions.length} Wörter</span></div>
+       <div class="match-col">${e.questions.map((q,i)=>`
+         <button class="match-btn match-btn-pro" type="button" data-vocab-match data-match="m1" data-side="left" data-key="${i}" aria-pressed="false">
+           <span class="match-label">${esc(q.p)}</span><span class="match-symbol" aria-hidden="true">${symbols[i%symbols.length]}</span>
+         </button>`).join("")}
+       </div>
+     </div>
+     <div class="match-panel">
+       <div class="match-panel-head"><div><span class="match-panel-eyebrow">SPRACHE 02</span><h4 dir="rtl">العربية</h4></div><span class="match-panel-count">${e.questions.length} كلمات</span></div>
+       <div class="match-col">${order.map(i=>`
+         <button class="match-btn match-btn-pro" type="button" data-vocab-match data-match="m1" data-side="right" data-key="${i}" dir="rtl" aria-pressed="false">
+           <span class="match-label small-ar">${esc(e.questions[i].a)}</span>
+         </button>`).join("")}
+       </div>
+     </div>
+   </div>`;
+ }
+ // Übung 2 – article cards, matching the original Artikel-Detektiv.
+ else if(e.id==="u2"){
+   content=`<div class="article-grid">${e.questions.map((q,i)=>`
+     <div class="article-card q-item" data-question="${i}">
+       <div class="article-word">${esc(q.p)}${q.ar?`<small>${esc(q.ar)}</small>`:""}</div>
+       <div class="article-buttons">${q.opts.map(o=>`<button class="choice" type="button" data-choice-value="${esc(o)}">${esc(o)}</button>`).join("")}
+         <input type="hidden" data-answer-hidden value="">
+       </div>
+     </div>`).join("")}</div>`;
+ }
+ // Übung 3 – quiz cards with numbered questions and radio options.
+ else if(e.id==="u3"){
+   content=`<div class="quiz-overview">
+     <div class="quiz-overview-copy"><span class="quiz-overview-kicker">FARBEN-QUIZ</span><strong>Wähle die passende Farbe</strong><small>${e.questions.length} Fragen · Eine richtige Antwort pro Frage</small></div>
+     <div class="quiz-progress"><span id="u3AnsweredText">0 / ${e.questions.length} beantwortet</span><div class="quiz-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="${e.questions.length}" aria-valuenow="0"><span id="u3AnsweredFill"></span></div></div>
+   </div>
+   <div class="quiz-grid">${e.questions.map((q,i)=>`
+     <div class="q-item quiz-question" data-question="${i}">
+       <div class="quiz-question-head"><span class="quiz-number">${String(i+1).padStart(2,"0")}</span><div class="q-label small-ar" dir="rtl">${esc(q.p)}</div></div>
+       ${radioOptions(q,i)}
+     </div>`).join("")}
+   </div>`;
+ }
+ // Übung 8 – map-style tiles for location/preposition questions.
+ else if(e.id==="u8"){
+   const icons=["🧥","👗","👖","👞"];
+   content=`<div class="map-grid">${e.questions.map((q,i)=>`
+     <div class="map-tile q-item" data-question="${i}">
+       <div class="map-emoji">${icons[i%icons.length]}</div>
+       <b>${esc(q.p)}</b>
+       ${selectOptions(q,i,"…")}
+     </div>`).join("")}</div>`;
+ }
+ // Übung 9 and 11 – word-puzzle cards for written comparative forms.
+ else if(e.type==="text"){
+   content=`<div class="grid-2">${e.questions.map((q,i)=>`
+     <div class="word-puzzle q-item" data-question="${i}">
+       <div class="scramble">${esc(q.p)}</div>
+       <div class="muted" style="font-size:12px;margin:5px 0 9px">${e.id==="u9"?"Komparativ":"Steigerung"}</div>
+       <input class="field" type="text" data-answer-input="${i}" autocomplete="off" placeholder="Antwort …">
+     </div>`).join("")}</div>`;
+ }
+ // Übung 12 – reading paper followed by the original two-column question cards.
+ else if(e.id==="u12"){
+   content=`<div class="reading-paper"><b>Anna in der Boutique</b><br>${esc(e.reading)}</div>
+     <p class="instruction" style="margin-top:14px">Wähle die richtige Antwort zum Text.</p>
+     <div class="grid-2">${e.questions.map((q,i)=>`
+       <div class="q-item" data-question="${i}">
+         <div class="q-label">${i+1}. ${esc(q.p)}</div>
+         ${radioOptions(q,i)}
+       </div>`).join("")}</div>`;
+ }
+ // Übung 13 – dialogue bubbles with inline dropdowns, as in L6 Übung 12.
+ else if(e.id==="u13"){
+   content=e.questions.map((q,i)=>{
+     const match=q.p.match(/^(Kundin|Verkäuferin):\s*(.*)$/);
+     const speaker=match?match[1]:"Kundin";
+     let sentence=match?match[2]:q.p;
+     sentence=sentence.replace(/___\s+und\s+___/,"___");
+     const parts=sentence.split("___");
+     const longest=Math.max(...q.opts.map(o=>o.length));
+     const width=Math.min(205,Math.max(112,longest*7+26));
+     const inlineSelect=`<select class="field" data-answer-select="${i}" style="display:inline-block;width:auto;min-width:${width}px;max-width:100%;padding:8px 9px;vertical-align:middle;margin:0 3px"><option value="">…</option>${q.opts.map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join("")}</select>`;
+     const bubble=parts.length>1?`${esc(parts[0])}${inlineSelect}${esc(parts.slice(1).join("___"))}`:`${esc(sentence)} ${inlineSelect}`;
+     const right=speaker==="Verkäuferin";
+     return `<div class="chat-line ${right?"right":""}" data-question="${i}">
+       <div class="avatar">${right?"🧑‍💼":"👩"}</div>
+       <div class="bubble">${bubble}</div>
+     </div>`;
+   }).join("");
+ }
+ // Übung 16 – word bank and lined writing area.
+ else if(e.type==="writing"){
+   const words=["der Mantel","die Jacke","der Rock","die Bluse","die Jeans","der Pullover","das Kleid","rot / blau","schöner als"];
+   content=`<div class="wordbank">${words.map(w=>`<span>${esc(w)}</span>`).join("")}</div>
+     <div class="q-item">
+       <div class="q-label">Schreibe 4–6 Sätze über deine Kleidung. Nenne Kleidungsstücke, Farben und mindestens einen Komparativ.</div>
+       <textarea class="field lined writing-area" id="writing-${e.id}" rows="6" placeholder="Ich trage gern Jeans und einen Pullover.&#10;Im Winter trage ich ..."></textarea>
+       <div class="muted writing-hint">اكتب 4 حتى 6 جمل بالألمانية.</div>
+     </div>
+     <details style="margin-top:13px"><summary style="cursor:pointer;font-weight:850;color:#26725c">💡 Beispieltext anzeigen</summary><p class="muted">${esc(e.prompt)}</p></details>`;
+ }
+ // Remaining exercises – L6-style two-column question cards.
+ else{
+   const useSelect=e.type==="select" || e.id==="u4" || e.id==="u6" || e.id==="u7" || e.id==="u14";
+   const isFinal=e.id==="u17";
+   if(isFinal){
+     content+=`<div class="final-banner"><strong>🎯 Die letzte Runde!</strong><br><span style="color:#dbe7ff;font-size:13px">12 Fragen · Kleidung, Farben, Grammatik und Komparativ.</span></div>`;
+   }
+   content+=`<div class="grid-2">${e.questions.map((q,i)=>`
+     <div class="q-item" data-question="${i}">
+       <div class="q-label">${i+1}. ${esc(q.p)}</div>
+       ${useSelect?selectOptions(q,i):radioOptions(q,i)}
+     </div>`).join("")}</div>`;
+ }
+
+ const primaryLabel=e.id==="u1"?"✓ Paare prüfen":e.id==="u13"?"✓ Dialog prüfen":e.id==="u16"?"✓ Text auswerten":e.id==="u17"?"🏆 Abschlusstest auswerten":"✓ Antworten prüfen";
+ const secondaryLabel=e.id==="u1"?"↻ Neu starten":e.id==="u13"?"↻ Dialog zurücksetzen":e.id==="u16"?"↻ Leeren":e.id==="u17"?"↻ Test wiederholen":"↻ Wiederholen";
+ section.innerHTML=head+`<div class="exercise-content">${content}</div>
+   <div class="feedback" id="fb-${e.id}" role="status"></div>
+   <div class="btn-row">
+     <button class="primary-btn" type="button" data-check="${e.id}">${primaryLabel}</button>
+     <button class="secondary-btn" type="button" data-reset-exercise="${e.id}">${secondaryLabel}</button>
+     ${e.id==="u17"?"":`<button class="next-btn" type="button" data-next="${e.id}">Weiter →</button>`}
+   </div>`;
+}
+function handleVocabMatch(btn){
+ const key=String(btn.dataset.key),side=btn.dataset.side;
+ if(vocabMatchState.done.has(key))return;
+ const section=document.getElementById("u1");
+ const fb=document.getElementById("fb-u1");
+ if(side==="left"){
+   section.querySelectorAll('[data-vocab-match][data-side="left"]').forEach(b=>{
+     b.classList.remove("active");b.setAttribute("aria-pressed","false");
+   });
+   vocabMatchState.left=key;
+   btn.classList.add("active");btn.setAttribute("aria-pressed","true");
+   const status=document.getElementById("matchProgressStatus1");
+   if(status)status.textContent="Wähle jetzt die passende arabische Übersetzung";
+   return;
+ }
+ if(vocabMatchState.left===null){
+   if(fb){fb.className="feedback show mid";fb.textContent="اختار الكلمة بالألمانية أولاً.";}
+   return;
+ }
+ if(vocabMatchState.left===key){
+   section.querySelectorAll(`[data-vocab-match][data-key="${key}"]`).forEach(b=>{
+     b.classList.remove("active");b.classList.add("matched");b.setAttribute("aria-pressed","false");
+   });
+   vocabMatchState.done.add(key);
+   const count=vocabMatchState.done.size,total=exercises.find(e=>e.id==="u1").questions.length;
+   const countEl=document.getElementById("matchCount1");
+   const status=document.getElementById("matchProgressStatus1");
+   const fill=document.getElementById("matchProgressFill1");
+   const track=section.querySelector(".match-progress-track");
+   if(countEl)countEl.textContent=`${count} / ${total} Paare gefunden`;
+   if(status)status.textContent=count===total?"Alle Wortpaare gefunden!":"Sehr gut – noch "+(total-count)+" Paare";
+   if(fill)fill.style.width=(count/total*100)+"%";
+   if(track)track.setAttribute("aria-valuenow",String(count));
+   if(fb){fb.className="feedback show good";fb.textContent="Sehr gut! Das Wortpaar ist richtig.";}
+   if(count===total){completed.u1=true;scoreMap.u1=total;updateDashboard();}
+ }else{
+   btn.classList.add("wrong");
+   if(fb){fb.className="feedback show mid";fb.textContent="Das passt noch nicht zusammen. Versuch es erneut.";}
+   setTimeout(()=>btn.classList.remove("wrong"),550);
+   section.querySelectorAll('[data-vocab-match][data-side="left"]').forEach(b=>b.classList.remove("active"));
+ }
+ vocabMatchState.left=null;
+}
+function renderAll(){
+ renderStages();
+ const host=document.getElementById("exerciseHost");
+ exercises.forEach(e=>{
+   const section=document.createElement("section");
+   section.className=`exercise ${e.theme}`;
+   section.id=e.id;
+   host.appendChild(section);
+   renderExercise(e);
+ });
+}
+function showStage(stageId,scroll=true){
+ const home=document.getElementById("stageHome");
+ if(home)home.style.display="";
+ document.querySelectorAll(".stage-screen").forEach(screen=>{
+   screen.classList.toggle("active-stage-screen",screen.dataset.stageScreen===stageId);
+ });
+ document.querySelectorAll(".stage-item").forEach(item=>{
+   item.classList.toggle("is-open",item.dataset.stageItem===stageId);
+ });
+ document.querySelectorAll(".stage-nav-btn").forEach(btn=>{
+   const active=btn.dataset.showStage===stageId;
+   btn.classList.toggle("active",active);
+   btn.setAttribute("aria-expanded",active?"true":"false");
+ });
+ document.querySelectorAll(".exercise").forEach(el=>el.classList.remove("active-exercise"));
+ currentExercise=null;
+ if(scroll){
+   const item=document.querySelector('[data-stage-item="'+stageId+'"]');
+   if(item)setTimeout(()=>item.scrollIntoView({behavior:"smooth",block:"nearest"}),40);
+ }
+}
+function openExercise(id){
+ const e=exercises.find(x=>x.id===id);
+ if(!e)return;
+ currentExercise=id;
+ const home=document.getElementById("stageHome");
+ if(home)home.style.display="none";
+ document.querySelectorAll(".exercise").forEach(el=>{
+   el.classList.toggle("active-exercise",el.id===id);
+ });
+ document.querySelectorAll(".stage-nav-btn").forEach(btn=>{
+   btn.classList.toggle("active",btn.dataset.showStage===e.stage);
+ });
+ document.querySelectorAll(".lesson-circle").forEach(btn=>{
+   btn.classList.toggle("active",btn.dataset.openExercise===id);
+ });
+ const section=document.getElementById(id);
+ if(section)setTimeout(()=>section.scrollIntoView({behavior:"smooth",block:"start"}),40);
+}
+function normalize(s){
+ return String(s||"").trim().toLocaleLowerCase("de-DE").replace(/[.!?،؛,:]/g,"").replace(/\s+/g," ");
+}
+function checkExercise(id){
+ const e=exercises.find(x=>x.id===id);if(!e)return;
+ const section=document.getElementById(id);
+ const fb=document.getElementById("fb-"+id);
+ let correct=0,total=0,missing=0;
+ if(id==="u1"){
+   total=e.questions.length;
+   correct=vocabMatchState.done.size;
+   missing=total-correct;
+   fb.className="feedback show "+(correct===total?"good":correct>=Math.ceil(total*.65)?"mid":"bad");
+   fb.textContent=`Ergebnis: ${correct} / ${total} Wortpaare richtig${missing?` · ${missing} noch offen`:""}. ${correct===total?"Ausgezeichnet!":"Versuche die übrigen Paare zu verbinden."}`;
+ }else if(e.type==="writing"){
+   const area=document.getElementById("writing-"+id);
+   const text=area?area.value.trim():"";
+   const sentences=(text.match(/[.!?](?:\s|$)/g)||[]).length;
+   const vocab=["mantel","jacke","rock","bluse","jeans","pullover","kleid","hose","schuhe","stiefel","hemd","mütze","anzug","schal"];
+   const comparative=["schöner","größer","kleiner","länger","kürzer","teurer","billiger","älter","besser","höher","wärmer","bequemer","mehr","lieber"];
+   const lower=normalize(text);
+   const vocabCount=vocab.filter(w=>lower.includes(w)).length;
+   const hasColor=["rot","blau","gelb","grün","grau","rosa","braun","schwarz","orange","weiß"].some(w=>lower.includes(w));
+   const hasComp=comparative.some(w=>lower.includes(w));
+   const checks=[sentences>=4,vocabCount>=3,hasColor&&hasComp];
+   correct=checks.filter(Boolean).length;total=3;
+   fb.className="feedback show "+(correct===3?"good":correct>=2?"mid":"bad");
+   fb.innerHTML=`${correct===3?"Sehr gut!":correct>=2?"Fast geschafft!":"Weiter üben!"}<br>✓ ${sentences} جمل مكتوبة (المطلوب 4 على الأقل) · ${vocabCount} كلمات ملابس · ${hasColor?"لون موجود":"خاصك لون"} · ${hasComp?"صيغة مقارنة موجودة":"خاصك صيغة مقارنة"}.<br>التنقيط: ${correct}/3.`;
+ }else{
+   e.questions.forEach((q,i)=>{
+     total++;
+     const item=section.querySelector(`[data-question="${i}"]`);
+     let val="";
+     const select=item?.querySelector("[data-answer-select]");
+     const textInput=item?.querySelector("[data-answer-input]");
+     const hidden=item?.querySelector("[data-answer-hidden]");
+     const radio=item?.querySelector('input[type="radio"]:checked');
+     if(select)val=select.value;
+     else if(textInput)val=textInput.value;
+     else if(hidden)val=hidden.value;
+     else if(radio)val=radio.value;
+     const accepted=q.answers||[q.a];
+     const ok=accepted.some(a=>normalize(a)===normalize(val));
+     if(item){
+       item.classList.toggle("correct",ok);
+       item.classList.toggle("incorrect",!ok);
+       const old=item.querySelector(".answer-note");if(old)old.remove();
+     }
+     if(ok)correct++;else if(!val)missing++;
+   });
+   fb.className="feedback show "+(correct===total?"good":correct>=Math.ceil(total*.65)?"mid":"bad");
+   fb.textContent=`Ergebnis: ${correct} / ${total} richtig${missing?` · ${missing} ohne Antwort`:""}. ${correct===total?"Ausgezeichnet!":correct>=Math.ceil(total*.65)?"Gut gemacht – schau dir die Fehler an.":"Versuch es noch einmal und lerne die Lösungen."}`;
+ }
+ scoreMap[id]=correct;
+ completed[id]=true;
+ updateDashboard();
+}
+function revealExercise(id){
+ const e=exercises.find(x=>x.id===id);if(!e)return;
+ const section=document.getElementById(id);
+ if(id==="u1"){
+   vocabMatchState.done=new Set(e.questions.map((q,i)=>String(i)));
+   vocabMatchState.left=null;
+   section.querySelectorAll("[data-vocab-match]").forEach(btn=>btn.classList.add("matched"));
+   const count=e.questions.length;
+   const countEl=document.getElementById("matchCount1");
+   const status=document.getElementById("matchProgressStatus1");
+   const fill=document.getElementById("matchProgressFill1");
+   if(countEl)countEl.textContent=`${count} / ${count} Paare gefunden`;
+   if(status)status.textContent="Alle Wortpaare angezeigt";
+   if(fill)fill.style.width="100%";
+ }else if(e.type==="writing"){
+   const fb=document.getElementById("fb-"+id);
+   fb.className="feedback show mid";
+   fb.textContent="Musterlösung: Ich trage gern Jeans und einen Pullover. Im Winter trage ich eine warme Jacke. Meine blaue Jacke ist schöner als mein alter Mantel. Ich finde bequeme Schuhe sehr wichtig.";
+   return;
+ }else{
+   e.questions.forEach((q,i)=>{
+     const item=section.querySelector(`[data-question="${i}"]`);
+     const ans=q.a||(q.answers&&q.answers[0]);
+     const select=item?.querySelector("[data-answer-select]");
+     const textInput=item?.querySelector("[data-answer-input]");
+     const hidden=item?.querySelector("[data-answer-hidden]");
+     if(select)select.value=ans;
+     else if(textInput)textInput.value=ans;
+     else if(hidden){
+       hidden.value=ans;
+       item.querySelectorAll(".choice").forEach(btn=>btn.classList.toggle("selected",normalize(btn.dataset.choiceValue)===normalize(ans)));
+     }else{
+       const radio=[...item.querySelectorAll('input[type="radio"]')].find(input=>normalize(input.value)===normalize(ans));
+       if(radio)radio.checked=true;
+     }
+   });
+ }
+ const fb=document.getElementById("fb-"+id);
+ fb.className="feedback show mid";
+ fb.textContent="Die richtigen Antworten wurden angezeigt. Drücke „Prüfen“, um dein Ergebnis zu speichern.";
+}
+function resetExercise(id){
+ const e=exercises.find(x=>x.id===id);if(!e)return;
+ delete completed[id];delete scoreMap[id];
+ if(id==="u1"){
+   vocabMatchState.left=null;
+   vocabMatchState.done.clear();
+ }
+ renderExercise(e);
+ updateDashboard();
+}
+function updateDashboard(){
+ stages.forEach(s=>{
+   const list=exercises.filter(e=>e.stage===s.id);
+   const n=list.filter(e=>completed[e.id]).length;
+   const stars=document.getElementById("stars-"+s.id);
+   if(stars)stars.innerHTML=Array.from({length:5},(_,i)=>`<span class="${i<Math.round(n/list.length*5)?"":"star-off"}">★</span>`).join(" ");
+   list.forEach(e=>{
+     const sub=document.getElementById("sub-"+e.id);
+     if(sub)sub.textContent=completed[e.id]?"✓ مكتمل":"ابدأ";
+     const tile=document.querySelector(`[data-open-exercise="${e.id}"]`);
+     if(tile)tile.classList.toggle("done",!!completed[e.id]);
+   });
+ });
+}
+function resetAll(){
+ if(!confirm("بغيتي تمسح جميع النتائج وترجع الاختبار من الأول؟"))return;
+ vocabMatchState.left=null;vocabMatchState.done.clear();
+ Object.keys(completed).forEach(k=>delete completed[k]);
+ Object.keys(scoreMap).forEach(k=>delete scoreMap[k]);
+ exercises.forEach(e=>renderExercise(e));
+ updateDashboard();showStage("stage1");
+}
+document.addEventListener("click",ev=>{
+ const vocabMatch=ev.target.closest("[data-vocab-match]");
+ if(vocabMatch){handleVocabMatch(vocabMatch);return;}
+ const reset=ev.target.closest("[data-reset-exercise]");
+ if(reset){resetExercise(reset.dataset.resetExercise);return;}
+ const stage=ev.target.closest("[data-show-stage]");
+ if(stage){showStage(stage.dataset.showStage);return;}
+ const lesson=ev.target.closest("[data-open-exercise]");
+ if(lesson){openExercise(lesson.dataset.openExercise);return;}
+ const back=ev.target.closest("[data-back-to-stage]");
+ if(back){const e=exercises.find(x=>x.id===currentExercise);showStage(e?e.stage:"stage1");return;}
+ const answerChoice=ev.target.closest("[data-choice-value]");
+ if(answerChoice){
+   const item=answerChoice.closest("[data-question]");
+   if(item){
+     const hidden=item.querySelector("[data-answer-hidden]");
+     if(hidden)hidden.value=answerChoice.dataset.choiceValue;
+     item.querySelectorAll(".choice").forEach(btn=>btn.classList.toggle("selected",btn===answerChoice));
+     item.classList.remove("correct","incorrect");
+   }
+   return;
+ }
+ const check=ev.target.closest("[data-check]");
+ if(check){checkExercise(check.dataset.check);return;}
+ const reveal=ev.target.closest("[data-reveal]");
+ if(reveal){revealExercise(reveal.dataset.reveal);return;}
+ const next=ev.target.closest("[data-next]");
+ if(next){
+   const i=exercises.findIndex(x=>x.id===next.dataset.next);
+   if(i>=0&&i<exercises.length-1)openExercise(exercises[i+1].id);
+   else showStage("stage5");
+   return;
+ }
+});
+document.addEventListener("change",ev=>{
+ const item=ev.target.closest("[data-question]");
+ if(item){item.classList.remove("correct","incorrect");}
+ if(ev.target.matches('#u3 input[type="radio"]')){
+   const total=exercises.find(e=>e.id==="u3").questions.length;
+   const answered=document.querySelectorAll('#u3 input[type="radio"]:checked').length;
+   const text=document.getElementById("u3AnsweredText");
+   const fill=document.getElementById("u3AnsweredFill");
+   const track=document.querySelector("#u3 .quiz-progress-track");
+   if(text)text.textContent=`${answered} / ${total} beantwortet`;
+   if(fill)fill.style.width=(answered/total*100)+"%";
+   if(track)track.setAttribute("aria-valuenow",String(answered));
+ }
+});
+renderAll();
+updateDashboard();
+
+</script>
+</body>
+</html>
