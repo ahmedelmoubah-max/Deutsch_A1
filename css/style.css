@@ -3797,6 +3797,10 @@ body {
 .competition-player-score small{font-size:9px;font-weight:700}
 .competition-rank-row.is-me{border-color:#b9c9ff;background:#f3f6ff}
 .competition-wait-note{text-align:center;padding:12px;color:#8793a9;font-size:11px}
+.competition-connection-error{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin:12px 0 0;padding:12px 14px;border:1px solid #f0c5a6;border-radius:12px;background:#fff8ef;color:#945018;font-size:12px;font-weight:700;line-height:1.7}
+.competition-connection-error button{cursor:pointer;border:1px solid #cf9a62;border-radius:9px;background:#fff;color:#9b5a22;font-weight:900;padding:6px 12px}
+.competition-loading + .competition-secondary-btn{margin-top:10px}
+
 .competition-live-layout{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(240px,.8fr);gap:12px;align-items:start}
 .competition-question-top{display:flex;justify-content:space-between;gap:8px;color:#6d7b97;font-size:10px}
 .competition-question-progress{height:7px;margin:10px 0 18px;border-radius:10px;background:#edf1f8;overflow:hidden}
@@ -6448,4 +6452,49 @@ body:has(.student-results-promo) {
   color: var(--muted, #64748b);
   font-size: .89rem;
   line-height: 1.7;
+}
+
+
+/* Monafassa — accessible, responsive dialogs (creation errors). The created
+   room uses its own code card, so no pop-up blocks the second player. */
+.competition-code-dialog-overlay{
+  position:fixed;inset:0;z-index:100000;
+  display:flex;align-items:center;justify-content:center;
+  padding:18px;background:rgba(19,30,64,.56);
+  -webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);
+  box-sizing:border-box;
+}
+.competition-code-dialog{
+  position:relative;width:min(100%,430px);max-height:min(90vh,650px);
+  overflow:auto;box-sizing:border-box;padding:30px 24px 25px;
+  border:1px solid #e0e7f7;border-radius:22px;text-align:center;
+  background:#fff;color:#253454;box-shadow:0 30px 70px rgba(15,28,75,.28);
+  font-family:inherit;
+}
+.competition-code-dialog .competition-dialog-x{
+  position:absolute;top:11px;left:11px;width:34px;height:34px;
+  border:1px solid #e5eaf5;border-radius:10px;background:#f6f8fd;
+  color:#54627d;font-size:23px;line-height:1;cursor:pointer;
+}
+.competition-dialog-emoji{display:block;margin:3px 0 9px;font-size:36px}
+.competition-code-dialog h2{margin:0 0 8px;font-size:21px;line-height:1.5;color:#1d2c4e}
+.competition-code-dialog p{margin:0 0 19px;font-size:13px;line-height:1.8;color:#73819d}
+.competition-dialog-code{
+  display:block;direction:ltr;unicode-bidi:isolate;
+  margin:0 0 17px;padding:12px;border:1px dashed #9cafe8;
+  border-radius:12px;background:#f3f6ff;color:#2e50c3;
+  font-size:clamp(23px,6vw,35px);letter-spacing:.17em;
+}
+.competition-dialog-actions{display:flex;gap:9px;justify-content:center;flex-wrap:wrap}
+.competition-dialog-actions button{
+  flex:1 1 135px;min-height:43px;padding:10px;border:0;
+  border-radius:12px;background:#3158ce;color:#fff;
+  font-size:12px;font-weight:900;cursor:pointer;
+}
+.competition-dialog-actions .competition-dialog-close{background:#eef2ff;color:#3158ce}
+.competition-dialog-error{color:#a14a36!important;overflow-wrap:anywhere}
+.competition-dialog-error-code{display:block;margin:-6px 0 17px;color:#8a94a7;font-size:10px}
+@media(max-width:520px){
+  .competition-code-dialog{padding:25px 16px 20px}
+  .competition-code-dialog h2{font-size:18px}
 }

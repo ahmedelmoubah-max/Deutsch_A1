@@ -890,7 +890,9 @@ let competitionRoomCode = "";
 let competitionRoomData = null;
 let competitionRoomPollTimer = null;
 let competitionRoomPollBusy = false;
+let competitionAutoStartRoomId = null;
 let competitionRoomLastSignature = "";
+let competitionRoomError = "";
 let competitionQuestionIndex = 0;
 let competitionFeedback = null;
 let competitionSubmitting = false;
@@ -2259,17 +2261,24 @@ async function competitionCallable(name,payload){
     ? validKey
     : "sb_publishable_4eqBTLOMzy-asbh4sUS6PQ_d1Z8ed9O";
   const idToken=await firebaseAuth.currentUser.getIdToken();
-  let response;
+  // A stalled network request must not block room polling or starting a game forever.
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),name==="createCompetitionRoom"?30000:18000);
+  let response,responseText;
   try{
     response=await fetch(`${supabaseUrl}/functions/v1/competition`,{
       method:"POST",
       headers:{"Content-Type":"application/json","apikey":anonKey,"Authorization":`Bearer ${idToken}`},
-      body:JSON.stringify({action:name,...(payload||{})})
+      body:JSON.stringify({action:name,...(payload||{})}),
+      signal:controller.signal
     });
+    responseText=await response.text();
   }catch(networkError){
+    if(networkError?.name==="AbortError"){
+      throw new Error("الاتصال بخدمة المنافسة تأخر بزاف. جرّب إعادة المحاولة، وتأكد من Supabase.");
+    }
     throw new Error("ما قدرناش نتصلو بخدمة Supabase. تأكد من الإنترنت ونشر Edge Function. (network)");
-  }
-  const responseText=await response.text();
+  }finally{clearTimeout(timeout);}
   let result={};
   try{result=JSON.parse(responseText||"{}");}catch(_error){}
   if(!response.ok||result.error){
@@ -2361,7 +2370,7 @@ function renderCompetition(){
       <section class="competition-card">
         <div class="competition-card-heading"><span>⚡</span><div><h3>أنشئ منافسة</h3><p>صايب غرفة وشارك الرمز مع صحابك</p></div></div>
         <div class="competition-mode-picker">
-          <button type="button" class="${competitionMode==="duel"?"active":""}" data-action="competition-mode" data-mode="duel"><strong>👤 1 ضد 1</strong><small>أنت وتلميذ آخر</small></button>
+          <button type="button" class="${competitionMode==="duel"?"active":""}" data-action="competition-mode" data-mode="duel"><strong>👤 1 ضد 1</strong><small>كتبدأ تلقائياً ملي تدخلو بجوج</small></button>
           <button type="button" class="${competitionMode==="group"?"active":""}" data-action="competition-mode" data-mode="group"><strong>👥 مجموعة</strong><small>حتى 20 تلميذ</small></button>
         </div>
         <div class="competition-field-head"><strong>اختار الدروس</strong><small>ضغط مرة باش تختار، ومرة ثانية باش تحيد المارك</small></div>
@@ -2395,7 +2404,7 @@ function renderCompetition(){
           <input id="competitionJoinCode" name="code" type="text" maxlength="6" minlength="6" autocomplete="off" placeholder="مثال: A7K9P2" required>
           <button type="submit" class="competition-secondary-btn" ${competitionBusy?"disabled":""}>انضم للغرفة ←</button>
         </form>
-        <div class="competition-howto"><strong>كيفاش كتخدم؟</strong><p>دخل للغرفة، تسنّى صاحبها يبدا، جاوب على نفس الأسئلة، وشوف النقاط ديالك مباشرة.</p></div>
+        <div class="competition-howto"><strong>كيفاش كتخدم؟</strong><p>فمنافسة 1 ضد 1، كيبداو التمارين تلقائياً ملي يدخلو جوج تلاميذ. فالمجموعة، صاحب الغرفة هو اللي كيبدا.</p></div>
       </section>
     </div>
 
@@ -2489,12 +2498,14 @@ function renderCompetitionRoom(){
   const total=(room.questions||[]).length;
   const roomCode=escapeHtml(room.code||competitionRoomCode||"------");
   const leaderboard=competitionLeaderboardMarkup(members);
+  const roomErrorMarkup=competitionRoomError
+    ?`<div class="competition-connection-error" role="alert">⚠️ ${escapeHtml(competitionRoomError)} <button type="button" data-action="competition-retry-room">عاود المحاولة</button></div>`:"";
   let content="";
   if(room.status==="waiting"){
     content=`
       <section class="competition-room-banner">
         <div><span>غرفة المنافسة</span><h2>${room.mode==="duel"?"منافسة 1 ضد 1":"منافسة جماعية"}</h2><p>${(room.lessonNames||[]).map(escapeHtml).join(" · ")}</p></div>
-        <span class="competition-status waiting">في انتظار اللاعبين</span>
+        <span class="competition-status waiting">${room.mode==="duel"&&members.length>=2?"كنفتحو التمارين…":"في انتظار اللاعبين"}</span>
       </section>
       <section class="competition-code-card">
         <div class="competition-code-copy"><small>رمز الغرفة — شاركو مع أصحابك</small><strong>${roomCode}</strong><span>دخلو هاد الرمز باش ينضمو للمنافسة</span></div>
@@ -2504,7 +2515,11 @@ function renderCompetitionRoom(){
         </div>
       </section>
       <section class="competition-card"><div class="competition-card-heading"><span>👥</span><div><h3>اللاعبون (${members.length}/${room.mode==="duel"?2:20})</h3><p>الأسماء كتظهر مباشرة ملي ينضمّو</p></div></div>${leaderboard}
-        ${isCreator?`<button type="button" class="competition-primary-btn" data-action="competition-start" ${members.length<2?"disabled":""}>ابدأ المنافسة 🚀</button>`:`<div class="competition-wait-note">تسنّى صاحب الغرفة يبدا المنافسة…</div>`}
+        ${isCreator?`
+          ${room.mode==="duel"&&members.length<2?`<div class="competition-wait-note">صيفط الرمز للتلميذ الثاني. غادي تبدا المنافسة تلقائياً ملي يدخل.</div>`:""}
+          <button type="button" class="competition-primary-btn" data-action="competition-start" ${members.length<2||competitionBusy?"disabled":""}>${competitionBusy?"كنفتحو التمارين…":room.mode==="duel"?"ابدأ دابا (إلا تأخرت البداية) 🚀":"ابدأ المنافسة 🚀"}</button>
+        `:`<div class="competition-wait-note">${room.mode==="duel"?"المنافسة غادي تبدا تلقائياً ملي يكونو جوج لاعبين. إلا تأخرت، صاحب الغرفة يقدر يضغط ابدأ.":"تسنّى صاحب الغرفة يضغط ابدأ المنافسة…"}</div>`}
+        ${roomErrorMarkup}
       </section>
       <button type="button" class="competition-text-btn" data-action="competition-leave">الخروج من الغرفة</button>
     `;
@@ -2523,9 +2538,14 @@ function renderCompetitionRoom(){
       competitionQuestionIndex=Number(myMember.answeredCount)||0;
       question=room.questions?.[competitionQuestionIndex];
     }
-    const finished=Boolean(myMember.finished)||competitionQuestionIndex>=total;
+    // Keep feedback visible for the final answer/Übung until the player clicks Next.
+    const finished=(Boolean(myMember.finished)||competitionQuestionIndex>=total) && !competitionFeedback;
     let quizMarkup="";
-    if(finished){
+    if(!total){
+      quizMarkup=`<div class="competition-loading" role="status">⏳ كنحمّلو تمارين المنافسة…</div>
+        ${roomErrorMarkup}
+        <button type="button" class="competition-secondary-btn" data-action="competition-retry-room">تحديث التمارين</button>`;
+    }else if(finished){
       quizMarkup=`<div class="competition-finished-note"><span>⏳</span><h3>كملتي الأسئلة ديالك!</h3><p>النقاط ديالك تسجلات. تسنّى باقي اللاعبين يكملو باش تبان النتيجة النهائية.</p><strong>${Number(myMember.score)||0} نقطة</strong></div>`;
     }else if(question && question.groupId){
       const stageId=String(question.groupId);
@@ -2582,7 +2602,7 @@ function renderCompetitionRoom(){
         <span class="competition-status live">● مباشرة</span>
       </section>
       <div class="competition-live-layout">
-        <section class="competition-card competition-quiz-card">${quizMarkup}</section>
+        <section class="competition-card competition-quiz-card">${quizMarkup}${total?roomErrorMarkup:""}</section>
         <section class="competition-card competition-score-card"><div class="competition-card-heading"><span>📊</span><div><h3>الترتيب المباشر</h3><p>النقاط كتتحدّث مباشرة</p></div></div>${leaderboard}</section>
       </div>
       <button type="button" class="competition-text-btn" data-action="competition-finish">إنهاء المنافسة والخروج</button>
@@ -2612,7 +2632,7 @@ function competitionRoomSignature(room){
     id:room.id||"",code:room.code||"",createdBy:room.createdBy||"",
     creatorName:room.creatorName||"",mode:room.mode||"",status:room.status||"",
     lessonIndices:room.lessonIndices||[],lessonNames:room.lessonNames||[],
-    questionCount:room.questionCount||0,questions:room.questions||[],
+    questionCount:room.questionCount||0,loadedQuestions:room.questions?.length||0,
     createdAt:room.createdAt||"",startedAt:room.startedAt||"",
     completedAt:room.completedAt||"",members
   });
@@ -2622,6 +2642,7 @@ function stopCompetitionRoomListener(){
   competitionRoomPollTimer=null;
   competitionRoomPollBusy=false;
   competitionRoomLastSignature="";
+  competitionAutoStartRoomId=null;
 }
 async function refreshCompetitionRoom(roomId){
   if(competitionRoomPollBusy||!roomId||roomId!==competitionRoomId)return;
@@ -2631,9 +2652,17 @@ async function refreshCompetitionRoom(roomId){
     const room=result.data?.room;
     if(roomId!==competitionRoomId)return;
     if(!room)throw new Error("الغرفة ما بقاتش متاحة.");
+    // Ignore an outdated in-flight response that would move an active game back to waiting.
+    const priorStatus=competitionRoomData?.status;
+    if(priorStatus && priorStatus!=="waiting" && room.status==="waiting")return;
+    if(priorStatus==="completed" && room.status!=="completed")return;
     const nextSignature=competitionRoomSignature(room);
     const hasChanged=nextSignature!==competitionRoomLastSignature;
+    const oldRoom=competitionRoomData;
+    const oldMember=oldRoom?.members?.[currentUser?.id]||{};
     const previousQuestionIndex=competitionQuestionIndex;
+    const previousError=competitionRoomError;
+    competitionRoomError="";
     competitionRoomData=room;
     competitionRoomCode=room.code||competitionRoomCode;
     if(competitionRoomData?.members?.[currentUser?.id]&&!competitionFeedback&&!competitionSubmitting){
@@ -2641,10 +2670,40 @@ async function refreshCompetitionRoom(roomId){
     }
     const questionIndexChanged=previousQuestionIndex!==competitionQuestionIndex;
     if(hasChanged)competitionRoomLastSignature=nextSignature;
-    if((hasChanged||questionIndexChanged)&&page==="competition")renderCompetition();
+    // The creator's open browser can launch a duel automatically, even when
+    // the newly deployed Edge Function has not propagated yet. Only one
+    // start attempt per room is made; the manual button remains a fallback.
+    if(room.status==="waiting" && room.mode==="duel"
+      && !competitionBusy
+      && room.createdBy===currentUser?.id
+      && Object.keys(room.members||{}).length>=2
+      && competitionAutoStartRoomId!==roomId){
+      competitionAutoStartRoomId=roomId;
+      void startCompetition();
+    }
+    if(page==="competition"&&(hasChanged||questionIndexChanged||previousError)){
+      const newMember=room.members?.[currentUser?.id]||{};
+      const quizStillOpen=oldRoom && oldRoom.status!=="waiting" && oldRoom.status!=="completed"
+        && room.status!=="waiting" && room.status!=="completed"
+        && oldRoom.questions?.length===room.questions?.length
+        && !questionIndexChanged
+        && Number(oldMember.answeredCount||0)===Number(newMember.answeredCount||0)
+        && Boolean(oldMember.finished)===Boolean(newMember.finished);
+      if(quizStillOpen&&!previousError){
+        // Live score updates must not wipe out answers or keyboard focus.
+        const scoreCard=app.querySelector(".competition-room-view .competition-score-card");
+        if(scoreCard){
+          scoreCard.innerHTML=`<div class="competition-card-heading"><span>📊</span><div><h3>الترتيب المباشر</h3><p>النقاط كتتحدّث مباشرة</p></div></div>${competitionLeaderboardMarkup(competitionMembers())}`;
+        }else renderCompetitionRoom();
+      }else renderCompetitionRoom();
+    }
   }catch(error){
     console.error("Competition room refresh:",error);
-    if(!competitionRoomData)showToast(error.message||"ما قدرناش نتصلو بغرفة المنافسة.");
+    const message=error?.message||"ما قدرناش نتصلو بغرفة المنافسة.";
+    if(competitionRoomError!==message){
+      competitionRoomError=message;
+      if(page==="competition")renderCompetition();
+    }
   }finally{competitionRoomPollBusy=false;}
 }
 function listenCompetitionRoom(roomId){
@@ -2653,6 +2712,7 @@ function listenCompetitionRoom(roomId){
   competitionRoomId=roomId;
   competitionRoomData=optimisticRoom;
   competitionRoomLastSignature=competitionRoomSignature(optimisticRoom);
+  competitionRoomError="";
   competitionQuestionIndex=0;
   competitionFeedback=null;
   competitionSubmitting=false;
@@ -2783,8 +2843,10 @@ async function createCompetition(){
     };
     renderCompetitionRoom();
     listenCompetitionRoom(generatedRoomId);
-    showCompetitionCodeDialog(generatedCode);
-    showToast("تخلقات الغرفة! شارك الرمز مع أصحابك.");
+    // Room already has a large styled code card with Copy/Share actions.
+    // Avoid a second unstyled/blocking pop-up over the room.
+    closeCompetitionCodeDialog();
+    showToast("تخلقات الغرفة! نسخ الرمز وصيفطو للتلميذ الثاني.");
   }catch(error){
     console.error("Create competition failed:",error);
     showCompetitionCreationError(error);
@@ -2808,11 +2870,48 @@ async function joinCompetition(event){
 }
 async function startCompetition(){
   if(!competitionRoomId||competitionBusy)return;
+  const roomId=competitionRoomId;
   competitionBusy=true;
+  competitionRoomError="";
+  renderCompetitionRoom();
   try{
-    await competitionCallable("startCompetitionRoom",{roomId:competitionRoomId});
-  }catch(error){showToast(error.message||"ما قدرناش نبداو المنافسة.");}
-  finally{competitionBusy=false;}
+    await competitionCallable("startCompetitionRoom",{roomId});
+    if(roomId!==competitionRoomId)return;
+    // Don't wait for the 2.5s poll: retrieve the exercises immediately.
+    // This also avoids showing "finished" before the server returns questions.
+    const result=await competitionCallable("getCompetitionRoom",{roomId});
+    if(roomId!==competitionRoomId)return;
+    if(!result.data?.room)throw new Error("ما وصلاتناش بيانات التمارين من الخادم.");
+    competitionRoomData=result.data.room;
+    competitionRoomLastSignature=competitionRoomSignature(result.data.room);
+    if(competitionRoomData.status==="waiting"){
+      throw new Error("المنافسة ما بداتش من الخادم. جرّب تحديث الغرفة.");
+    }
+    competitionQuestionIndex=Number(competitionRoomData.members?.[currentUser?.id]?.answeredCount)||0;
+    competitionFeedback=null;
+    competitionExerciseSelections={};competitionExerciseDrafts={};competitionExerciseTileDrafts={};
+  }catch(error){
+    console.error("Competition start failed:",error);
+    // A second device/server auto-start may have won the race. Read the
+    // authoritative state before reporting an error to the student.
+    let alreadyStarted=false;
+    try{
+      const synced=await competitionCallable("getCompetitionRoom",{roomId});
+      if(roomId===competitionRoomId && synced.data?.room?.status!=="waiting" && synced.data?.room?.questions?.length){
+        competitionRoomData=synced.data.room;
+        competitionRoomLastSignature=competitionRoomSignature(synced.data.room);
+        competitionRoomError="";
+        alreadyStarted=true;
+      }
+    }catch(_syncError){}
+    if(!alreadyStarted){
+      competitionRoomError=error?.message||"ما قدرناش نبداو المنافسة.";
+      showToast(competitionRoomError);
+    }
+  }finally{
+    competitionBusy=false;
+    if(page==="competition"&&roomId===competitionRoomId)renderCompetitionRoom();
+  }
 }
 async function submitCompetitionUebung(){
   if(competitionSubmitting||competitionFeedback||!competitionRoomId||!competitionRoomData)return;
@@ -2892,6 +2991,7 @@ async function leaveCompetition(){
   stopCompetitionRoomListener();
   competitionRoomId=null;competitionRoomCode="";competitionRoomData=null;
   competitionQuestionIndex=0;competitionFeedback=null;competitionSubmitting=false;
+  competitionRoomError="";
   competitionExerciseSelections={};competitionExerciseDrafts={};competitionExerciseTileDrafts={};
   await loadCompetitionStats();
   if(page==="competition")renderCompetition();
@@ -6779,6 +6879,15 @@ document.addEventListener("click",function(event){
   else if(action==="competition-copy-code"){copyCompetitionCode();return;}
   else if(action==="competition-share-code"){shareCompetitionCode();return;}
   else if(action==="competition-start"){startCompetition();return;}
+  else if(action==="competition-retry-room"){
+    const roomId=competitionRoomId;
+    if(roomId){
+      competitionRoomError="";
+      renderCompetitionRoom();
+      refreshCompetitionRoom(roomId);
+    }
+    return;
+  }
   else if(action==="competition-answer"){submitCompetitionChoice(Number(el.dataset.option));return;}
   else if(action==="competition-exercise-choice"){
     const index=Number(el.dataset.questionIndex),option=Number(el.dataset.option);

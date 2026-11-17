@@ -255,12 +255,32 @@ async function handleAction(action: string, body: any, identity: any) {
     const profile = await getStudentProfile(uid, identity.token);
     const code = String(body.code || "").trim().toUpperCase();
     if (!/^[A-Z0-9]{6}$/.test(code)) throw new ApiError("رمز المنافسة غير صالح.", 400);
-    const { data: room, error } = await dbClient().from("competition_rooms").select("id,lesson_indices").eq("code", code).maybeSingle();
+    const { data: room, error } = await dbClient().from("competition_rooms").select("id,lesson_indices,mode,status,created_by").eq("code", code).maybeSingle();
     if (error) throw new ApiError(error.message, 500, "database_error");
     if (!room) throw new ApiError("ما لقيناش غرفة بهاد الرمز.", 404, "room_not_found");
     await assertLessonAccess(profile, identity.token, room.lesson_indices || []);
     const { error: joinError } = await dbClient().rpc("competition_join_room", { p_room_id: room.id, p_uid: uid, p_name: cleanName(profile.name, identity.claims.name) });
     if (joinError) throw new ApiError(joinError.message, 409, joinError.code || "join_failed");
+    // 1 vs 1 starts as soon as the second member joins. This lives on the
+    // server, so neither student needs to manually press Start. Group rooms
+    // keep their creator-controlled start button.
+    if (room.mode === "duel" && room.status === "waiting" && room.created_by) {
+      try {
+        const { data: participants, error: countError } = await dbClient()
+          .from("competition_members").select("uid").eq("room_id", room.id).limit(2);
+        if (countError) throw countError;
+        if ((participants || []).length >= 2) {
+          const { error: startError } = await dbClient().rpc("competition_start_room", {
+            p_room_id: room.id, p_uid: room.created_by,
+          });
+          // Starting twice can race with the creator browser. A member who
+          // already joined must still get the room ID, not a join failure.
+          if (startError) console.warn("competition duel auto-start:", startError);
+        }
+      } catch (startException) {
+        console.warn("competition duel auto-start check:", startException);
+      }
+    }
     return { roomId: room.id };
   }
   if (action === "startCompetitionRoom") {
