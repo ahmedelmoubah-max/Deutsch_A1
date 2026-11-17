@@ -203,9 +203,11 @@ function newCode() {
   const bytes = crypto.getRandomValues(new Uint8Array(6));
   return Array.from(bytes, (b) => chars[b % chars.length]).join("");
 }
-function safeRoom(room: any, members: any[]) {
+function safeRoom(room: any, members: any[], viewerUid: string) {
   return {
-    id: room.id, code: room.code, createdBy: room.created_by, creatorName: room.creator_name,
+    id: room.id, code: room.code, createdBy: room.created_by,
+    // Derived on the server from the verified Firebase token, never client input.
+    isCreator: room.created_by === viewerUid, creatorName: room.creator_name,
     mode: room.mode, status: room.status, lessonIndices: room.lesson_indices, lessonNames: room.lesson_names,
     questionCount: room.question_count, questions: room.questions, createdAt: room.created_at,
     startedAt: room.started_at, completedAt: room.completed_at,
@@ -255,37 +257,32 @@ async function handleAction(action: string, body: any, identity: any) {
     const profile = await getStudentProfile(uid, identity.token);
     const code = String(body.code || "").trim().toUpperCase();
     if (!/^[A-Z0-9]{6}$/.test(code)) throw new ApiError("رمز المنافسة غير صالح.", 400);
-    const { data: room, error } = await dbClient().from("competition_rooms").select("id,lesson_indices,mode,status,created_by").eq("code", code).maybeSingle();
+    const { data: room, error } = await dbClient().from("competition_rooms").select("id,lesson_indices").eq("code", code).maybeSingle();
     if (error) throw new ApiError(error.message, 500, "database_error");
     if (!room) throw new ApiError("ما لقيناش غرفة بهاد الرمز.", 404, "room_not_found");
     await assertLessonAccess(profile, identity.token, room.lesson_indices || []);
     const { error: joinError } = await dbClient().rpc("competition_join_room", { p_room_id: room.id, p_uid: uid, p_name: cleanName(profile.name, identity.claims.name) });
     if (joinError) throw new ApiError(joinError.message, 409, joinError.code || "join_failed");
-    // 1 vs 1 starts as soon as the second member joins. This lives on the
-    // server, so neither student needs to manually press Start. Group rooms
-    // keep their creator-controlled start button.
-    if (room.mode === "duel" && room.status === "waiting" && room.created_by) {
-      try {
-        const { data: participants, error: countError } = await dbClient()
-          .from("competition_members").select("uid").eq("room_id", room.id).limit(2);
-        if (countError) throw countError;
-        if ((participants || []).length >= 2) {
-          const { error: startError } = await dbClient().rpc("competition_start_room", {
-            p_room_id: room.id, p_uid: room.created_by,
-          });
-          // Starting twice can race with the creator browser. A member who
-          // already joined must still get the room ID, not a join failure.
-          if (startError) console.warn("competition duel auto-start:", startError);
-        }
-      } catch (startException) {
-        console.warn("competition duel auto-start check:", startException);
-      }
-    }
+    // Joining never starts a match. Only the room creator may press Start.
     return { roomId: room.id };
   }
   if (action === "startCompetitionRoom") {
-    const { error } = await dbClient().rpc("competition_start_room", { p_room_id: body.roomId, p_uid: uid });
-    if (error) throw new ApiError(error.message, 409, error.code || "start_failed"); return { success: true };
+    // Server-side authorization: only the authenticated creator may start
+    // and at least two participants must already have joined.
+    const roomId = String(body.roomId || "");
+    const { data: room, error: roomError } = await dbClient().from("competition_rooms")
+      .select("id,created_by,status").eq("id", roomId).maybeSingle();
+    if (roomError) throw new ApiError(roomError.message, 500, "database_error");
+    if (!room) throw new ApiError("الغرفة ما بقاتش متاحة.", 404, "room_not_found");
+    if (room.created_by !== uid) throw new ApiError("غير صاحب الغرفة اللي يقدر يبدأ المنافسة.", 403, "creator_only");
+    if (room.status !== "waiting") throw new ApiError("المنافسة بدات بالفعل أو سالات.", 409, "not_waiting");
+    const { count, error: membersError } = await dbClient().from("competition_members")
+      .select("uid", { count: "exact", head: true }).eq("room_id", roomId);
+    if (membersError) throw new ApiError(membersError.message, 500, "database_error");
+    if ((count ?? 0) < 2) throw new ApiError("خاص جوج لاعبين على الأقل باش تبدا المنافسة.", 409, "not_enough_players");
+    const { error } = await dbClient().rpc("competition_start_room", { p_room_id: roomId, p_uid: uid });
+    if (error) throw new ApiError(error.message, 409, error.code || "start_failed");
+    return { success: true };
   }
   if (action === "submitCompetitionAnswer") {
     const { data, error } = await dbClient().rpc("competition_submit_answer", { p_room_id: body.roomId, p_uid: uid, p_question_index: Number(body.questionIndex), p_selected_index: Number(body.selectedIndex) });
@@ -307,7 +304,7 @@ async function handleAction(action: string, body: any, identity: any) {
     const { data: members, error: memberError } = await dbClient().from("competition_members").select("uid,name,score,answered_count,correct_count,finished,joined_at").eq("room_id", roomId);
     if (memberError) throw new ApiError(memberError.message, 500, "database_error");
     if (!(members || []).some((m: any) => m.uid === uid)) throw new ApiError("ماشي عضو فهاد المنافسة.", 403, "not_a_member");
-    return { room: safeRoom(room, members || []) };
+    return { room: safeRoom(room, members || [], uid) };
   }
   if (action === "getCompetitionStats") {
     const { data, error } = await dbClient().from("competition_stats").select("uid,name,total_points,competitions_played,wins").order("total_points", { ascending: false }).limit(50);
