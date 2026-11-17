@@ -54,13 +54,15 @@ ADMIN VOCABULARY TEST MODULE
 - Student/group creation remains managed by the main Deutsch A1 admin dashboard.
 
 
-INTERACTIVE LESSON POSTERS (LESSONS 7, 8, 9)
-- Lektion 7: pages/wie-wo-und-wann-interaktiv.html
-- Lektion 8: pages/unterwegs-interaktiv.html
-- Lektion 9: pages/unter-freunden-flohmarkt-interaktiv.html
-- Students open each poster from the matching lesson detail page under A1.2.
-- Existing lesson tests remain available separately under the "Teste" area.
-- Existing lesson/group access controls apply: lessons 7, 8, and 9 use access keys 7, 8, and 9.
+INTERACTIVE KURS PAGES (LESSONS 6, 7, 8, 9)
+- Lektion 6: pages/Kurs/lektion-6-kurs.html — Meine Stadt, meine Wohnung
+- Lektion 7: pages/Kurs/lektion-7-kurs.html — Wie, wo und wann?
+- Lektion 8: pages/Kurs/lektion-8-kurs.html — Unterwegs
+- Lektion 9: pages/Kurs/lektion-9-kurs.html — Unter Freunden – Der Flohmarkt
+- Each Kurs page opens from the matching lesson detail page under A1.2.
+- Matching tests remain in pages/Test/lektion-6-test.html through lektion-9-test.html
+  and open from the separate "Teste" area.
+- The existing lesson/group access controls continue to apply to the matching lessons.
 
 
 ADMIN STUDENT DETAILS

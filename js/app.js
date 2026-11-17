@@ -7,15 +7,50 @@ const categoryMeta = {
   "Grammatik": {icon:"📘", desc:"Regeln einfach verstehen"}
 };
 const standaloneLessonTests = {
-  5: { title: "Meine Stadt, meine Wohnung", file: "pages/adjective-challenge.html", description: "17 interaktive Übungen · 5 Stufen", icon: "🏙️" },
-  6: { title: "Wie, wo und wann?", file: "pages/lektion-7-test.html", description: "Interaktive Übungen A1", icon: "🗓️" },
-  7: { title: "Unterwegs", file: "pages/lektion-8-test.html", description: "Interaktive Übungen", icon: "🚌" },
-  8: { title: "Unter Freunden – Der Flohmarkt", file: "pages/lektion-9-test.html", description: "Interaktive Übungen", icon: "🛍️" }
+  5: { title: "Meine Stadt, meine Wohnung", file: "pages/Test/lektion-6-test.html", description: "اختبار تفاعلي خاص بالدرس 6", icon: "🏙️" },
+  6: { title: "Wie, wo und wann?", file: "pages/Test/lektion-7-test.html", description: "اختبار تفاعلي خاص بالدرس 7", icon: "🗓️" },
+  7: { title: "Unterwegs", file: "pages/Test/lektion-8-test.html", description: "اختبار تفاعلي خاص بالدرس 8", icon: "🚌" },
+  8: { title: "Unter Freunden – Der Flohmarkt", file: "pages/Test/lektion-9-test.html", description: "اختبار تفاعلي خاص بالدرس 9", icon: "🛍️" }
 };
+
+function getAdminTestPageRoutes(){
+  const projectRoutes = window.DEUTSCH_A1_TEST_PAGE_ROUTES;
+  if(projectRoutes && typeof projectRoutes === "object" && !Array.isArray(projectRoutes)) return projectRoutes;
+  try{
+    const routes = JSON.parse(localStorage.getItem(ADMIN_TEST_PAGE_ROUTES_KEY) || "{}");
+    return routes && typeof routes === "object" && !Array.isArray(routes) ? routes : {};
+  }catch(error){return {};}
+}
+async function saveAdminTestPageRoute(lessonNo,path){
+  if(!adminPagesRootDirectoryHandle) throw new Error("اختار مجلد المشروع أولاً باش يتحفظ الربط داخل js/ بلا Firebase.");
+  const routes = {...getAdminTestPageRoutes(), [String(lessonNo)]:path};
+  const jsDirectory = await adminPagesRootDirectoryHandle.getDirectoryHandle("js",{create:true});
+  const routeFile = await jsDirectory.getFileHandle("test-page-routes.js",{create:true});
+  const writable = await routeFile.createWritable();
+  await writable.write("window.DEUTSCH_A1_TEST_PAGE_ROUTES = "+JSON.stringify(routes,null,2)+";\n");
+  await writable.close();
+  window.DEUTSCH_A1_TEST_PAGE_ROUTES = routes;
+  try{localStorage.setItem(ADMIN_TEST_PAGE_ROUTES_KEY,JSON.stringify(routes));}catch(error){}
+  return routes;
+}
+function getLessonTestPage(lessonIndex){
+  const lessonNo = Number(lessonIndex) + 1;
+  const routes = getAdminTestPageRoutes();
+  const assignedPath = normalizeManagedPagePath(routes[String(lessonNo)] || "");
+  const path = assignedPath || `pages/Test/lektion-${lessonNo}-test.html`;
+  const definition = managedPageDefinition(path) || managedPageMetaForPath(path);
+  return {
+    title: definition?.title || `Lektion ${lessonNo} – Test`,
+    file: path,
+    description: "اختبار HTML مستقل",
+    icon: "📝"
+  };
+}
 const interactiveLessonPosters = {
-  6: { title: "Wie, wo und wann?", file: "pages/wie-wo-und-wann-interaktiv.html", description: "Wetter, Jahreszeiten und Zeitangaben – interaktive Bildkarte", icon: "🌦️" },
-  7: { title: "Unterwegs", file: "pages/unterwegs-interaktiv.html", description: "Verkehrsmittel und unterwegs sein – interaktive Bildkarte", icon: "🚌" },
-  8: { title: "Unter Freunden – Der Flohmarkt", file: "pages/unter-freunden-flohmarkt-interaktiv.html", description: "Wörter rund um den Flohmarkt – interaktive Bildkarte", icon: "🛍️" }
+  5: { title: "Meine Stadt, meine Wohnung", file: "pages/Kurs/lektion-6-kurs.html", description: "Orte in der Stadt, Zimmer und Wohnung – interaktive Lernkarte", icon: "🏙️" },
+  6: { title: "Wie, wo und wann?", file: "pages/Kurs/lektion-7-kurs.html", description: "Wetter, Jahreszeiten, Monate und Zeitangaben – interaktive Lernkarte", icon: "🌦️" },
+  7: { title: "Unterwegs", file: "pages/Kurs/lektion-8-kurs.html", description: "Verkehrsmittel, Orientierung und unterwegs sein – interaktive Lernkarte", icon: "🚌" },
+  8: { title: "Unter Freunden – Der Flohmarkt", file: "pages/Kurs/lektion-9-kurs.html", description: "Wortschatz rund um Flohmarkt, Preise und Einkaufen – interaktive Lernkarte", icon: "🛍️" }
 };
 const lessons = [
 { name:"Hallo & Herkunft", data:{
@@ -208,8 +243,94 @@ const dialogues = [{"title":"Hallo & Herkunft","intro":"Lerne, dich vorzustellen
 [lessons[4], lessons[5]] = [lessons[5], lessons[4]];
 [dialogues[4], dialogues[5]] = [dialogues[5], dialogues[4]];
 
-const podcastLibrary = [{"id":"podcast-5-1","lesson":5,"title":"Meine Freizeit – Audio-Lesetraining","file":"pages/podcasts/podcast-5-1.html"},{"id":"podcast-5-2","lesson":5,"title":"Meine Freizeit – Audio-Lesetraining Teil 2","file":"pages/podcasts/podcast-5-2.html"},{"id":"podcast-6-1","lesson":6,"title":"Einkaufen, Stadt und Land – Audio-Lesetraining","file":"pages/podcasts/podcast-6-1.html"},{"id":"podcast-6-2","lesson":6,"title":"Meine Stadt und meine Wohnung – Audio-Lesetraining","file":"pages/podcasts/podcast-6-2.html"},{"id":"podcast-7-1","lesson":7,"title":"Wetter, Stadt und Arbeit – Audio-Lesetraining","file":"pages/podcasts/podcast-7-1.html"},{"id":"podcast-7-2","lesson":7,"title":"Herbst, Winter und Wochenende – Audio-Lesetraining","file":"pages/podcasts/podcast-7-2.html"},{"id":"podcast-8-1","lesson":8,"title":"Verkehrsmittel und eine Reise nach Hamburg – Audio-Lesetraining","file":"pages/podcasts/podcast-8-1.html"},{"id":"podcast-8-2","lesson":8,"title":"In Hamburg und Verkehrsmittel – Audio-Lesetraining","file":"pages/podcasts/podcast-8-2.html"},{"id":"podcast-9-1","lesson":9,"title":"Ein Wochenende mit Freunden – Audio-Lesetraining","file":"pages/podcasts/podcast-9-1.html"},{"id":"podcast-9-2","lesson":9,"title":"Emma auf dem Flohmarkt – Audio-Lesetraining","file":"pages/podcasts/podcast-9-2.html"},{"id":"podcast-10-1","lesson":10,"title":"Sara entdeckt die Welt – Audio-Lesetraining","file":"pages/podcasts/podcast-10-1.html"},{"id":"podcast-10-2","lesson":10,"title":"Winterreisen und Urlaubserlebnisse – Audio-Lesetraining","file":"pages/podcasts/podcast-10-2.html"}];
+const podcastLibrary = [
+  {id:'podcast-5-1',lesson:5,title:'Meine Freizeit – Audio-Lesetraining',file:'Lektion 5/Lina_Freizeit_Audio_Lesetraining_CENTER_POPUP_PAUSE.html',format:"html"},
+  {id:'podcast-5-2',lesson:5,title:'Meine Freizeit – Audio-Lesetraining Teil 2',file:'Lektion 5/Lina_Freizeit_Audio_Lesetraining_Teil2.html',format:"html"},
+  {id:'podcast-6-1',lesson:6,title:'Einkaufen, Stadt und Land – Audio-Lesetraining',file:'Lektion 6/Lina_Einkaufen_Stadt_Land_Audio_Lesetraining.html',format:"html"},
+  {id:'podcast-6-2',lesson:6,title:'Meine Stadt und meine Wohnung – Audio-Lesetraining',file:'Lektion 6/Lina_Stadt_Wohnung_Audio_Lesetraining.html',format:"html"},
+  {id:'podcast-7-1',lesson:7,title:'Wetter, Stadt und Arbeit – Audio-Lesetraining',file:'Lektion 7/Lina_Wetter_Stadt_Arbeit_Audio_Lesetraining.html',format:"html"},
+  {id:'podcast-7-2',lesson:7,title:'Herbst, Winter und Wochenende – Audio-Lesetraining',file:'Lektion 7/Lina_Herbst_Winter_Wochenende_Audio_Lesetraining.html',format:"html"},
+  {id:'podcast-8-1',lesson:8,title:'Verkehrsmittel und eine Reise nach Hamburg – Audio-Lesetraining',file:'Lektion 8/Lina_Verkehrsmittel_Hamburg_Audio_Lesetraining.html',format:"html"},
+  {id:'podcast-8-2',lesson:8,title:'In Hamburg und Verkehrsmittel – Audio-Lesetraining',file:'Lektion 8/Lina_Hamburg_Verkehrsmittel_Teil2_Audio_Lesetraining.html',format:"html"},
+  {id:'podcast-9-1',lesson:9,title:'Ein Wochenende mit Freunden – Audio-Lesetraining',file:'Lektion 9/Lina_Wochenende_Restaurant_Audio_Lesetraining.html',format:"html"},
+  {id:'podcast-9-2',lesson:9,title:'Emma auf dem Flohmarkt – Audio-Lesetraining',file:'Lektion 9/Emma_Flohmarkt_Audio_Lesetraining.html',format:"html"},
+  {id:'podcast-10-1',lesson:10,title:'Sara entdeckt die Welt – Audio-Lesetraining',file:'Lektion 10/Sara_Reisen_Jahreszeiten_Audio_Lesetraining.html',format:"html"},
+  {id:'podcast-10-2',lesson:10,title:'Winterreisen und Urlaubserlebnisse – Audio-Lesetraining',file:'Lektion 10/Sara_Winterreisen_Urlaubserlebnisse_Audio_Lesetraining.html',format:"html"}
+];
 
+const managedHtmlPageDefinitions = [
+  {path:"pages/adjective-challenge.html",title:"Meine Stadt – Interaktive Übungen",group:"Tests & Übungen"},
+  {path:"pages/test-center.html",title:"واجهة الاختبارات – اختيار وحل الاختبار",group:"Tests & Übungen"},
+  {path:"pages/admin-vocabulary.html",title:"مفرداتي – إدارة المفردات",group:"إدارة وأدوات"},
+  {path:"pages/lektion-7-test.html",title:"Lektion 7 – Wie, wo und wann?",group:"Tests & Übungen"},
+  {path:"pages/lektion-8-test.html",title:"Lektion 8 – Unterwegs",group:"Tests & Übungen"},
+  {path:"pages/lektion-9-test.html",title:"Lektion 9 – Unter Freunden",group:"Tests & Übungen"},
+  {path:"pages/intro-dialogue.html",title:"Sich vorstellen – Dialog",group:"Interaktive Lektionen"},
+  {path:"pages/numbers.html",title:"Die Zahlen",group:"Interaktive Lektionen"},
+  {path:"pages/essen.html",title:"Essen und Trinken",group:"Interaktive Lektionen"},
+  {path:"pages/freizeit.html",title:"Freizeit und Hobbys",group:"Interaktive Lektionen"},
+  {path:"pages/family-tree.html",title:"Familienstammbaum",group:"Interaktive Lektionen"},
+  {path:"pages/meine-stadt.html",title:"Meine Stadt und meine Wohnung",group:"Interaktive Lektionen"},
+  {path:"pages/wie-wo-und-wann-interaktiv.html",title:"Wie, wo und wann? – Lernkarte",group:"Interaktive Lektionen"},
+  {path:"pages/unter-freunden-flohmarkt-interaktiv.html",title:"Unter Freunden – Flohmarkt",group:"Interaktive Lektionen"},
+  {path:"pages/unterwegs-interaktiv.html",title:"Unterwegs – Lernkarte",group:"Interaktive Lektionen"},
+  {path:"Lektion 5/Lina_Freizeit_Audio_Lesetraining_CENTER_POPUP_PAUSE.html",title:"Podcast L5 – Teil 1",group:"Podcasts"},
+  {path:"Lektion 5/Lina_Freizeit_Audio_Lesetraining_Teil2.html",title:"Podcast L5 – Teil 2",group:"Podcasts"},
+  {path:"Lektion 6/Lina_Einkaufen_Stadt_Land_Audio_Lesetraining.html",title:"Podcast L6 – Teil 1",group:"Podcasts"},
+  {path:"Lektion 6/Lina_Stadt_Wohnung_Audio_Lesetraining.html",title:"Podcast L6 – Teil 2",group:"Podcasts"},
+  {path:"Lektion 7/Lina_Wetter_Stadt_Arbeit_Audio_Lesetraining.html",title:"Podcast L7 – Teil 1",group:"Podcasts"},
+  {path:"Lektion 7/Lina_Herbst_Winter_Wochenende_Audio_Lesetraining.html",title:"Podcast L7 – Teil 2",group:"Podcasts"},
+  {path:"Lektion 8/Lina_Verkehrsmittel_Hamburg_Audio_Lesetraining.html",title:"Podcast L8 – Teil 1",group:"Podcasts"},
+  {path:"Lektion 8/Lina_Hamburg_Verkehrsmittel_Teil2_Audio_Lesetraining.html",title:"Podcast L8 – Teil 2",group:"Podcasts"},
+  {path:"Lektion 9/Lina_Wochenende_Restaurant_Audio_Lesetraining.html",title:"Podcast L9 – Teil 1",group:"Podcasts"},
+  {path:"Lektion 9/Emma_Flohmarkt_Audio_Lesetraining.html",title:"Podcast L9 – Teil 2",group:"Podcasts"},
+  {path:"Lektion 10/Sara_Reisen_Jahreszeiten_Audio_Lesetraining.html",title:"Podcast L10 – Teil 1",group:"Podcasts"},
+  {path:"Lektion 10/Sara_Winterreisen_Urlaubserlebnisse_Audio_Lesetraining.html",title:"Podcast L10 – Teil 2",group:"Podcasts"},
+  {path:"pages/Kurs/lektion-1-kurs.html",title:"Lektion 1 – Kurs",group:"Kurs"},
+  {path:"pages/Kurs/lektion-2-kurs.html",title:"Lektion 2 – Kurs",group:"Kurs"},
+  {path:"pages/Kurs/lektion-3-kurs.html",title:"Lektion 3 – Kurs",group:"Kurs"},
+  {path:"pages/Kurs/lektion-4-kurs.html",title:"Lektion 4 – Kurs",group:"Kurs"},
+  {path:"pages/Kurs/lektion-5-kurs.html",title:"Lektion 5 – Kurs",group:"Kurs"},
+  {path:"pages/Kurs/lektion-6-kurs.html",title:"Lektion 6 – Kurs",group:"Kurs"},
+  {path:"pages/Kurs/lektion-7-kurs.html",title:"Lektion 7 – Kurs",group:"Kurs"},
+  {path:"pages/Kurs/lektion-8-kurs.html",title:"Lektion 8 – Kurs",group:"Kurs"},
+  {path:"pages/Kurs/lektion-9-kurs.html",title:"Lektion 9 – Kurs",group:"Kurs"},
+  {path:"pages/Kurs/lektion-10-kurs.html",title:"Lektion 10 – Kurs",group:"Kurs"},
+  {path:"pages/Kurs/A2/lektion-2-kurs.html",title:"A2 – Lektion 2: Gut aussehen",group:"Kurs A2"},
+  {path:"pages/Kurs/A2/lektion-3-kurs.html",title:"A2 – Lektion 3: Familie und Freunde",group:"Kurs A2"},
+  {path:"pages/Kurs/A2/lektion-4-kurs.html",title:"A2 – Lektion 4: Die Ferienwohnung",group:"Kurs A2"},
+  {path:"pages/Kurs/A2/lektion-5-kurs.html",title:"A2 – Lektion 5: Guten Appetit",group:"Kurs A2"},
+  {path:"pages/Test/lektion-1-test.html",title:"Lektion 1 – Test",group:"Test"},
+  {path:"pages/Test/lektion-2-test.html",title:"Lektion 2 – Test",group:"Test"},
+  {path:"pages/Test/lektion-3-test.html",title:"Lektion 3 – Test",group:"Test"},
+  {path:"pages/Test/lektion-4-test.html",title:"Lektion 4 – Test",group:"Test"},
+  {path:"pages/Test/lektion-5-test.html",title:"Lektion 5 – Test",group:"Test"},
+  {path:"pages/Test/lektion-6-test.html",title:"Lektion 6 – Test",group:"Test"},
+  {path:"pages/Test/lektion-7-test.html",title:"Lektion 7 – Test",group:"Test"},
+  {path:"pages/Test/lektion-8-test.html",title:"Lektion 8 – Test",group:"Test"},
+  {path:"pages/Test/lektion-9-test.html",title:"Lektion 9 – Test",group:"Test"},
+  {path:"pages/Test/lektion-10-test.html",title:"Lektion 10 – Test",group:"Test"},
+  {path:"pages/Podcast/lektion-1-podcast.html",title:"Lektion 1 – Podcast",group:"Podcast"},
+  {path:"pages/Podcast/lektion-2-podcast.html",title:"Lektion 2 – Podcast",group:"Podcast"},
+  {path:"pages/Podcast/lektion-3-podcast.html",title:"Lektion 3 – Podcast",group:"Podcast"},
+  {path:"pages/Podcast/lektion-4-podcast.html",title:"Lektion 4 – Podcast",group:"Podcast"},
+  {path:"pages/Podcast/lektion-5-podcast.html",title:"Lektion 5 – Podcast",group:"Podcast"},
+  {path:"pages/Podcast/lektion-6-podcast.html",title:"Lektion 6 – Podcast",group:"Podcast"},
+  {path:"pages/Podcast/lektion-7-podcast.html",title:"Lektion 7 – Podcast",group:"Podcast"},
+  {path:"pages/Podcast/lektion-8-podcast.html",title:"Lektion 8 – Podcast",group:"Podcast"},
+  {path:"pages/Podcast/lektion-9-podcast.html",title:"Lektion 9 – Podcast",group:"Podcast"},
+  {path:"pages/Podcast/lektion-10-podcast.html",title:"Lektion 10 – Podcast",group:"Podcast"},
+  {path:"pages/Sprechen/lektion-1-sprechen.html",title:"Lektion 1 – Sprechen",group:"Sprechen"},
+  {path:"pages/Sprechen/lektion-2-sprechen.html",title:"Lektion 2 – Sprechen",group:"Sprechen"},
+  {path:"pages/Sprechen/lektion-3-sprechen.html",title:"Lektion 3 – Sprechen",group:"Sprechen"},
+  {path:"pages/Sprechen/lektion-4-sprechen.html",title:"Lektion 4 – Sprechen",group:"Sprechen"},
+  {path:"pages/Sprechen/lektion-5-sprechen.html",title:"Lektion 5 – Sprechen",group:"Sprechen"},
+  {path:"pages/Sprechen/lektion-6-sprechen.html",title:"Lektion 6 – Sprechen",group:"Sprechen"},
+  {path:"pages/Sprechen/lektion-7-sprechen.html",title:"Lektion 7 – Sprechen",group:"Sprechen"},
+  {path:"pages/Sprechen/lektion-8-sprechen.html",title:"Lektion 8 – Sprechen",group:"Sprechen"},
+  {path:"pages/Sprechen/lektion-9-sprechen.html",title:"Lektion 9 – Sprechen",group:"Sprechen"},
+  {path:"pages/Sprechen/lektion-10-sprechen.html",title:"Lektion 10 – Sprechen",group:"Sprechen"}
+];
 
 const AUTH_SESSION_KEY = "deutsch_a1_session_v2";
 const AUTH_USERS_KEY = "deutsch_a1_users_cache_v2";
@@ -242,11 +363,24 @@ let adminGroupFilter = "all";
 let adminAnalyticsGroupFilter = "all";
 let adminAnalyticsStudentFilter = "all";
 let adminSection = "home";
+let adminContentMeta = {};
+let adminPagesRootDirectoryHandle = null;
+const ADMIN_LOCAL_HTML_PAGES_KEY = "deutsch_a1_admin_local_html_pages_v1";
+const ADMIN_TEST_PAGE_ROUTES_KEY = "deutsch_a1_admin_test_page_routes_v1";
+let adminPageSelectedPath = "pages/adjective-challenge.html";
+let managedHtmlPagePath = "";
+let activeCustomContentMeta = null;
+let activeCustomContentFile = null;
+let customContentReturnPage = "lesson-hub";
+
 let adminSelectedGroupId = null;
 let adminResultsGroupId = "all";
 let adminResultsStudentId = "all";
 let adminResultsLessonFilter = "all";
 let adminResultsTypeFilter = "all";
+let studentProgressLessonFilter = "all";
+let studentResultsExpanded = false;
+let studentResultsActiveTool = "";
 let adminExerciseHeatmapMode = "performance";
 let editingGroupId = null;
 let adminEditingStudentLessonsId = null;
@@ -322,6 +456,14 @@ async function loadDeutschA1Data(){
     cloudGroups = groupsSnap.val() || {};
     cloudActivity = activitySnap.val() || {};
   }
+  try {
+    const contentMetaSnap = await firebaseDb.ref(`${DEUTSCH_A1_PATH}/contentMeta`).once("value");
+    adminContentMeta = contentMetaSnap.val() || {};
+  } catch (contentError) {
+    console.warn("Custom lesson content metadata could not be loaded. Check Firebase rules:", contentError);
+    adminContentMeta = {};
+  }
+  // HTML pages are static files under /pages and are never read from or written to Firebase.
   localStorage.setItem(AUTH_USERS_KEY, JSON.stringify(cloudUsers));
   localStorage.setItem(AUTH_RESULTS_KEY, JSON.stringify(cloudResults));
   // Merge any exercise progress saved by an embedded page before the student signs out.
@@ -392,7 +534,9 @@ function saveEmbeddedProgressReport(data){
     stageLabels:data.stageLabels && typeof data.stageLabels==="object" ? data.stageLabels : {},
     attemptId:String(data.attemptId||""),
     contentType:String(data.contentType||"test"),
-    source:"embedded-exercise",
+    lessonNumber:Number(data.lessonNumber)||0,
+    customContentId:String(data.customContentId||""),
+    source:String(data.source||"embedded-exercise"),
     updatedAt:data.updatedAt || new Date().toISOString()
   });
 }
@@ -513,9 +657,10 @@ function flushStudentActiveTime(){
   const testPages=["test","test-result","test-categories","standalone-lesson-test"];
   const coursePages=["lesson","interactive-lesson-poster","category","learning","dialogue","intro-dialogue","numbers","essen","freizeit","stadt","family-tree"];
   const podcastPages=["podcast-player","lesson-podcasts"];
+  const activePodcastPage=pageKey==="podcasts" && (!!podcastFilterLesson || !!activePodcastSelection);
   const listeningDialogue=(pageKey==="dialogue"||pageKey==="intro-dialogue") && (dialogueReturnPage==="lesson-podcasts"||dialogueReturnPage==="podcasts");
-  const learningPages=[...coursePages,...testPages,...podcastPages];
-  const contentType=(podcastPages.includes(pageKey)||listeningDialogue)?"podcast":testPages.includes(pageKey)?"test":coursePages.includes(pageKey)?"kurs":null;
+  const learningPages=[...coursePages,...testPages,...podcastPages,...(activePodcastPage?["podcasts"]:[])];
+  const contentType=(podcastPages.includes(pageKey)||activePodcastPage||listeningDialogue)?"podcast":testPages.includes(pageKey)?"test":coursePages.includes(pageKey)?"kurs":null;
   const lessonKey=String(Number(currentLesson)+1);
   const ref=firebaseDb.ref(`${DEUTSCH_A1_PATH}/activity/${uid}/${day}`);
   ref.transaction(current=>{
@@ -667,8 +812,19 @@ let currentUser = readSession();
 let page = currentUser ? (currentUser.role === "admin" ? "admin" : "home") : "login";
 let selectedLevel = "A1.1";
 let currentLesson = 0;
+let currentA2LessonNo = 1;
+let currentA2TestNo = 1;
+let a2TestReturnPage = "a2-level-home";
+let lessonSectionType = "course";
+let lessonSectionReturnPage = "lesson-hub";
 let currentPodcastId = "";
+let podcastFilterLesson = null;
+let activePodcastSelection = null;
+let activePodcastFile = null;
+let activePodcastLoading = false;
+let activePodcastError = "";
 let currentCategory = "Verben";
+let categoryReturnPage = "lesson";
 let learningTab = "Bilder";
 let activeVerbCard = null;
 let testIndex = 0;
@@ -681,14 +837,65 @@ let dialogueReturnPage = "lesson";
 let testReturnPage = "category";
 let testCategoriesReturnPage = "tests";
 let courseReturnPage = "lessons";
+let lessonHubReturnPage = "level-home";
 let podcastReturnPage = "podcasts";
 let demoMode = false;
 let tutorScenario = "cafe";
 let tutorLessonIndex = 0;
+let talkReturnPage = "home";
+let talkReturnLesson = 0;
 let tutorTool = "conversation";
 let tutorToolOpen = false;
+let tutorKeyboardOpen = false;
+let tutorExamplesOpen = false;
+let tutorLessonFilterOpen = false;
+let tutorVoiceCapture = false;
+let tutorVoiceSession = null;
 let tutorMessages = [];
 let communityRoom = null;
+let competitionMode = "duel";
+let competitionSelectedLessons = [];
+let competitionQuestionCount = 10;
+let competitionWholeExercises = false;
+let competitionExerciseSelections = {};
+let competitionExerciseDrafts = {};
+let competitionExerciseTileDrafts = {};
+// Catalog metadata only: no answer keys or full questions are sent to students.
+const competitionTestCatalog = [{"name":"Hallo & Herkunft","types":[{"name":"Verben","count":5},{"name":"Nomen","count":3},{"name":"Adjektive","count":3},{"name":"Präpositionen","count":3},{"name":"Grammatik","count":3}]},{"name":"Familie","types":[{"name":"Verben","count":7},{"name":"Nomen","count":18},{"name":"Adjektive","count":9},{"name":"Präpositionen","count":5},{"name":"Grammatik","count":5}]},{"name":"Wohnen","types":[{"name":"Verben","count":3},{"name":"Nomen","count":3},{"name":"Adjektive","count":3},{"name":"Präpositionen","count":3},{"name":"Grammatik","count":3},{"name":"Zusatztest · Wörter verbinden","count":10},{"name":"Zusatztest · Artikel-Detektiv","count":12},{"name":"Zusatztest · Übersetzungsquiz","count":8},{"name":"Zusatztest · Lückensätze","count":8},{"name":"Zusatztest · Satzbau-Werkstatt","count":5},{"name":"Zusatztest · Wo bist du? – Präpositionen","count":6},{"name":"Zusatztest · Verben im Alltag","count":8},{"name":"Zusatztest · Adjektive-Duell","count":4},{"name":"Zusatztest · Lesen und verstehen","count":5},{"name":"Zusatztest · Fehler-Polizei","count":5},{"name":"Zusatztest · Wörter sortieren","count":12},{"name":"Zusatztest · Übersetzungswerkstatt","count":5},{"name":"Zusatztest · Abschlusstest","count":12}]},{"name":"Essen und Trinken","types":[{"name":"Verben","count":3},{"name":"Nomen","count":3},{"name":"Adjektive","count":3},{"name":"Präpositionen","count":3},{"name":"Grammatik","count":3}]},{"name":"Mein Alltag","types":[{"name":"Verben","count":3},{"name":"Nomen","count":3},{"name":"Adjektive","count":3},{"name":"Präpositionen","count":3},{"name":"Grammatik","count":3},{"name":"Zusatztest · Wörter verbinden","count":10},{"name":"Zusatztest · Wetter-Detektiv","count":8},{"name":"Zusatztest · Jahreszeiten und Monate","count":8},{"name":"Zusatztest · Wochentage ergänzen","count":5},{"name":"Zusatztest · Lückensätze","count":8},{"name":"Zusatztest · Satzbau-Werkstatt","count":5},{"name":"Zusatztest · am oder im?","count":8},{"name":"Zusatztest · Verben im Präsens","count":8},{"name":"Zusatztest · Wie, wo oder wann?","count":8},{"name":"Zusatztest · Lesen und verstehen","count":5},{"name":"Zusatztest · Fehler-Polizei","count":5},{"name":"Zusatztest · Wörter sortieren","count":12},{"name":"Zusatztest · Übersetzungswerkstatt","count":5},{"name":"Zusatztest · Abschlusstest","count":12}]},{"name":"Freizeit & Hobbys","types":[{"name":"Verben","count":3},{"name":"Nomen","count":3},{"name":"Adjektive","count":3},{"name":"Präpositionen","count":3},{"name":"Grammatik","count":3}]},{"name":"Einkaufen","types":[{"name":"Verben","count":3},{"name":"Nomen","count":3},{"name":"Adjektive","count":3},{"name":"Präpositionen","count":3},{"name":"Grammatik","count":3},{"name":"Zusatztest · Wörter verbinden","count":10},{"name":"Zusatztest · Artikel-Detektiv","count":12},{"name":"Zusatztest · Übersetzungsquiz","count":10},{"name":"Zusatztest · Lückensätze","count":8},{"name":"Zusatztest · Buchstabensalat","count":8},{"name":"Zusatztest · Satzbau-Werkstatt","count":5},{"name":"Zusatztest · Adjektive im Flohmarkt","count":8},{"name":"Zusatztest · Verben richtig konjugieren","count":8},{"name":"Zusatztest · Adjektive verbinden","count":8},{"name":"Zusatztest · Lesen und verstehen","count":6},{"name":"Zusatztest · Dialog ergänzen","count":4},{"name":"Zusatztest · Fehler-Polizei","count":8},{"name":"Zusatztest · Wörter sortieren","count":16},{"name":"Zusatztest · Übersetzungswerkstatt","count":8},{"name":"Zusatztest · Abschlusstest","count":15}]},{"name":"Arbeit & Beruf","types":[{"name":"Verben","count":3},{"name":"Nomen","count":3},{"name":"Adjektive","count":3},{"name":"Präpositionen","count":3},{"name":"Grammatik","count":3}]},{"name":"Stadt & Verkehr","types":[{"name":"Verben","count":3},{"name":"Nomen","count":3},{"name":"Adjektive","count":3},{"name":"Präpositionen","count":3},{"name":"Grammatik","count":3},{"name":"Zusatztest · Wörter verbinden","count":10},{"name":"Zusatztest · Artikel-Detektiv","count":12},{"name":"Zusatztest · Übersetzungsquiz","count":8},{"name":"Zusatztest · Lückensätze","count":8},{"name":"Zusatztest · Buchstabensalat","count":8},{"name":"Zusatztest · Satzbau-Werkstatt","count":5},{"name":"Zusatztest · Mit dem Bus oder mit der Bahn?","count":6},{"name":"Zusatztest · Verben unterwegs","count":8},{"name":"Zusatztest · Adjektive-Match","count":8},{"name":"Zusatztest · Lesen und verstehen","count":5},{"name":"Zusatztest · Fehler-Polizei","count":5},{"name":"Zusatztest · Wörter sortieren","count":12},{"name":"Zusatztest · Übersetzungswerkstatt","count":5},{"name":"Zusatztest · Abschlusstest","count":12}]},{"name":"Gesundheit & Termine","types":[{"name":"Verben","count":3},{"name":"Nomen","count":3},{"name":"Adjektive","count":3},{"name":"Präpositionen","count":3},{"name":"Grammatik","count":3}]},{"name":"L7 A1.1 · Wie, wo und wann?","types":[{"name":"L7 A1.1 · 🌤️ Wetter-Detektiv Welches Wetter passt zur Beschreibung?","count":8},{"name":"L7 A1.1 · 🌷 Jahreszeiten und Monate Ordne jeden Monat der richtigen Jahreszeit zu.","count":8},{"name":"L7 A1.1 · 🕒 am oder im? Wähle die richtige Zeitpräposition.","count":8},{"name":"L7 A1.1 · ❓ Wie, wo oder wann? Wähle das passende Fragewort.","count":8},{"name":"L7 A1.1 · 🔊 Hördetektiv Höre den deutschen Satz und wähle die passende Bedeutung.","count":5},{"name":"L7 A1.1 · 📖 Lesen und verstehen Lies den Text und beantworte die Fragen.","count":5},{"name":"L7 A1.1 · 🗂️ Wörter sortieren Ordne jedes Wort der richtigen Kategorie zu.","count":12},{"name":"L7 A1.1 · 🏆 Abschlusstest Zeige, was du gelernt hast!","count":12}]}];
+let competitionSelectedTestTypes = {};
+let competitionExpandedLesson = null;
+function competitionEnsureTypes(lessonIndex){
+  const all=competitionTestCatalog[lessonIndex]?.types||[];
+  const current=competitionSelectedTestTypes[lessonIndex];
+  if(!Array.isArray(current)){
+    competitionSelectedTestTypes[lessonIndex]=all.map((_,i)=>i);
+  }
+  return competitionSelectedTestTypes[lessonIndex];
+}
+function competitionAvailableQuestionCount(){
+  return competitionSelectedLessons.reduce((total,lessonIndex)=>{
+    const types=competitionTestCatalog[lessonIndex]?.types||[];
+    return total+competitionEnsureTypes(lessonIndex).reduce((num,typeIndex)=>num+(types[typeIndex]?.count||0),0);
+  },0);
+}
+function competitionTypeTitle(name){
+  return String(name||'Test').replace(/^L7 A1\.1\s*·\s*/,'').replace(/^Zusatztest\s*·\s*/,'').trim();
+}
+function competitionSelectedTypePayload(){
+  return Object.fromEntries(competitionSelectedLessons.map(index=>[String(index),competitionEnsureTypes(index).slice()]));
+}
+
+let competitionRoomId = null;
+let competitionRoomCode = "";
+let competitionRoomData = null;
+let competitionRoomPollTimer = null;
+let competitionRoomPollBusy = false;
+let competitionRoomLastSignature = "";
+let competitionQuestionIndex = 0;
+let competitionFeedback = null;
+let competitionSubmitting = false;
+let competitionBusy = false;
+let competitionGlobalStats = [];
 
 const app = document.getElementById("app");
 const toast = document.getElementById("toast");
@@ -797,9 +1004,10 @@ function setStudentPageForTab(tab){
   if(tab==="home") page="home";
   else if(tab==="learn") page="learn-hub";
   else if(tab==="talk"){
+    talkReturnPage="home";talkReturnLesson=currentLesson;
     tutorLessonIndex=getHomeLessonIndex();currentLesson=tutorLessonIndex;tutorTool="conversation";tutorToolOpen=false;tutorMessages=[];page="talk";
   }else if(tab==="sessions") page="sessions";
-  else if(tab==="progress") page="student-results";
+  else if(tab==="progress"){studentResultsActiveTool="";page="student-results";}
   else if(tab==="community"){page="community";communityRoom=null;}
   else return false;
   return true;
@@ -828,6 +1036,7 @@ function header(){
   const name = escapeHtml(currentUser?.name || "متعلّم");
   const pageTitles = {
     home:"اليوم", "learn-hub":"تعلّم", levels:"تعلّم", "level-home":"تعلّم",
+    "a2-level-home":"تعلّم", "a2-lesson-html":"تعلّم", "a2-course-content":"تعلّم",
     lessons:"تعلّم", "lesson-hub":"تعلّم", "lesson-podcasts":"تعلّم",
     podcasts:"تعلّم", "podcast-player":"تعلّم", tests:"تعلّم",
     "test-categories":"تعلّم", "standalone-lesson-test":"تعلّم",
@@ -835,11 +1044,11 @@ function header(){
     "intro-dialogue":"تعلّم", numbers:"تعلّم", essen:"تعلّم",
     freizeit:"تعلّم", stadt:"تعلّم", "family-tree":"تعلّم",
     category:"تعلّم", learning:"تعلّم", test:"تعلّم",
-    "test-result":"تعلّم", talk:"تكلّم", sessions:"الجلسات",
-    community:"المجتمع", "student-results":"تقدّمي", settings:"الإعدادات"
+    "test-result":"تعلّم", "custom-content":"تعلّم", talk:"تكلّم", sessions:"الجلسات",
+    community:"المجتمع", competition:"المنافسة", "student-results":"تقدّمي", settings:"الإعدادات"
   };
   const title = pageTitles[page] || "Deutsch";
-  const level = selectedLevel || "A1.1";
+  const level = ["a2-level-home","a2-lesson-html","a2-course-content","a2-test-html"].includes(page) ? "A2" : (selectedLevel || "A1.1");
   if(page==="student-results"){
     return `<header class="student-topbar student-topbar-progress">
       <div class="student-topbar-brand"><span class="student-brand-copy"><strong>تقدّمي</strong><small>${name} · ${level}</small></span></div>
@@ -866,7 +1075,8 @@ function studentNavActive(){
   if(page === "talk") return "talk";
   if(page === "sessions") return "sessions";
   if(page === "community") return "community";
-  if(["learn-hub","levels","level-home","lessons","lesson-hub","lesson-podcasts","podcasts","podcast-player","tests","test-categories","standalone-lesson-test","lesson","interactive-lesson-poster","dialogue","intro-dialogue","numbers","essen","freizeit","stadt","family-tree","category","learning","test","test-result"].includes(page)) return "learn";
+  if(page === "competition") return "competition";
+  if(["learn-hub","levels","level-home","a2-level-home","a2-lesson-html","a2-course-content","a2-test-html","lessons","lesson-hub","lesson-podcasts","podcasts","podcast-player","tests","test-categories","standalone-lesson-test","lesson","interactive-lesson-poster","dialogue","intro-dialogue","numbers","essen","freizeit","stadt","family-tree","category","learning","test","test-result","custom-content"].includes(page)) return "learn";
   return "home";
 }
 
@@ -877,7 +1087,8 @@ function studentBottomNav(active){
     talk: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11.5a7 7 0 0 0 14 0"/><path d="M12 18.5V22M8.5 22h7"/></svg>',
     sessions: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V21"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-1.5a4 4 0 0 0-3-3.87M16 3.2a4 4 0 0 1 0 7.6"/></svg>',
     progress: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V11M10 20V4M16 20v-7M22 20H2"/></svg>',
-    community: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a7.5 7.5 0 0 1-7.5 7.5H7l-4 2v-5.5A7.5 7.5 0 1 1 21 11.5Z"/><path d="M8 10h.01M12 10h.01M16 10h.01"/></svg>'
+    community: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a7.5 7.5 0 0 1-7.5 7.5H7l-4 2v-5.5A7.5 7.5 0 1 1 21 11.5Z"/><path d="M8 10h.01M12 10h.01M16 10h.01"/></svg>',
+    competition: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v4a4 4 0 0 1-8 0V4Z"/><path d="M8 6H5v2a4 4 0 0 0 4 4M16 6h3v2a4 4 0 0 1-4 4M12 12v5M8 21h8M10 17h4"/></svg>'
   };
   const tabs = [
     ["home","اليوم"],
@@ -885,7 +1096,8 @@ function studentBottomNav(active){
     ["talk","تكلّم"],
     ["sessions","الجلسات"],
     ["progress","تقدّمي"],
-    ["community","المجتمع"]
+    ["community","المجتمع"],
+    ["competition","المنافسة"]
   ];
   return `<nav class="student-bottom-nav" aria-label="التنقل الرئيسي">${tabs.map(([tab,label]) =>
     `<button type="button" class="student-nav-btn ${active===tab?"active":""}" data-action="student-nav" data-tab="${tab}" ${active===tab?'aria-current="page"':""}>
@@ -899,7 +1111,15 @@ function studentLayout(content, active){
 }
 
 function pageShell(eyebrow,title,subtitle,content){
-  return studentLayout(`<section class="student-page-heading">
+  const pagesWithHeaderBack = new Set([
+    "learn-hub","levels","level-home","a2-level-home","lessons","lesson-hub","lesson-podcasts",
+    "tests","test-categories","lesson","category","learning","test","test-result",
+    "sessions","community","settings"
+  ]);
+  const backControl = pagesWithHeaderBack.has(page)
+    ? `<div class="student-page-back-row"><button type="button" class="student-page-back" data-action="back"><span aria-hidden="true">→</span><span>رجوع</span></button></div>`
+    : "";
+  return studentLayout(`${backControl}<section class="student-page-heading">
     <p class="student-eyebrow">${eyebrow}</p>
     <h1>${title}</h1>
     <p>${subtitle}</p>
@@ -1090,37 +1310,257 @@ function renderHome(){
 }
 function renderLearnHub(){
   const levels = [
-    {id:"A1",emoji:"🌱",title:"مبتدئ",desc:"الحروف، التعارف، الجمل اليومية",active:true},
-    {id:"A2",emoji:"🌿",title:"مبتدئ متقدم",desc:"التواصل في مواقف الحياة اليومية"},
-    {id:"B1",emoji:"🌳",title:"متوسط",desc:"التعبير عن الرأي والتجارب"},
-    {id:"B2",emoji:"🏔️",title:"فوق المتوسط",desc:"النقاش وفهم النصوص المعقدة"},
-    {id:"C1",emoji:"🚀",title:"متقدم",desc:"اللغة الأكاديمية والمهنية"},
-    {id:"C2",emoji:"👑",title:"إتقان",desc:"فهم وتعبير بمستوى قريب من الناطقين"}
+    {id:"A1",title:"المستوى الأساسي",desc:"تعلّم الأساسيات والتواصل في الحياة اليومية",tone:"green",available:true},
+    {id:"A2",title:"المستوى الأساسي الأعلى",desc:"توسيع المفردات والتعبير في مواقف يومية أكثر · 10 دروس متاحة",tone:"blue",available:true},
+    {id:"B1",title:"المستوى المتوسط",desc:"التعبير عن الآراء والتجارب بشكل أوضح وأطول",tone:"orange",available:false},
+    {id:"B2",title:"المستوى المتقدم الأعلى",desc:"التواصل بطلاقة ومناقشة مواضيع معقدة",tone:"purple",available:false}
   ];
   const levelCards = levels.map(level=>`
-    <button type="button" class="path-level-card ${level.active?"is-current":"is-locked"}" data-action="level-path" data-level="${level.id}">
-      <span class="path-level-emoji">${level.emoji}</span><strong>${level.id}</strong><span>${level.title}</span><small>${level.desc}</small>
-      <b>${level.active?"ابدأ المستوى ←":"🔒 قريباً"}</b>
+    <button type="button" class="learn-level-card learn-level-${level.tone} ${level.available?"is-available":"is-coming"}"
+      data-action="level-path" data-level="${level.id}" aria-label="اختيار المستوى ${level.id}">
+      <span class="learn-level-top">
+        <strong>${level.id}</strong>
+        <span class="learn-level-bars" aria-hidden="true"><i></i><i></i><i></i></span>
+      </span>
+      <b>${level.title}</b>
+      <small>${level.desc}</small>
+      <span class="learn-level-arrow" aria-hidden="true">→</span>
     </button>`).join("");
+
   const content = `
-    <section class="learning-current-card">
-      <div><span class="section-overline">مسارك الحالي</span><h2>مستوى A1 – البداية الصحيحة</h2><p>10 دروس موجودة في المشروع الحالي، مقسّمة إلى A1.1 وA1.2.</p></div>
-      <button type="button" class="primary-soft-btn" data-action="student-open-a1">فتح دروس A1 ←</button>
+    <section class="learn-home" aria-label="الصفحة الرئيسية للتعلّم">
+      <header class="learn-home-heading">
+        <h1>المعلّم الذكي</h1>
+        <button type="button" class="learn-clear-chat" data-action="learn-reset-conversation">
+          <span aria-hidden="true">▤</span> مسح المحادثة
+        </button>
+      </header>
+
+      <button type="button" class="learn-voice-cta" data-action="learn-open-voice">
+        <span class="learn-voice-mic" aria-hidden="true">♩</span>
+        <strong>تحدّث مع المعلّم بصوتك</strong>
+      </button>
+
+      <section class="learn-level-section">
+        <div class="learn-level-heading">
+          <h2>اختر مستواك في الألمانية</h2>
+          <p>للبدء في التعلّم والمحادثة</p>
+        </div>
+        <div class="learn-level-grid">${levelCards}</div>
+      </section>
+
+      <section class="learn-placement-card">
+        <span class="learn-placement-icon" aria-hidden="true">🎓</span>
+        <div class="learn-placement-copy">
+          <strong>لست متأكداً من مستواك؟</strong>
+          <small>قم باختبار تحديد المستوى الآن</small>
+        </div>
+        <button type="button" data-action="learn-placement-test">اختبار المستوى <span aria-hidden="true">←</span></button>
+      </section>
+      <p class="learn-level-note">المتاح حالياً: دروس A1 و10 دروس من مستوى A2.</p>
     </section>
-    <section class="dashboard-section"><div class="dashboard-section-head"><div><span class="section-overline">من A1 إلى C2</span><h2>مراحل التعلّم</h2></div></div><div class="path-level-grid">${levelCards}</div></section>
-    <section class="dashboard-section"><div class="dashboard-section-head"><div><span class="section-overline">تعلّم بالطريقة اللي تناسبك</span><h2>وحدات التعلّم</h2></div></div>
-      <div class="learning-tools-grid">
-        <button class="learning-tool-card" data-action="student-open-a1"><span class="tool-icon green">▦</span><strong>خططي ودروسي</strong><small>الدروس والوحدات</small></button>
-        <button class="learning-tool-card" data-action="student-open-tests"><span class="tool-icon orange">🏆</span><strong>الامتحانات</strong><small>اختبر مستواك</small></button>
-        <button class="learning-tool-card" data-action="student-open-podcasts"><span class="tool-icon blue">🎧</span><strong>استماع وقراءة</strong><small>حوارات وبودكاست</small></button>
-        <button class="learning-tool-card" data-action="student-open-grammar"><span class="tool-icon purple">📐</span><strong>القواعد والأفعال</strong><small>شرح وأمثلة</small></button>
-        <button class="learning-tool-card" data-action="student-open-vocab"><span class="tool-icon teal">Aa</span><strong>أساسيات الألمانية</strong><small>مفردات وتعبيرات</small></button>
-        <button class="learning-tool-card" data-action="student-open-writing"><span class="tool-icon pink">✎</span><strong>الكتابة والإملاء</strong><small>تدريب كتابي</small></button>
-      </div>
-    </section>
-    <p class="learning-scope-note">ملاحظة: المحتوى التعليمي المدمج حالياً هو A1. المستويات A2–C2 ظاهرة في خارطة الطريق، وتحتاج إضافة دروسها قبل فتحها.</p>
   `;
-  app.innerHTML = pageShell("مسار التعلّم","من A1 إلى C2","مسار متدرّج خطوة بخطوة مع شرح بالعربية.",content);
+  app.innerHTML = studentLayout(content,"learn");
+}
+
+const a2CourseLessons = [
+  {number:1,title:"Erfahrungen und Pläne",arabic:"التجارب والخطط",icon:"🧭",path:"pages/Kurs/A2/lektion-1-kurs.html",test:""},
+  {number:2,title:"Gut aussehen",arabic:"المظهر والأناقة",icon:"👗",path:"pages/Kurs/A2/lektion-2-kurs.html",test:"pages/Test/A2/lektion-2-test.html"},
+  {number:3,title:"Familie und Freunde",arabic:"العائلة والأصدقاء",icon:"👨‍👩‍👧",path:"pages/Kurs/A2/lektion-3-kurs.html",test:"pages/Test/A2/lektion-3-test.html"},
+  {number:4,title:"Die Ferienwohnung",arabic:"شقة العطلة",icon:"🏡",path:"pages/Kurs/A2/lektion-4-kurs.html",test:"pages/Test/A2/lektion-4-test.html"},
+  {number:5,title:"Guten Appetit!",arabic:"الطعام والشراب",icon:"🍽️",path:"pages/Kurs/A2/lektion-5-kurs.html",test:"pages/Test/A2/lektion-5-test.html"},
+  {number:6,title:"Deutsch A2 – Klick & Hör",arabic:"التعلّم بالنطق والاستماع",icon:"🎧",path:"pages/Kurs/A2/lektion-6-kurs.html",test:"pages/Test/A2/lektion-6-test.html"},
+  {number:7,title:"Wetter, Jahreszeiten und Termine",arabic:"الطقس والفصول والمواعيد",icon:"🌦️",path:"pages/Kurs/A2/lektion-7-kurs.html",test:"pages/Test/A2/lektion-7-test.html"},
+  {number:8,title:"Verkehrsmittel und Reisen",arabic:"وسائل النقل والسفر",icon:"🚌",path:"pages/Kurs/A2/lektion-8-kurs.html",test:"pages/Test/A2/lektion-8-test.html"},
+  {number:9,title:"Flohmarkt und Wochenende",arabic:"سوق المستعمل وعطلة نهاية الأسبوع",icon:"🛍️",path:"pages/Kurs/A2/lektion-9-kurs.html",test:"pages/Test/A2/lektion-9-test.html"},
+  {number:10,title:"Reisen und Urlaubserlebnisse",arabic:"السفر وتجارب العطلة",icon:"✈️",path:"pages/Kurs/A2/lektion-10-kurs.html",test:"pages/Test/A2/lektion-10-test.html"}
+];
+
+function renderA2LevelHome(){
+  // Keep the A2 overview visually and behaviorally aligned with the A1 lesson grid.
+  const resultRows = Object.values(readStudentResults(currentUser?.id || "") || {}).filter(item=>item && typeof item==="object");
+  const completedForLesson = lessonNo => resultRows.some(result=>{
+    const resultNo = Number(result.lessonNo || result.lessonNumber || result.lesson || 0);
+    if(resultNo !== lessonNo) return false;
+    const completedMap = result.completed && typeof result.completed==="object" ? result.completed : {};
+    const total = Number(result.totalExercises) || Object.keys(completedMap).length;
+    const completed = Number(result.completedExercises) || Object.values(completedMap).filter(Boolean).length;
+    return result.completed===true || (total>0 && completed>=total);
+  });
+  const statuses = a2CourseLessons.map((lesson,index)=>({
+    lesson,index,completed:completedForLesson(lesson.number),unlocked:true
+  }));
+  const currentIndex = statuses.find(item=>!item.completed)?.index ?? -1;
+  const nextLesson = statuses.find(item=>item.index===currentIndex) || statuses[0];
+  const completedCount = statuses.filter(item=>item.completed).length;
+  const progress = a2CourseLessons.length ? Math.round(completedCount/a2CourseLessons.length*100) : 0;
+
+  const lessonCards = statuses.map(item=>{
+    const {lesson,index}=item;
+    const state = item.completed ? "completed" : index===currentIndex ? "current" : "available";
+    const stateLabel = state==="completed" ? "مكتمل" : state==="current" ? "قيد التعلّم" : "متاح";
+    const stateIcon = state==="completed" ? "✓" : state==="current" ? "●" : "•";
+    return `<button type="button" class="level-lesson-card is-${state}" data-action="a2-lesson" data-lesson-no="${lesson.number}" aria-label="${escapeHtml(`الدرس ${lesson.number}: ${lesson.arabic} · ${stateLabel}`)}">
+      <span class="level-lesson-art" aria-hidden="true">${lesson.icon}</span>
+      <span class="level-lesson-copy">
+        <span class="level-lesson-number">الدرس ${lesson.number}</span>
+        <strong>${escapeHtml(lesson.arabic)}</strong>
+        <small dir="ltr">${escapeHtml(lesson.title)}</small>
+      </span>
+      <span class="level-lesson-side">
+        <span class="level-lesson-status is-${state}"><i aria-hidden="true">${stateIcon}</i>${stateLabel}</span>
+        <span class="level-lesson-arrow" aria-hidden="true">←</span>
+      </span>
+    </button>`;
+  }).join("");
+
+  const nextCta = nextLesson
+    ? `<button type="button" class="level-next-cta" data-action="a2-lesson" data-lesson-no="${nextLesson.lesson.number}">
+        <span class="level-next-cta-icon" aria-hidden="true">←</span>
+        <span class="level-next-cta-copy"><strong>${currentIndex>=0 ? "ابدأ الدرس التالي" : "راجع الدروس"}</strong><small>Lektion ${nextLesson.lesson.number} · ${escapeHtml(nextLesson.lesson.title)}</small></span>
+        <span class="level-next-cta-spark" aria-hidden="true">✦</span>
+      </button>`
+    : `<div class="level-complete-note"><span aria-hidden="true">🏆</span><strong>أحسنت! أكملت جميع الدروس</strong></div>`;
+
+  app.innerHTML = `<div class="student-app level-home-app" dir="rtl">
+    <header class="level-screen-topbar">
+      <button type="button" class="level-screen-back" data-action="back" aria-label="رجوع"><span aria-hidden="true">←</span></button>
+      <div class="level-screen-title"><small>مسارك التعليمي</small><strong>مستوى A2</strong></div>
+    </header>
+    <main class="level-home-main">
+      <section class="level-hero" aria-labelledby="a2LevelHeroTitle">
+        <div class="level-hero-visual" aria-hidden="true">
+          <span class="level-hero-orbit"></span><span class="level-hero-cap">🎓</span>
+          <span class="level-hero-book">📚</span><span class="level-hero-star">✦</span>
+        </div>
+        <div class="level-hero-copy">
+          <span class="level-hero-kicker"><i aria-hidden="true"></i> رحلتك مستمرة خطوة بخطوة</span>
+          <h1 id="a2LevelHeroTitle"><strong>A2</strong><span>المستوى الأساسي الأعلى</span></h1>
+          <p>وسّع مفرداتك وطوّر قدرتك على التواصل بالألمانية.</p>
+          <div class="level-hero-tags"><span>${a2CourseLessons.length} دروس</span><span>تطوير اللغة</span></div>
+        </div>
+      </section>
+      <section class="level-progress-card" aria-label="تقدمك في المستوى A2">
+        <div class="level-progress-top">
+          <div class="level-progress-title"><span class="level-progress-icon" aria-hidden="true">▥</span>
+            <span><strong>تقدمك في المستوى</strong><small>${completedCount} من ${a2CourseLessons.length} دروس مكتملة</small></span>
+          </div>
+          <span class="level-progress-percent">${progress}%</span>
+        </div>
+        <div class="level-progress-track" role="progressbar" aria-label="نسبة التقدم في المستوى A2" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}"><span style="width:${progress}%"></span></div>
+      </section>
+      <section class="level-lessons-section">
+        <div class="level-lessons-heading">
+          <div><span class="level-section-kicker">خطتك التعليمية</span><h2>دروس المستوى <b>${a2CourseLessons.length}</b></h2></div>
+          <small>تابع من حيث توقفت</small>
+        </div>
+        <div class="level-lessons-list">${lessonCards}</div>
+      </section>
+    </main>
+    <div class="level-next-cta-wrap">${nextCta}</div>
+  </div>`;
+}
+
+function renderA2LessonHtmlPage(){
+  const lesson = a2CourseLessons.find(item=>item.number===Number(currentA2LessonNo));
+  if(!lesson){ page="a2-level-home"; return render(); }
+
+  const descriptions = {
+    1:"تعلّم كيف تتحدث عن التجارب والخطط باستعمال أمثلة واضحة.",
+    2:"تعلّم وصف الملابس والمظهر والألوان والمقاسات.",
+    3:"تحدّث عن العائلة والأصدقاء والعلاقات اليومية.",
+    4:"تعلّم وصف شقة العطلة وحجز مكان للإقامة.",
+    5:"تعرّف على الأطعمة والمشروبات وكيفية الطلب في المطعم.",
+    6:"طوّر مهارات الاستماع والنطق والتواصل بالألمانية.",
+    7:"تحدّث عن الطقس والفصول والمواعيد.",
+    8:"تعلّم أسماء وسائل النقل والتخطيط للسفر.",
+    9:"تعلّم مفردات سوق المستعمل وأنشطة نهاية الأسبوع.",
+    10:"تحدّث عن السفر والعطلة والتجارب التي عشتها."
+  };
+  const stages=[
+    {id:"explanation",number:"1",title:"شرح الدرس",desc:`تعلّم أهم العبارات حول ${lesson.arabic} مع شرح وأمثلة واضحة.`,icon:"📖",tone:"blue",status:"ابدأ الآن",statusIcon:"▶"},
+    {id:"vocabulary",number:"2",title:"المفردات المهمة",desc:"أهم الكلمات مع النطق والترجمة والأمثلة.",icon:"🏷️",tone:"green",status:"المفردات",statusIcon:"Aa"},
+    {id:"practice",number:"3",title:"تمارين تطبيقية",desc:lesson.test?"حل الاختبار التفاعلي الخاص بهذا الدرس وتعرّف على نتيجتك.":"اختبر فهمك وطبّق ما تعلّمته في الدرس.",icon:"📝",tone:"amber",status:lesson.test?"ابدأ الاختبار":"تدرّب",statusIcon:"✓"},
+    {id:"speaking",number:"4",title:"المحادثة العملية",desc:"تدرّب على الحوار باستعمال مفردات وتعبيرات هذا الدرس.",icon:"🤖",tone:"pink",status:"تحدّث",statusIcon:"💬"}
+  ];
+  const stageMarkup=stages.map((stage,index)=>`
+    <button type="button" class="lesson-detail-stage lesson-detail-stage-${stage.tone} ${index===0?"is-primary":""}"
+      data-action="a2-stage-open" data-stage="${stage.id}" aria-label="${escapeHtml(stage.title)}">
+      <span class="lesson-detail-stage-icon" aria-hidden="true">${stage.icon}</span>
+      <span class="lesson-detail-stage-copy">
+        <strong>${stage.number}. ${stage.title}</strong>
+        <small>${escapeHtml(stage.desc)}</small>
+      </span>
+      <span class="lesson-detail-stage-status"><i aria-hidden="true">${stage.statusIcon}</i>${stage.status}</span>
+      <span class="lesson-detail-stage-arrow" aria-hidden="true">←</span>
+    </button>`).join("");
+
+  app.innerHTML=`<div class="student-app lesson-detail-app" dir="rtl">
+    <main class="student-main lesson-detail-main">
+      <section class="lesson-detail-page" aria-label="محتوى درس A2">
+        <header class="lesson-detail-topbar">
+          <button type="button" class="lesson-detail-back" data-action="close-a2-lesson" aria-label="رجوع">←</button>
+          <button type="button" class="lesson-detail-podcast-mini" data-action="a2-stage-open" data-stage="speaking" aria-label="التدرب على النطق" title="التدرب على النطق">🎧</button>
+          <div class="lesson-detail-level-label"><strong>A2</strong><span>مستوى</span></div>
+        </header>
+        <section class="lesson-detail-hero">
+          <div class="lesson-detail-hero-copy">
+            <span class="lesson-detail-hero-badge">A2.${lesson.number}</span>
+            <h1>الدرس ${lesson.number}</h1>
+            <h2>${escapeHtml(lesson.arabic)}</h2>
+            <p dir="ltr">${escapeHtml(lesson.title)}</p>
+            <small>${escapeHtml(descriptions[lesson.number]||"تعلّم أهم الكلمات والعبارات واستعملها في مواقف الحياة اليومية.")}</small>
+          </div>
+          <div class="lesson-detail-hero-art" aria-hidden="true">
+            <span class="lesson-detail-art-spark">✦</span>
+            <span class="lesson-detail-art-bubble">Hallo!</span>
+            <span class="lesson-detail-art-topic">${lesson.icon}</span>
+          </div>
+        </section>
+        <section class="lesson-detail-progress-card" aria-label="تقدمك في الدرس">
+          <div class="lesson-detail-progress-ring"><strong>0%</strong></div>
+          <div class="lesson-detail-progress-copy">
+            <strong>تقدمك في الدرس</strong>
+            <small>أكمل جميع الأنشطة لإنهاء الدرس</small>
+            <div class="lesson-detail-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span></span></div>
+          </div>
+        </section>
+        <div class="lesson-detail-content-heading"><h2>محتوى الدرس</h2><span aria-hidden="true">▱</span></div>
+        <div class="lesson-detail-stage-list">${stageMarkup}</div>
+        <div class="lesson-detail-footer">
+          <button type="button" class="lesson-detail-start" data-action="a2-stage-open" data-stage="explanation">
+            <span aria-hidden="true">▶</span><strong>ابدأ شرح الدرس</strong><i aria-hidden="true">←</i>
+          </button>
+        </div>
+      </section>
+    </main>
+  </div>`;
+}
+
+function renderA2CourseContentPage(){
+  const lesson = a2CourseLessons.find(item=>item.number===Number(currentA2LessonNo));
+  if(!lesson){ page="a2-level-home"; return render(); }
+  document.documentElement.classList.add("challenge-fullscreen-open");
+  document.body.classList.add("challenge-fullscreen-open");
+  app.innerHTML = `<div class="challenge-fullscreen-shell lesson-section-fullscreen-shell">
+    <button type="button" class="challenge-fullscreen-exit" data-action="close-a2-course-content">← رجوع إلى الدرس ${lesson.number}</button>
+    <iframe id="a2LessonPageFrame" title="A2 – Lektion ${lesson.number} – ${escapeHtml(lesson.title)}" loading="eager" allow="autoplay; fullscreen"></iframe>
+  </div>`;
+  const frame=document.getElementById("a2LessonPageFrame");
+  if(frame) loadManagedPageIntoFrame(frame,lesson.path);
+}
+
+function renderA2TestHtmlPage(){
+  const lesson = a2CourseLessons.find(item=>item.number===Number(currentA2TestNo));
+  if(!lesson || !lesson.test){ page="a2-level-home"; return render(); }
+  document.documentElement.classList.add("challenge-fullscreen-open");
+  document.body.classList.add("challenge-fullscreen-open");
+  app.innerHTML = `<div class="challenge-fullscreen-shell lesson-section-fullscreen-shell">
+    <button type="button" class="challenge-fullscreen-exit" data-action="close-a2-test">← رجوع إلى دروس A2</button>
+    <iframe id="a2TestPageFrame" title="A2 – Lektion ${lesson.number} – Test" loading="eager" allow="autoplay; fullscreen"></iframe>
+  </div>`;
+  const frame = document.getElementById("a2TestPageFrame");
+  if(frame) loadManagedPageIntoFrame(frame, lesson.test);
 }
 
 const tutorLessonProfiles = [
@@ -1350,6 +1790,10 @@ function renderTalk(){
   tutorLessonIndex = getTutorLessonIndex();
   const profile = getTutorProfile();
   if(!tutorMessages.length) tutorMessages = loadTutorMessages();
+  // The robot conversation is now the default and only main Talk screen.
+  // The former training-tools grid is intentionally removed from this flow.
+  tutorTool = "conversation";
+  tutorToolOpen = true;
   const level = tutorLessonIndex < 5 ? "A1.1" : "A1.2";
   const activeTool = getTutorTool();
 
@@ -1373,6 +1817,155 @@ function renderTalk(){
   const prompts = profile.questions.map(question=>
     `<button type="button" class="tutor-prompt-chip" data-action="tutor-prompt" data-prompt="${escapeHtml(question)}">${escapeHtml(question)}</button>`
   ).join("");
+
+  // Lesson-specific conversation screen. It is used for the speaking section
+  // inside every lesson and for the conversation tool in the tutor area.
+  if(tutorTool==="conversation"){
+    const sampleSentences = (String(profile.sample||"").match(/[^.!?]+[.!?]?/g)||[profile.sample||""]).map(item=>item.trim()).filter(Boolean).slice(0,2);
+    const examples = sampleSentences.map(sentence=>`
+      <div class="tutor-conversation-example">
+        <button type="button" class="tutor-conversation-example-audio" data-action="tutor-speak" data-text="${escapeHtml(sentence)}" aria-label="استمع إلى الجملة"> 
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6l-5 4H4Z"/><path d="M16 9a5 5 0 0 1 0 6M18.5 6.5a8.5 8.5 0 0 1 0 11"/></svg>
+        </button>
+        <button type="button" class="tutor-conversation-example-text" data-action="tutor-prompt" data-prompt="${escapeHtml(sentence)}" dir="ltr">${escapeHtml(sentence)}</button>
+        <span class="tutor-conversation-example-arrow" aria-hidden="true">›</span>
+      </div>`).join("");
+
+    const historyItems = tutorMessages
+      .filter((message,index)=>!(index===0 && message.role==="assistant"))
+      .slice(-8)
+      .map(message=>`
+        <article class="tutor-conversation-history-item ${message.role==="user"?"is-user":"is-teacher"}">
+          <div class="tutor-conversation-history-bubble" dir="ltr">${escapeHtml(message.text)}</div>
+          ${message.translation?`<p>${escapeHtml(message.translation)}</p>`:""}
+          ${message.role==="assistant"?`<button type="button" data-action="tutor-speak" data-text="${escapeHtml(message.text)}" aria-label="إعادة الاستماع">🔊</button>`:""}
+        </article>`).join("");
+
+    const customMaterials = renderCustomContentFeatureCards("speaking",tutorLessonIndex+1,"مواد إضافية للمحادثة");
+    const greetingText = profile.greeting || "Hallo! Wie geht es Ihnen?";
+    const greetingTranslation = profile.translation || "مرحباً! كيف حالك؟";
+    const fullscreenContent = `
+      <main class="tutor-conversation-screen" dir="rtl">
+        <section class="tutor-conversation-panel">
+          <header class="tutor-conversation-header">
+            <button type="button" class="tutor-conversation-back" data-action="back" aria-label="رجوع للدرس">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
+            <div class="tutor-conversation-heading">
+              <strong>المحادثة العملية</strong>
+              <small>${escapeHtml(profile.title)} · Lektion ${tutorLessonIndex+1} · ${level}</small>
+            </div>
+            <span class="tutor-conversation-level">${level}</span>
+          </header>
+
+          <section class="tutor-conversation-lesson-filter ${tutorLessonFilterOpen?"is-open":"is-collapsed"}" aria-label="فلتر الدروس">
+            <button type="button" class="tutor-conversation-lesson-filter-toggle" data-action="tutor-toggle-lesson-filter" aria-expanded="${tutorLessonFilterOpen?"true":"false"}">
+              <div class="tutor-conversation-lesson-filter-heading">
+                <strong>اختار الدرس</strong>
+                <small>Lektion ${tutorLessonIndex+1} · ${escapeHtml(lessons[tutorLessonIndex].name)}</small>
+              </div>
+              <span class="tutor-conversation-filter-caret" aria-hidden="true">${tutorLessonFilterOpen?"▲":"▼"}</span>
+            </button>
+            <div class="tutor-conversation-lesson-filter-strip-wrap ${tutorLessonFilterOpen?"is-open":""}">
+              <div class="tutor-conversation-lesson-filter-strip">${lessonChoices}</div>
+            </div>
+          </section>
+
+          <section class="tutor-conversation-robot-stage" aria-label="المعلّم الذكي">
+            <div class="tutor-conversation-spark tutor-conversation-spark-one">✦</div>
+            <div class="tutor-conversation-spark tutor-conversation-spark-two">✧</div>
+            <svg class="tutor-conversation-robot" viewBox="0 0 280 190" role="img" aria-label="روبوت المعلّم الذكي">
+              <defs>
+                <linearGradient id="tutorRobotHead" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#c9e4ff"/></linearGradient>
+                <linearGradient id="tutorRobotBody" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a8e7ff"/><stop offset="1" stop-color="#3287e8"/></linearGradient>
+                <linearGradient id="tutorRobotBlue" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4eaaff"/><stop offset="1" stop-color="#244bd5"/></linearGradient>
+                <filter id="tutorRobotShadow" x="-30%" y="-30%" width="160%" height="170%"><feGaussianBlur stdDeviation="5"/></filter>
+              </defs>
+              <ellipse cx="140" cy="174" rx="51" ry="8" fill="#8ab9f0" opacity=".22" filter="url(#tutorRobotShadow)"/>
+              <g fill="none" stroke="#76baff" stroke-linecap="round" stroke-width="3" opacity=".85">
+                <path d="M18 96v18M27 88v34M36 78v54M45 91v28M54 99v12"/>
+                <path d="M226 99v12M235 91v28M244 78v54M253 88v34M262 96v18"/>
+                <path d="M8 105h7M265 105h7"/>
+              </g>
+              <path d="M140 17V7" stroke="#4c8fe9" stroke-width="4" stroke-linecap="round"/>
+              <circle cx="140" cy="6" r="6" fill="#ffcf58" stroke="#fff" stroke-width="2"/>
+              <path d="M106 57c0-22 15-37 34-37s34 15 34 37" fill="none" stroke="#78b9ff" stroke-width="7" stroke-linecap="round"/>
+              <rect x="83" y="62" width="18" height="45" rx="9" fill="url(#tutorRobotBlue)"/>
+              <rect x="179" y="62" width="18" height="45" rx="9" fill="url(#tutorRobotBlue)"/>
+              <rect x="99" y="35" width="82" height="79" rx="27" fill="url(#tutorRobotHead)" stroke="#a9d7ff" stroke-width="3"/>
+              <rect x="108" y="49" width="64" height="48" rx="17" fill="#183c83"/>
+              <circle cx="127" cy="70" r="4.5" fill="#fff"/>
+              <circle cx="153" cy="70" r="4.5" fill="#fff"/>
+              <path d="M129 83q11 9 22 0" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+              <path d="M108 111q-10 12-7 27l13 17h52l13-17q3-15-7-27" fill="url(#tutorRobotBody)" stroke="#80caff" stroke-width="2"/>
+              <path d="M119 117q21 13 42 0" fill="none" stroke="#fff" stroke-width="3" opacity=".75"/>
+              <rect x="128" y="132" width="24" height="12" rx="6" fill="#1c68c9" opacity=".75"/>
+              <circle cx="140" cy="138" r="3" fill="#fff"/>
+              <path d="M108 125l-16 20M172 125l16 20" stroke="#3c83dc" stroke-width="9" stroke-linecap="round"/>
+              <circle cx="91" cy="147" r="7" fill="#8bd5ff"/>
+              <circle cx="189" cy="147" r="7" fill="#8bd5ff"/>
+              <path d="M121 153l-8 13M159 153l8 13" stroke="#3d7fd8" stroke-width="8" stroke-linecap="round"/>
+              <path d="M115 167h-8M165 167h8" stroke="#4d9ce8" stroke-width="5" stroke-linecap="round"/>
+              <circle cx="106" cy="52" r="4" fill="#fff" opacity=".8"/>
+            </svg>
+          </section>
+
+          <section class="tutor-conversation-greeting">
+            <span class="tutor-conversation-greeting-kicker">Hallo!</span>
+            <strong dir="ltr">${escapeHtml(greetingText)}</strong>
+            <p>${escapeHtml(greetingTranslation)}</p>
+            <button type="button" class="tutor-conversation-greeting-audio" data-action="tutor-speak" data-text="${escapeHtml(greetingText)}" aria-label="استمع إلى سؤال المعلّم">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6l-5 4H4Z"/><path d="M16 9a5 5 0 0 1 0 6M18.5 6.5a8.5 8.5 0 0 1 0 11"/></svg>
+            </button>
+          </section>
+
+          <section class="tutor-conversation-history ${historyItems?"has-messages":"is-empty"}" aria-label="نص المحادثة" aria-live="polite">
+            <header class="tutor-conversation-history-heading">
+              <strong>نص المحادثة</strong>
+              <small>الكلام اللي كتقولو غادي يبان هنا</small>
+            </header>
+            <div class="tutor-conversation-history-content" id="tutorConversationHistoryContent">
+              ${historyItems || `<div class="tutor-conversation-empty"><span>🎙️</span><p>هضر بالألمانية، والكلام ديالك غادي يبان هنا.</p></div>`}
+            </div>
+            <div class="tutor-conversation-live" id="tutorLiveTranscript" aria-live="polite">جاهز للاستماع…</div>
+          </section>
+
+          <section class="tutor-conversation-examples ${tutorExamplesOpen?"is-open":"is-collapsed"}">
+            <button type="button" class="tutor-conversation-examples-toggle" data-action="tutor-toggle-examples" aria-expanded="${tutorExamplesOpen?"true":"false"}">
+              <h3><span>💡</span> Beispiel · جمل تساعدك في الرد</h3>
+              <span class="tutor-conversation-filter-caret" aria-hidden="true">${tutorExamplesOpen?"▲":"▼"}</span>
+            </button>
+            <div class="tutor-conversation-example-list-wrap ${tutorExamplesOpen?"is-open":""}">
+              <div class="tutor-conversation-example-list">${examples}</div>
+            </div>
+          </section>
+
+          ${customMaterials?`<section class="tutor-conversation-extra">${customMaterials}</section>`:""}
+
+          <section class="tutor-conversation-bottom-bar" aria-label="أدوات المحادثة">
+            <div class="tutor-conversation-controls">
+              <button type="button" class="tutor-conversation-side-control" data-action="tutor-keyboard-toggle" aria-label="فتح لوحة الكتابة" aria-pressed="${tutorKeyboardOpen?"true":"false"}">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M6 9h1M10 9h1M14 9h1M18 9h.5M6 12h1M10 12h1M14 12h1M18 12h.5M8 15h8"/></svg>
+              </button>
+              <button type="button" class="tutor-conversation-mic" data-action="tutor-voice" aria-label="تحدث الآن">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3.5M8.5 21.5h7"/></svg>
+              </button>
+              <button type="button" class="tutor-conversation-side-control" data-action="tutor-speak" data-text="${escapeHtml(greetingText)}" aria-label="استمع إلى المعلّم">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6h4l5 4V5L7 9H3Z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>
+              </button>
+            </div>
+            <p class="tutor-conversation-hint">${tutorKeyboardOpen?"اكتب جوابك بالألمانية":"اضغط وتحدث الآن"}</p>
+            <form id="tutorForm" class="tutor-conversation-composer ${tutorKeyboardOpen?"is-open":""}">
+              <input id="tutorInput" type="text" autocomplete="off" placeholder="اكتب جوابك بالألمانية..." aria-label="جوابك بالألمانية">
+              <button type="submit" aria-label="إرسال الجواب">إرسال <span>←</span></button>
+            </form>
+          </section>
+        </section>
+      </main>
+    `;
+    app.innerHTML = fullscreenContent;
+    return;
+  }
 
   if(tutorToolOpen){
     const fullscreenContent = `
@@ -1409,7 +2002,12 @@ function renderTalk(){
     return;
   }
 
+  const speakingMaterials = renderCustomContentFeatureCards("speaking", tutorLessonIndex+1, "مواد إضافية للمحادثة");
+  const talkBack = talkReturnPage === "lesson-hub"
+    ? `<div class="student-page-back-row"><button type="button" class="student-page-back" data-action="back"><span aria-hidden="true">→</span><span>رجوع للدرس ${talkReturnLesson+1}</span></button></div>`
+    : "";
   const content = `
+    ${talkBack}
     <section class="tutor-lesson-picker tutor-lesson-picker-standalone">
       <div class="tutor-section-heading"><strong>اختار الدرس</strong><small>المحادثة كتتبدّل حسب الدرس</small></div>
       <div class="tutor-lesson-strip">${lessonChoices}</div>
@@ -1418,6 +2016,7 @@ function renderTalk(){
       <div class="tutor-section-heading"><strong>اختار طريقة التدريب</strong><small>15 تدريباً مرتبطاً بموضوع الدرس</small></div>
       <div class="tutor-tools-grid">${tools}</div>
     </section>
+    ${speakingMaterials}
   `;
   app.innerHTML = studentLayout(content,"talk");
 }
@@ -1430,25 +2029,896 @@ function sendTutorMessage(event){
   tutorMessages.push({role:"user",text});
   tutorMessages.push({role:"assistant",...tutorReplyFor(text)});
   saveTutorMessages();
+  if(tutorTool==="conversation" && !tutorVoiceCapture) tutorKeyboardOpen=true;
   renderTalk();
-  const messagesNode = document.getElementById("tutorMessages");
+  const messagesNode = document.getElementById("tutorConversationHistoryContent") || document.getElementById("tutorMessages") || document.querySelector(".tutor-conversation-history");
   if(messagesNode) messagesNode.scrollTop = messagesNode.scrollHeight;
 }
-function startTutorVoice(){
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SpeechRecognition){showToast("الإملاء الصوتي غير مدعوم في هذا المتصفح. يمكنك الكتابة أو استعمال متصفح Chrome.");return;}
-  const recognition = new SpeechRecognition();
-  recognition.lang = "de-DE";
-  recognition.interimResults = false;
-  recognition.maxAlternatives = 1;
-  recognition.onresult = event=>{
-    const input = document.getElementById("tutorInput");
-    if(input){input.value = event.results[0][0].transcript;sendTutorMessage();}
-  };
-  recognition.onerror = ()=>showToast("تعذّر التقاط الصوت. تأكد من صلاحية الميكروفون.");
-  try{recognition.start();showToast("تحدث الآن بالألمانية…");}
-  catch(error){showToast("تعذّر تشغيل الميكروفون. حاول مرة أخرى.");}
+function updateTutorVoiceUI(active, remainingMs=180000){
+  const mic=document.querySelector('.tutor-conversation-mic');
+  const hint=document.querySelector('.tutor-conversation-hint');
+  if(mic){
+    mic.classList.toggle('is-recording',!!active);
+    mic.setAttribute('aria-pressed',active?'true':'false');
+    mic.setAttribute('aria-label',active?'إيقاف وإرسال الكلام':'تحدث الآن');
+    mic.title=active?'اضغط لإيقاف الاستماع وإرسال الكلام':'تحدث الآن لمدة تصل إلى 3 دقائق';
+  }
+  if(hint){
+    hint.classList.toggle('is-recording',!!active);
+    if(active){
+      const seconds=Math.max(0,Math.ceil(remainingMs/1000));
+      const minutes=String(Math.floor(seconds/60)).padStart(2,'0');
+      const rest=String(seconds%60).padStart(2,'0');
+      hint.textContent=`كنسمع ليك… ${minutes}:${rest} · اضغط لإيقاف وإرسال`;
+    }else{
+      hint.textContent='اضغط وتحدث الآن';
+    }
+  }
 }
+function updateTutorLiveTranscript(session){
+  const liveNode=document.getElementById('tutorLiveTranscript');
+  if(!liveNode) return;
+  const visible=[...session.finalSegments,session.currentFinal,session.currentInterim]
+    .filter(Boolean).join(' ').replace(/\s+/g,' ').trim();
+  liveNode.textContent=visible || 'كنسمع ليك…';
+  liveNode.classList.add('is-listening');
+}
+function finalizeTutorVoiceSession(session){
+  if(!session || session.completed || tutorVoiceSession!==session) return;
+  session.completed=true;
+  clearTimeout(session.limitTimer);
+  clearTimeout(session.restartTimer);
+  clearTimeout(session.stopFallbackTimer);
+  clearInterval(session.countdownTimer);
+  const transcript=[...session.finalSegments,session.currentFinal,session.currentInterim]
+    .filter(Boolean).join(' ').replace(/\s+/g,' ').trim();
+  tutorVoiceSession=null;
+  tutorVoiceCapture=false;
+  updateTutorVoiceUI(false);
+  const liveNode=document.getElementById('tutorLiveTranscript');
+  if(transcript){
+    const input=document.getElementById('tutorInput');
+    if(input){
+      input.value=transcript;
+      tutorVoiceCapture=true;
+      sendTutorMessage();
+      tutorVoiceCapture=false;
+    }else{
+      if(!tutorMessages.length) tutorMessages=loadTutorMessages();
+      tutorMessages.push({role:'user',text:transcript});
+      tutorMessages.push({role:'assistant',...tutorReplyFor(transcript)});
+      saveTutorMessages();
+    }
+    if(session.finishReason==='timeout') showToast('انتهت 3 دقائق، تم إرسال كلامك للمعلّم.');
+    else if(session.finishReason==='manual') showToast('تم إرسال كلامك للمعلّم.');
+    else if(session.error) showToast('تم إرسال الكلام الذي التقطه الميكروفون.');
+  }else{
+    if(liveNode){
+      liveNode.textContent=session.error?'تعذّر التقاط الصوت. تحقق من صلاحية الميكروفون.':'ما سمعناش كلام واضح. حاول مرة أخرى.';
+      liveNode.classList.remove('is-listening');
+    }
+    if(session.error==='not-allowed' || session.error==='service-not-allowed'){
+      showToast('خاصك تسمح للموقع باستعمال الميكروفون.');
+    }else if(session.error){
+      showToast('تعذّر تشغيل الميكروفون. تأكد من الصلاحية وحاول مرة أخرى.');
+    }else{
+      showToast('ما تسجّل حتى كلام واضح. حاول مرة أخرى.');
+    }
+  }
+}
+function finishTutorVoiceSession(session,reason='manual'){
+  if(!session || session.completed || session.finishing) return;
+  session.finishing=true;
+  session.finishReason=reason;
+  clearTimeout(session.limitTimer);
+  clearTimeout(session.restartTimer);
+  clearInterval(session.countdownTimer);
+  if(session.recognition && session.running){
+    try{
+      session.recognition.stop();
+      session.stopFallbackTimer=setTimeout(()=>finalizeTutorVoiceSession(session),1400);
+      return;
+    }catch(error){
+      session.running=false;
+    }
+  }
+  finalizeTutorVoiceSession(session);
+}
+function startTutorVoice(){
+  if(tutorVoiceSession && !tutorVoiceSession.completed){
+    finishTutorVoiceSession(tutorVoiceSession,'manual');
+    return;
+  }
+  const SpeechRecognition=window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SpeechRecognition){
+    showToast('الإملاء الصوتي غير مدعوم في هذا المتصفح. استعمل Chrome أو Edge.');
+    return;
+  }
+
+  const session={
+    finalSegments:[],
+    currentFinal:'',
+    currentInterim:'',
+    recognition:null,
+    running:false,
+    finishing:false,
+    completed:false,
+    deadline:Date.now()+180000,
+    limitTimer:null,
+    countdownTimer:null,
+    restartTimer:null,
+    stopFallbackTimer:null,
+    startFailures:0,
+    finishReason:'timeout',
+    error:''
+  };
+  tutorVoiceSession=session;
+
+  const startRecognitionRun=()=>{
+    if(session.finishing || session.completed || tutorVoiceSession!==session) return;
+    if(Date.now()>=session.deadline){
+      finishTutorVoiceSession(session,'timeout');
+      return;
+    }
+    const recognition=new SpeechRecognition();
+    session.recognition=recognition;
+    let runFinal='';
+    let runInterim='';
+    recognition.lang='de-DE';
+    recognition.continuous=true;
+    recognition.interimResults=true;
+    recognition.maxAlternatives=1;
+    recognition.onresult=event=>{
+      const finalParts=[];
+      const interimParts=[];
+      for(let i=0;i<event.results.length;i++){
+        const spoken=event.results[i][0]?.transcript || '';
+        if(event.results[i].isFinal) finalParts.push(spoken);
+        else interimParts.push(spoken);
+      }
+      runFinal=finalParts.join(' ').trim();
+      runInterim=interimParts.join(' ').trim();
+      session.currentFinal=runFinal;
+      session.currentInterim=runInterim;
+      updateTutorLiveTranscript(session);
+    };
+    recognition.onerror=event=>{
+      const errorName=event?.error || 'recognition-error';
+      if(errorName==='no-speech' || errorName==='aborted') return;
+      session.error=errorName;
+      finishTutorVoiceSession(session,'error');
+    };
+    recognition.onend=()=>{
+      session.running=false;
+      clearTimeout(session.stopFallbackTimer);
+      if(runFinal) session.finalSegments.push(runFinal);
+      else if(runInterim) session.finalSegments.push(runInterim);
+      session.currentFinal='';
+      session.currentInterim='';
+      if(session.finishing || Date.now()>=session.deadline){
+        if(!session.finishing) session.finishReason='timeout';
+        session.finishing=true;
+        finalizeTutorVoiceSession(session);
+        return;
+      }
+      // Some browsers stop speech recognition after a pause. Restart it quietly
+      // until the 3-minute limit, keeping all recognized segments together.
+      session.restartTimer=setTimeout(startRecognitionRun,300);
+    };
+    try{
+      recognition.start();
+      session.running=true;
+      session.startFailures=0;
+    }catch(error){
+      session.running=false;
+      session.startFailures++;
+      if(session.startFailures<=2 && Date.now()<session.deadline){
+        session.restartTimer=setTimeout(startRecognitionRun,500);
+      }else{
+        session.error=error?.name || 'start-failed';
+        finishTutorVoiceSession(session,'error');
+      }
+    }
+  };
+
+  const liveNode=document.getElementById('tutorLiveTranscript');
+  if(liveNode){
+    liveNode.textContent='كنسمع ليك… تكلم بالألمانية، عندك حتى 3 دقائق';
+    liveNode.classList.add('is-listening');
+  }
+  updateTutorVoiceUI(true,180000);
+  session.limitTimer=setTimeout(()=>finishTutorVoiceSession(session,'timeout'),180000);
+  session.countdownTimer=setInterval(()=>{
+    if(session.finishing || session.completed) return;
+    const remaining=session.deadline-Date.now();
+    updateTutorVoiceUI(true,remaining);
+    if(remaining<=0) finishTutorVoiceSession(session,'timeout');
+  },1000);
+  startRecognitionRun();
+  showToast('بدأ الاستماع بالألمانية. سيتوقف ويرسل الكلام بعد 3 دقائق، أو اضغط الميكروفون للإرسال قبل ذلك.');
+}
+
+/* =========================================================
+   COMPETITION — live one-to-one and group challenges
+   Questions are built from the same vocabulary data used by
+   the existing lesson tests. Scores are validated by Cloud Functions.
+   ========================================================= */
+async function competitionCallable(name,payload){
+  if(!firebaseReady || !firebaseAuth || !firebaseAuth.currentUser) {
+    throw new Error("سجّل الدخول بحساب التلميذ باش تستعمل المنافسة.");
+  }
+  // Public configuration fallback: the app still connects if the hosting
+  // service missed supabase-config.js during an update. Never place secret keys here.
+  const cfg=window.DEUTSCH_A1_SUPABASE_CONFIG||{};
+  const validUrl=String(cfg.url||"").trim().replace(/\/+$/,"");
+  const validKey=String(cfg.anonKey||"").trim();
+  const supabaseUrl=/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(validUrl)
+    ? validUrl
+    : "https://nqwaaapraiwbkagfssqo.supabase.co";
+  const anonKey=validKey.startsWith("sb_publishable_")||validKey.startsWith("eyJ")
+    ? validKey
+    : "sb_publishable_4eqBTLOMzy-asbh4sUS6PQ_d1Z8ed9O";
+  const idToken=await firebaseAuth.currentUser.getIdToken();
+  let response;
+  try{
+    response=await fetch(`${supabaseUrl}/functions/v1/competition`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json","apikey":anonKey,"Authorization":`Bearer ${idToken}`},
+      body:JSON.stringify({action:name,...(payload||{})})
+    });
+  }catch(networkError){
+    throw new Error("ما قدرناش نتصلو بخدمة Supabase. تأكد من الإنترنت ونشر Edge Function. (network)");
+  }
+  const responseText=await response.text();
+  let result={};
+  try{result=JSON.parse(responseText||"{}");}catch(_error){}
+  if(!response.ok||result.error){
+    const detail=result.error||result.message||`Supabase HTTP ${response.status}`;
+    const error=new Error(detail);
+    error.code=result.code||`http_${response.status}`;
+    error.status=response.status;
+    throw error;
+  }
+  return {data:result.data??result};
+}
+function competitionMembers(){
+  const members=competitionRoomData && competitionRoomData.members ? competitionRoomData.members : {};
+  return Object.entries(members).map(([uid,member])=>({...member,uid}))
+    .sort((a,b)=>(Number(b.score)||0)-(Number(a.score)||0));
+}
+function competitionLeaderboardMarkup(members){
+  if(!members.length)return `<div class="competition-empty">مازال ما انضم حتى تلميذ.</div>`;
+  return `<div class="competition-leaderboard">${members.map((member,index)=>`
+    <div class="competition-rank-row ${member.uid===currentUser?.id?"is-me":""}">
+      <span class="competition-rank">${index===0?"🥇":index===1?"🥈":index===2?"🥉":index+1}</span>
+      <span class="competition-player-avatar">${escapeHtml((member.name||"؟").slice(0,1))}</span>
+      <span class="competition-player-name"><strong>${escapeHtml(member.name||"متعلّم")}</strong><small>${Number(member.answeredCount)||0} / ${competitionRoomData?.questions?.length||0} سؤال</small></span>
+      <strong class="competition-player-score">${Number(member.score)||0} <small>نقطة</small></strong>
+    </div>`).join("")}</div>`;
+}
+function renderCompetition(){
+  if(competitionRoomId){
+    if(!competitionRoomData){
+      app.innerHTML=pageShell("المنافسة","كنوجدّو الغرفة…","لحظة، كنجيبو معلومات المنافسة.",`<div class="competition-loading">🏆 جاري الاتصال بالغرفة…</div>`);
+      return;
+    }
+    renderCompetitionRoom();
+    return;
+  }
+  // Selection is user-controlled: do not automatically re-check L1/the last lesson.
+  const lessonsMarkup=lessons.map((lesson,index)=>{
+    const allowed=getStudentLessonAccess(index);
+    const selected=competitionSelectedLessons.includes(index);
+    return `<button type="button" class="competition-lesson-chip ${selected?"selected":""} ${allowed?"":"locked"}" data-action="competition-lesson" data-lesson="${index}" ${allowed?"":"disabled"}>
+      <span class="competition-lesson-check">${selected?"✓":""}</span><strong>L${index+1}</strong><small>${escapeHtml(lesson.name)}</small>
+    </button>`;
+  }).join("") + `
+    <button type="button" class="competition-lesson-chip ${competitionSelectedLessons.includes(10)?"selected":""} ${getStudentLessonAccess(6)?"":"locked"}" data-action="competition-lesson" data-lesson="10" ${getStudentLessonAccess(6)?"":"disabled"} title="Test الأصلي Lektion 7 من مستوى A1.1">
+      <span class="competition-lesson-check">${competitionSelectedLessons.includes(10)?"✓":""}</span><strong>L7 · A1.1</strong><small>Wie, wo und wann?</small>
+    </button>`;
+  // The chosen lesson opens its Test sections underneath the lesson grid.
+  if(competitionExpandedLesson===null || !competitionSelectedLessons.includes(competitionExpandedLesson)){
+    competitionExpandedLesson=competitionSelectedLessons[0]??null;
+  }
+  const activeLessonIndex=competitionExpandedLesson;
+  const activeTypes=activeLessonIndex===null?[]:(competitionTestCatalog[activeLessonIndex]?.types||[]);
+  const activeSelected=activeLessonIndex===null?[]:competitionEnsureTypes(activeLessonIndex);
+  const testTypesMarkup=activeTypes.map((type,typeIndex)=>{
+    const checked=activeSelected.includes(typeIndex);
+    return `<button type="button" class="competition-test-type ${checked?"chosen":""}" data-action="competition-type" data-lesson="${activeLessonIndex}" data-type="${typeIndex}" aria-pressed="${checked}">
+      <span class="competition-type-check">${checked?"✓":""}</span>
+      <span class="competition-type-title">${escapeHtml(competitionTypeTitle(type.name))}</span>
+      <small>${type.count} سؤال</small>
+    </button>`;
+  }).join("");
+  const selectedTypesTotal=competitionSelectedLessons.reduce((n,i)=>n+competitionEnsureTypes(i).length,0);
+  const availableQuestions=competitionAvailableQuestionCount();
+  if(availableQuestions>0 && competitionQuestionCount>availableQuestions)competitionQuestionCount=availableQuestions;
+  if(competitionQuestionCount<1)competitionQuestionCount=1;
+  const typePanel=activeLessonIndex===null?`<div class="competition-selection-empty" role="status">اختار درساً من الفوق باش تبان أنواع الأسئلة ديالو. تقدر تحدد أو تحيد المارك بحرية.</div>`:`
+    <section class="competition-test-panel" aria-label="اختيار أنواع أسئلة الدرس">
+      <div class="competition-test-panel-head">
+        <div><strong>📚 Test ديال ${escapeHtml(activeLessonIndex===10?"L7 A1.1":"L"+(activeLessonIndex+1))}</strong>
+        <small>${escapeHtml(competitionTestCatalog[activeLessonIndex]?.name||"")} · اختار التمارين اللي بغيتي</small></div>
+        <div class="competition-test-tools"><button type="button" data-action="competition-types-all" data-lesson="${activeLessonIndex}">اختيار الكل</button><button type="button" data-action="competition-lesson-remove" data-lesson="${activeLessonIndex}">حيد الدرس</button></div>
+      </div>
+      ${competitionSelectedLessons.length>1?`<div class="competition-selected-lessons-tabs" role="group" aria-label="بدّل بين اختبارات الدروس المختارة">${competitionSelectedLessons.map(i=>`<button type="button" class="${i===activeLessonIndex?"active":""}" data-action="competition-open-lesson" data-lesson="${i}" aria-pressed="${i===activeLessonIndex}">تعديل ${i===10?"L7 A1.1":"L"+(i+1)}</button>`).join("")}</div>`:""}
+      <div class="competition-test-types">${testTypesMarkup}</div>
+    </section>`;
+  const stats=competitionGlobalStats.slice().sort((a,b)=>(Number(b.totalPoints)||0)-(Number(a.totalPoints)||0));
+  const myStats=stats.find(item=>item.uid===currentUser?.id)||{totalPoints:0,wins:0,competitionsPlayed:0};
+  const leaderboard=stats.slice(0,5).map((item,index)=>`
+    <div class="competition-global-row">
+      <span>${index===0?"🥇":index===1?"🥈":index===2?"🥉":index+1}</span>
+      <strong>${escapeHtml(item.name||"متعلّم")}</strong>
+      <b>${Number(item.totalPoints)||0} نقطة</b>
+    </div>`).join("");
+  const content=`
+    <section class="competition-hero">
+      <div class="competition-hero-icon">🏆</div>
+      <div><span>تحدّى أصحابك</span><h2>كل جواب صحيح يقرّبك للصدارة!</h2><p>اختار الدرس، جمع النقاط، وطلع فلوحة المتصدرين.</p></div>
+      <div class="competition-my-points"><strong>${Number(myStats.totalPoints)||0}</strong><small>مجموع نقاطك</small></div>
+    </section>
+
+    <div class="competition-create-grid">
+      <section class="competition-card">
+        <div class="competition-card-heading"><span>⚡</span><div><h3>أنشئ منافسة</h3><p>صايب غرفة وشارك الرمز مع صحابك</p></div></div>
+        <div class="competition-mode-picker">
+          <button type="button" class="${competitionMode==="duel"?"active":""}" data-action="competition-mode" data-mode="duel"><strong>👤 1 ضد 1</strong><small>أنت وتلميذ آخر</small></button>
+          <button type="button" class="${competitionMode==="group"?"active":""}" data-action="competition-mode" data-mode="group"><strong>👥 مجموعة</strong><small>حتى 20 تلميذ</small></button>
+        </div>
+        <div class="competition-field-head"><strong>اختار الدروس</strong><small>ضغط مرة باش تختار، ومرة ثانية باش تحيد المارك</small></div>
+        <div class="competition-lesson-grid">${lessonsMarkup}</div>
+        ${typePanel}
+        <div class="competition-full-exercise-choice">
+          <label class="competition-full-exercise-label" for="competitionWholeExercises">
+            <input id="competitionWholeExercises" type="checkbox" ${competitionWholeExercises?"checked":""}>
+            <span><strong>📖 فتح Übung كامل كيفما فـ Test</strong><small>مثلاً Lückensätze: غادي يبان التمرين كامل بـ8 جمل والاختيارات الأصلية، وتتحسب نقاط كل جواب.</small></span>
+          </label>
+        </div>
+        <div class="competition-field-head"><strong>${competitionWholeExercises?"عدد الأسئلة فالتداريب المختارة":"عدد الأسئلة"}</strong><small>كل جواب صحيح = 10 نقاط</small></div>
+        <div class="competition-question-count-box">
+          <label for="competitionCustomCount">كتب عدد الأسئلة اللي بغيتي</label>
+          <div class="competition-count-input-row"><input id="competitionCustomCount" type="number" inputmode="numeric" min="1" max="${Math.max(availableQuestions,1)}" step="1" value="${availableQuestions?(competitionWholeExercises?availableQuestions:competitionQuestionCount):""}" placeholder="اختار تمارين أولاً" ${availableQuestions&&!competitionWholeExercises?"":"disabled"} aria-label="عدد أسئلة المنافسة"><span>سؤال</span></div>
+          ${competitionWholeExercises?`<small class="competition-exercise-count-note">فهاد الوضع كنجيبو جميع أسئلة Übung اللي اخترتي، بلا تقطيع. تقدر تختار أو تحيد أي نوع من الفوق.</small>`:""}
+          <small>الأسئلة المتاحة من التمارين المختارة: <strong id="competitionAvailableCount">${availableQuestions}</strong> · أنواع التمارين المختارة: ${selectedTypesTotal}</small>
+        </div>
+        ${competitionWholeExercises?"":`<div class="competition-count-picker">
+          ${[5,10,15].map(count=>`<button type="button" class="${competitionQuestionCount===count?"active":""}" data-action="competition-count" data-count="${count}" ${count>availableQuestions?"disabled":""}>${count} أسئلة</button>`).join("")}
+        </div>`}
+        <button type="button" class="competition-primary-btn" data-action="competition-create" ${competitionBusy||!competitionSelectedLessons.length||!availableQuestions||selectedTypesTotal<competitionSelectedLessons.length?"disabled":""}>${competitionBusy?"كنوجدّو المنافسة…":"🏆 إنشاء غرفة المنافسة"}</button>
+        <p class="competition-hint">غادي يتولد رمز خاص بالغرفة. صيفطو للتلميذ أو للمجموعة باش ينضمو.</p>
+      </section>
+
+      <section class="competition-card competition-join-card">
+        <div class="competition-card-heading"><span>🔑</span><div><h3>انضم لمنافسة</h3><p>دخل الرمز اللي عطاك صاحبك</p></div></div>
+        <form id="competitionJoinForm" class="competition-join-form">
+          <label for="competitionJoinCode">رمز المنافسة</label>
+          <input id="competitionJoinCode" name="code" type="text" maxlength="6" minlength="6" autocomplete="off" placeholder="مثال: A7K9P2" required>
+          <button type="submit" class="competition-secondary-btn" ${competitionBusy?"disabled":""}>انضم للغرفة ←</button>
+        </form>
+        <div class="competition-howto"><strong>كيفاش كتخدم؟</strong><p>دخل للغرفة، تسنّى صاحبها يبدا، جاوب على نفس الأسئلة، وشوف النقاط ديالك مباشرة.</p></div>
+      </section>
+    </div>
+
+    <section class="competition-card competition-global-card">
+      <div class="competition-card-heading"><span>🌍</span><div><h3>المتصدرون</h3><p>ترتيب مجموع نقاط المنافسات</p></div></div>
+      ${leaderboard?`<div class="competition-global-list">${leaderboard}</div>`:`<div class="competition-empty">مازال ما تسجلات حتى منافسة. كون أول بطل!</div>`}
+    </section>
+  `;
+  // Do not recreate the entire app/header/navbar on every checkbox click.
+  // Replacing only the setup view prevents scroll resets and visible flicker.
+  const existingSetup=page==="competition"&&!competitionRoomId
+    ?app.querySelector(".competition-setup-view"):null;
+  if(existingSetup){
+    const main=app.querySelector(".student-main");
+    const mainScroll=main?.scrollTop||0;
+    const pageScroll=window.scrollY||0;
+    existingSetup.innerHTML=content;
+    if(main&&Math.abs(main.scrollTop-mainScroll)>1)main.scrollTop=mainScroll;
+    if(Math.abs((window.scrollY||0)-pageScroll)>1)window.scrollTo({top:pageScroll,behavior:"instant"});
+    return;
+  }
+  app.innerHTML=pageShell("تحدّى وتعلّم","المنافسة بين التلاميذ","تنافس فردياً أو مع مجموعة، وتدرّب على اختبارات الدروس واجمع النقاط.",`<div class="competition-setup-view">${content}</div>`);
+}
+
+function competitionNormalizeExerciseAnswer(value){
+  return String(value??"").toLowerCase().normalize("NFD")
+    .replace(/[\u0300-\u036f]/g,"").replace(/ß/g,"ss")
+    .replace(/\s+([.,!?;:])/g,"$1").replace(/[.,!?;:؛،؟]/g,"")
+    .replace(/\s+/g," ").trim();
+}
+function competitionResolveExerciseText(question,value){
+  const answer=competitionNormalizeExerciseAnswer(value);
+  if(!answer)return null;
+  const options=Array.isArray(question?.options)?question.options:[];
+  const match=options.findIndex(option=>competitionNormalizeExerciseAnswer(option)===answer);
+  if(match>=0)return match;
+  const invalid=Number(question?.invalidIndex);
+  return Number.isInteger(invalid)&&invalid>=0&&invalid<options.length?invalid:0;
+}
+function competitionUpdateExerciseSubmitButton(){
+  const submit=app.querySelector('[data-action="competition-submit-uebung"]');
+  if(!submit)return;
+  const cards=[...app.querySelectorAll(".competition-uebung-item[data-question-index]:not(.submitted)")];
+  submit.disabled=competitionSubmitting||cards.some(card=>{
+    const index=Number(card.dataset.questionIndex);
+    return !Number.isInteger(competitionExerciseSelections[index]);
+  });
+}
+function competitionRenderExerciseItem(item,index,alreadyAnswered,disabled){
+  const type=item.exerciseType||"choice";
+  const options=Array.isArray(item.options)?item.options:[];
+  const selected=competitionExerciseSelections[index];
+  const note=item.note?`<div class="competition-uebung-note">${escapeHtml(item.note)}</div>`:"";
+  if(alreadyAnswered)return `<div class="competition-uebung-item submitted" data-question-index="${index}">
+    <div class="competition-uebung-prompt" dir="auto">${escapeHtml(item.prompt)}</div>${note}
+    <div class="competition-uebung-submitted">✓ تسجّل الجواب</div></div>`;
+  let control="";
+  if(type==="sentence"||type==="scramble"){
+    const isLetters=type==="scramble";
+    const tiles=isLetters?(Array.isArray(item.letters)?item.letters:Array.from(String(item.scramble||"").replace(/\s+/g,""))):(Array.isArray(item.tiles)?item.tiles:[]);
+    const draft=Array.isArray(competitionExerciseTileDrafts[index])?competitionExerciseTileDrafts[index]:[];
+    const used=new Set(draft);
+    const answerLine=draft.map(tileIndex=>`<button type="button" class="competition-tile-answer ${isLetters?"letter":""}" data-action="competition-exercise-tile" data-question-index="${index}" data-tile-index="${tileIndex}" data-tile-kind="${isLetters?"letters":"words"}" ${disabled?"disabled":""}>${escapeHtml(tiles[tileIndex]??"")} <span>×</span></button>`).join("");
+    const bank=tiles.map((tile,tileIndex)=>`<button type="button" class="competition-tile-bank-item ${used.has(tileIndex)?"used":""} ${isLetters?"letter":""}" data-action="competition-exercise-tile" data-question-index="${index}" data-tile-index="${tileIndex}" data-tile-kind="${isLetters?"letters":"words"}" ${disabled||used.has(tileIndex)?"disabled":""}>${escapeHtml(tile)}</button>`).join("");
+    control=`<div class="competition-tile-answer-line ${draft.length?"has-answer":""}">${answerLine||`<span class="competition-tile-placeholder">${isLetters?"رتّب الحروف هنا":"ركّب الجملة هنا"}</span>`}</div>
+      <div class="competition-tile-bank">${bank}</div>`;
+  }else if(type==="text"||item.answerMode==="text"||(type==="verb"&&item.answerMode!=="select")){
+    const value=competitionExerciseDrafts[index]||"";
+    control=`<input class="competition-uebung-input" type="text" data-competition-text-question="${index}" value="${escapeHtml(value)}" placeholder="${type==="verb"?"اكتب تصريف الفعل الصحيح…":type==="text"?"اكتب الجواب الصحيح…":"اكتب الكلمة المناسبة…"}" autocomplete="off" ${disabled?"disabled":""}>`;
+  }else if(type==="fill"||type==="sorting"||type==="verb"){
+    const choices=options.map((option,i)=>`<option value="${i}" ${selected===i?"selected":""}>${escapeHtml(option)}</option>`).join("");
+    control=`<select class="competition-uebung-select" data-competition-exercise-question="${index}" aria-label="جواب السؤال ${index+1}" ${disabled?"disabled":""}>
+      <option value="">— اختر الإجابة —</option>${choices}</select>`;
+  }else{
+    const style=type==="article"?"article":type==="matching"?"matching":"choice";
+    control=`<div class="competition-exercise-options ${style}">${options.map((option,i)=>`<button type="button" class="competition-exercise-choice ${selected===i?"selected":""}" data-action="competition-exercise-choice" data-question-index="${index}" data-option="${i}" ${disabled?"disabled":""}>${escapeHtml(option)}</button>`).join("")}</div>`;
+  }
+  const promptClass=type==="article"?"competition-uebung-prompt article":type==="matching"?"competition-uebung-prompt matching":"competition-uebung-prompt";
+  const extra=type==="scramble"&&item.scramble?`<div class="competition-scramble-hint">${escapeHtml(item.scramble)}</div>`:"";
+  return `<div class="competition-uebung-item ${type==="sentence"?"sentence":""} ${type==="matching"?"matching":""}" data-question-index="${index}">
+    <div class="${promptClass}" dir="auto">${escapeHtml(item.prompt)}</div>${note}${extra}${control}
+  </div>`;
+}
+
+function renderCompetitionRoom(){
+  if(!competitionRoomData){renderCompetition();return;}
+  const room=competitionRoomData;
+  const members=competitionMembers();
+  const isCreator=room.createdBy===currentUser?.id;
+  const myMember=room.members?.[currentUser?.id]||{};
+  const total=(room.questions||[]).length;
+  const roomCode=escapeHtml(room.code||competitionRoomCode||"------");
+  const leaderboard=competitionLeaderboardMarkup(members);
+  let content="";
+  if(room.status==="waiting"){
+    content=`
+      <section class="competition-room-banner">
+        <div><span>غرفة المنافسة</span><h2>${room.mode==="duel"?"منافسة 1 ضد 1":"منافسة جماعية"}</h2><p>${(room.lessonNames||[]).map(escapeHtml).join(" · ")}</p></div>
+        <span class="competition-status waiting">في انتظار اللاعبين</span>
+      </section>
+      <section class="competition-code-card">
+        <div class="competition-code-copy"><small>رمز الغرفة — شاركو مع أصحابك</small><strong>${roomCode}</strong><span>دخلو هاد الرمز باش ينضمو للمنافسة</span></div>
+        <div class="competition-code-actions">
+          <button type="button" data-action="competition-copy-code">نسخ الرمز</button>
+          <button type="button" class="competition-share-code-btn" data-action="competition-share-code">مشاركة</button>
+        </div>
+      </section>
+      <section class="competition-card"><div class="competition-card-heading"><span>👥</span><div><h3>اللاعبون (${members.length}/${room.mode==="duel"?2:20})</h3><p>الأسماء كتظهر مباشرة ملي ينضمّو</p></div></div>${leaderboard}
+        ${isCreator?`<button type="button" class="competition-primary-btn" data-action="competition-start" ${members.length<2?"disabled":""}>ابدأ المنافسة 🚀</button>`:`<div class="competition-wait-note">تسنّى صاحب الغرفة يبدا المنافسة…</div>`}
+      </section>
+      <button type="button" class="competition-text-btn" data-action="competition-leave">الخروج من الغرفة</button>
+    `;
+  }else if(room.status==="completed"){
+    const sorted=members;
+    const topScore=sorted.length?Number(sorted[0].score)||0:0;
+    const winners=sorted.filter(item=>(Number(item.score)||0)===topScore);
+    content=`
+      <section class="competition-complete-hero"><span>🏆</span><h2>سالات المنافسة!</h2><p>${winners.map(item=>escapeHtml(item.name||"متعلّم")).join(" و ")} ${winners.length>1?"تعادلو فالمركز الأول":"ربح المنافسة"}.</p></section>
+      <section class="competition-card"><div class="competition-card-heading"><span>🥇</span><div><h3>النتائج النهائية</h3><p>كل نقطة صحيحة تحسبات فالمجموع</p></div></div>${leaderboard}</section>
+      <button type="button" class="competition-primary-btn" data-action="competition-leave">رجوع للمنافسة</button>
+    `;
+  }else{
+    let question=room.questions?.[competitionQuestionIndex];
+    if(!competitionFeedback&&!competitionSubmitting&&Number(myMember.answeredCount||0)>competitionQuestionIndex){
+      competitionQuestionIndex=Number(myMember.answeredCount)||0;
+      question=room.questions?.[competitionQuestionIndex];
+    }
+    const finished=Boolean(myMember.finished)||competitionQuestionIndex>=total;
+    let quizMarkup="";
+    if(finished){
+      quizMarkup=`<div class="competition-finished-note"><span>⏳</span><h3>كملتي الأسئلة ديالك!</h3><p>النقاط ديالك تسجلات. تسنّى باقي اللاعبين يكملو باش تبان النتيجة النهائية.</p><strong>${Number(myMember.score)||0} نقطة</strong></div>`;
+    }else if(question && question.groupId){
+      const stageId=String(question.groupId);
+      let start=competitionQuestionIndex;
+      while(start>0 && room.questions[start-1]?.groupId===stageId)start--;
+      let end=competitionQuestionIndex;
+      while(end<total && room.questions[end]?.groupId===stageId)end++;
+      const serverDone=Number(myMember.answeredCount)||0;
+      const stageQuestions=room.questions.slice(start,end);
+      const groupFinished=competitionFeedback?.groupEnd===end;
+      const panels=stageQuestions.map((item,offset)=>{
+        const idx=start+offset;
+        return competitionRenderExerciseItem(item,idx,idx<serverDone,competitionSubmitting||groupFinished);
+      }).join("");
+      const pending=stageQuestions.some((_,offset)=>{
+        const idx=start+offset;
+        return idx>=serverDone && !Number.isInteger(competitionExerciseSelections[idx]);
+      });
+      const heading=escapeHtml(question.groupTitle||question.category||"Übung");
+      const instruction=question.exerciseInstruction
+        ?`<p class="competition-uebung-instruction">${escapeHtml(question.exerciseInstruction)}</p>`
+        :`<p class="competition-uebung-instruction">حلّ التمرين بالطريقة المطلوبة، وكل جواب كيتصحح بوحدو وكيحسب فالنقط.</p>`;
+      const result=groupFinished?
+        `<div class="competition-uebung-result">✓ تصحّح التمرين: ${competitionFeedback.correctCount} من ${competitionFeedback.answeredCount} أجوبة صحيحة (+${competitionFeedback.pointsAwarded} نقطة)</div>
+         <button type="button" class="competition-primary-btn" data-action="competition-next">${end>=total?"إنهاء الأسئلة":"التمرين التالي ←"}</button>`:
+        `<button type="button" class="competition-primary-btn competition-uebung-submit" data-action="competition-submit-uebung" ${pending||competitionSubmitting?"disabled":""}>
+          ${competitionSubmitting?"كنسجلو الأجوبة…":"تصحيح التمرين كامل"}</button>`;
+      quizMarkup=`
+        <div class="competition-question-top"><span>${start+1}–${end} من ${total} سؤال</span><span>${escapeHtml(question.lessonName||"الدرس")}</span></div>
+        <div class="competition-question-progress"><span style="width:${Math.round((serverDone/Math.max(total,1))*100)}%"></span></div>
+        <div class="competition-uebung-heading"><h3>${heading}</h3><span>${question.exerciseNumber?`ÜBUNG ${question.exerciseNumber}`:"ÜBUNG"}</span></div>
+        ${instruction}
+        <div class="competition-uebung-grid">${panels}</div>
+        ${result}
+      `;
+    }else if(question){
+      const options=(question.options||[]).map((option,index)=>{
+        const chosen=competitionFeedback&&competitionFeedback.selectedIndex===index;
+        return `<button type="button" class="competition-answer-option ${chosen?"chosen":""}" data-action="competition-answer" data-option="${index}" ${competitionFeedback||competitionSubmitting?"disabled":""}><span>${String.fromCharCode(65+index)}</span>${escapeHtml(option)}</button>`;
+      }).join("");
+      const feedback=competitionFeedback?`<div class="competition-answer-feedback ${competitionFeedback.correct?"correct":"wrong"}">${competitionFeedback.correct?"إجابة صحيحة! +10 نقاط 🎉":"ماشي هادي الإجابة الصحيحة. حظ موفق فالسؤال الجاي."}</div>`:"";
+      const next=competitionFeedback?`<button type="button" class="competition-primary-btn" data-action="competition-next">${competitionQuestionIndex+1>=total?"إنهاء الأسئلة":"السؤال التالي ←"}</button>`:"";
+      quizMarkup=`
+        <div class="competition-question-top"><span>السؤال ${competitionQuestionIndex+1} من ${total}</span><span>${escapeHtml(question.lessonName||"الدرس")}</span></div>
+        <div class="competition-question-progress"><span style="width:${Math.round((competitionQuestionIndex/Math.max(total,1))*100)}%"></span></div>
+        <h3 class="competition-question-title" dir="ltr">${escapeHtml(question.prompt)}</h3>
+        <div class="competition-answer-grid">${options}</div>
+        ${feedback}${next}
+      `;
+    }
+    content=`
+      <section class="competition-room-banner active">
+        <div><span>المنافسة مباشرة</span><h2>${room.mode==="duel"?"1 ضد 1":"منافسة جماعية"}</h2><p>${(room.lessonNames||[]).map(escapeHtml).join(" · ")}</p></div>
+        <span class="competition-status live">● مباشرة</span>
+      </section>
+      <div class="competition-live-layout">
+        <section class="competition-card competition-quiz-card">${quizMarkup}</section>
+        <section class="competition-card competition-score-card"><div class="competition-card-heading"><span>📊</span><div><h3>الترتيب المباشر</h3><p>النقاط كتتحدّث مباشرة</p></div></div>${leaderboard}</section>
+      </div>
+      <button type="button" class="competition-text-btn" data-action="competition-finish">إنهاء المنافسة والخروج</button>
+    `;
+  }
+  const existingRoom=page==="competition"?app.querySelector(".competition-room-view"):null;
+  if(existingRoom){
+    const main=app.querySelector(".student-main");
+    const scrollTop=main?.scrollTop||0;
+    const windowTop=window.scrollY||0;
+    existingRoom.innerHTML=content;
+    if(main&&Math.abs(main.scrollTop-scrollTop)>1)main.scrollTop=scrollTop;
+    if(Math.abs((window.scrollY||0)-windowTop)>1)window.scrollTo({top:windowTop,behavior:"instant"});
+  }else{
+    app.innerHTML=pageShell("المنافسة","غرفة "+roomCode,"تنافس مع زملائك واجمع أكبر عدد من النقاط.",`<div class="competition-room-view">${content}</div>`);
+  }
+}
+function competitionRoomSignature(room){
+  if(!room)return "";
+  const members=Object.entries(room.members||{})
+    .sort(([uidA],[uidB])=>uidA.localeCompare(uidB))
+    .map(([uid,m])=>[
+      uid,m?.name||"",Number(m?.score)||0,Number(m?.answeredCount)||0,
+      Number(m?.correctCount)||0,Boolean(m?.finished),m?.joinedAt||""
+    ]);
+  return JSON.stringify({
+    id:room.id||"",code:room.code||"",createdBy:room.createdBy||"",
+    creatorName:room.creatorName||"",mode:room.mode||"",status:room.status||"",
+    lessonIndices:room.lessonIndices||[],lessonNames:room.lessonNames||[],
+    questionCount:room.questionCount||0,questions:room.questions||[],
+    createdAt:room.createdAt||"",startedAt:room.startedAt||"",
+    completedAt:room.completedAt||"",members
+  });
+}
+function stopCompetitionRoomListener(){
+  if(competitionRoomPollTimer)clearInterval(competitionRoomPollTimer);
+  competitionRoomPollTimer=null;
+  competitionRoomPollBusy=false;
+  competitionRoomLastSignature="";
+}
+async function refreshCompetitionRoom(roomId){
+  if(competitionRoomPollBusy||!roomId||roomId!==competitionRoomId)return;
+  competitionRoomPollBusy=true;
+  try{
+    const result=await competitionCallable("getCompetitionRoom",{roomId});
+    const room=result.data?.room;
+    if(roomId!==competitionRoomId)return;
+    if(!room)throw new Error("الغرفة ما بقاتش متاحة.");
+    const nextSignature=competitionRoomSignature(room);
+    const hasChanged=nextSignature!==competitionRoomLastSignature;
+    const previousQuestionIndex=competitionQuestionIndex;
+    competitionRoomData=room;
+    competitionRoomCode=room.code||competitionRoomCode;
+    if(competitionRoomData?.members?.[currentUser?.id]&&!competitionFeedback&&!competitionSubmitting){
+      competitionQuestionIndex=Number(competitionRoomData.members[currentUser.id].answeredCount)||0;
+    }
+    const questionIndexChanged=previousQuestionIndex!==competitionQuestionIndex;
+    if(hasChanged)competitionRoomLastSignature=nextSignature;
+    if((hasChanged||questionIndexChanged)&&page==="competition")renderCompetition();
+  }catch(error){
+    console.error("Competition room refresh:",error);
+    if(!competitionRoomData)showToast(error.message||"ما قدرناش نتصلو بغرفة المنافسة.");
+  }finally{competitionRoomPollBusy=false;}
+}
+function listenCompetitionRoom(roomId){
+  const optimisticRoom=competitionRoomId===roomId?competitionRoomData:null;
+  stopCompetitionRoomListener();
+  competitionRoomId=roomId;
+  competitionRoomData=optimisticRoom;
+  competitionRoomLastSignature=competitionRoomSignature(optimisticRoom);
+  competitionQuestionIndex=0;
+  competitionFeedback=null;
+  competitionSubmitting=false;
+  competitionExerciseSelections={};competitionExerciseDrafts={};competitionExerciseTileDrafts={};
+  refreshCompetitionRoom(roomId);
+  competitionRoomPollTimer=setInterval(()=>refreshCompetitionRoom(roomId),2500);
+}
+async function loadCompetitionStats(){
+  if(!firebaseReady||!firebaseAuth?.currentUser)return;
+  try{
+    const result=await competitionCallable("getCompetitionStats",{});
+    const nextStats=Array.isArray(result.data?.stats)?result.data.stats:[];
+    const changed=JSON.stringify(nextStats)!==JSON.stringify(competitionGlobalStats);
+    competitionGlobalStats=nextStats;
+    if(changed&&page==="competition"&&!competitionRoomId)renderCompetition();
+  }catch(error){console.warn("Competition stats unavailable:",error);}
+}
+
+/* Competition room code display — actual server-confirmed code only. */
+function closeCompetitionCodeDialog(){
+  const existing=document.getElementById("competitionCodeDialogOverlay");
+  if(existing)existing.remove();
+}
+function showCompetitionCodeDialog(code){
+  if(!/^[A-Z0-9]{6}$/.test(String(code||"")))return;
+  closeCompetitionCodeDialog();
+  const overlay=document.createElement("div");
+  overlay.id="competitionCodeDialogOverlay";
+  overlay.className="competition-code-dialog-overlay";
+  overlay.innerHTML=`<div class="competition-code-dialog" role="dialog" aria-modal="true" aria-labelledby="competitionDialogHeading" dir="rtl">
+    <button type="button" class="competition-dialog-x" aria-label="إغلاق">×</button>
+    <span class="competition-dialog-emoji">🏆</span>
+    <h2 id="competitionDialogHeading">تخلقات غرفة المنافسة!</h2>
+    <p>صيفط الرمز للتلميذ اللي غادي يتنافس معاك</p>
+    <strong class="competition-dialog-code" dir="ltr"></strong>
+    <div class="competition-dialog-actions"><button type="button" class="competition-dialog-copy">نسخ الرمز</button><button type="button" class="competition-dialog-close">دخول للغرفة</button></div>
+  </div>`;
+  overlay.querySelector(".competition-dialog-code").textContent=code;
+  overlay.querySelector(".competition-dialog-x").addEventListener("click",closeCompetitionCodeDialog);
+  overlay.querySelector(".competition-dialog-close").addEventListener("click",closeCompetitionCodeDialog);
+  overlay.querySelector(".competition-dialog-copy").addEventListener("click",async()=>{
+    try{await navigator.clipboard.writeText(code);showToast("تنسخ رمز المنافسة!");}
+    catch(_error){window.prompt("نسخ الرمز:",code);}
+  });
+  overlay.addEventListener("click",event=>{if(event.target===overlay)closeCompetitionCodeDialog();});
+  document.body.appendChild(overlay);
+}
+function showCompetitionCreationError(error){
+  closeCompetitionCodeDialog();
+  const msg=error?.message||"ما قدرناش ننشئو الغرفة.";
+  const code=error?.code||"unknown";
+  const overlay=document.createElement("div");
+  overlay.id="competitionCodeDialogOverlay";
+  overlay.className="competition-code-dialog-overlay";
+  overlay.innerHTML=`<div class="competition-code-dialog is-error" role="alertdialog" aria-modal="true" aria-labelledby="competitionDialogHeading" dir="rtl">
+    <button type="button" class="competition-dialog-x" aria-label="إغلاق">×</button>
+    <span class="competition-dialog-emoji">⚠️</span>
+    <h2 id="competitionDialogHeading">تعذّر إنشاء الغرفة</h2>
+    <p class="competition-dialog-error"></p>
+    <small class="competition-dialog-error-code"></small>
+    <div class="competition-dialog-actions"><button type="button" class="competition-dialog-copy-error">نسخ تفاصيل الخطأ</button><button type="button" class="competition-dialog-close">حسناً</button></div>
+  </div>`;
+  overlay.querySelector(".competition-dialog-error").textContent=msg;
+  overlay.querySelector(".competition-dialog-error-code").textContent=code;
+  overlay.querySelector(".competition-dialog-x").addEventListener("click",closeCompetitionCodeDialog);
+  overlay.querySelector(".competition-dialog-close").addEventListener("click",closeCompetitionCodeDialog);
+  overlay.querySelector(".competition-dialog-copy-error").addEventListener("click",async()=>{
+    try{await navigator.clipboard.writeText(`${code}: ${msg}`);showToast("تم نسخ تفاصيل الخطأ.");}
+    catch(_error){window.prompt("تفاصيل الخطأ:",`${code}: ${msg}`);}
+  });
+  overlay.addEventListener("click",event=>{if(event.target===overlay)closeCompetitionCodeDialog();});
+  document.body.appendChild(overlay);
+}
+
+async function createCompetition(){
+  if(competitionBusy)return;
+  if(!firebaseReady||!firebaseAuth?.currentUser){showToast("خاصك تدخل بحساب التلميذ باش تنشئ منافسة حقيقية.");return;}
+  const selected=competitionSelectedLessons.filter(index=>(index===10?getStudentLessonAccess(6):getStudentLessonAccess(index)));
+  if(!selected.length){showToast("اختار درساً واحداً على الأقل.");return;}
+  const countField=document.getElementById("competitionCustomCount");
+  const available=competitionAvailableQuestionCount();
+  const requestedCount=competitionWholeExercises ? available : Number(countField?.value??competitionQuestionCount);
+  if(!Number.isInteger(requestedCount)||requestedCount<1||requestedCount>available){
+    showToast(`اختار عدد الأسئلة بين 1 و ${available}.`);return;
+  }
+  const testTypes=competitionSelectedTypePayload();
+  if(selected.some(index=>!testTypes[String(index)]?.length)){
+    showToast("اختار نوع تمرين واحد على الأقل لكل درس.");return;
+  }
+  competitionQuestionCount=requestedCount;
+  competitionBusy=true;renderCompetition();
+  try{
+    const result=await competitionCallable("createCompetitionRoom",{
+      mode:competitionMode,lessonIndices:selected,questionCount:competitionQuestionCount,testTypes,
+      wholeExercises:competitionWholeExercises
+    });
+    const payload=result?.data||{};
+    const generatedCode=String(payload.code||"").trim().toUpperCase();
+    const generatedRoomId=String(payload.roomId||"").trim();
+    if(!/^[A-Z0-9]{6}$/.test(generatedCode)||!generatedRoomId){
+      throw new Error("Supabase ما رجّعش رمز الغرفة. تأكد من نشر Edge Function competition.");
+    }
+
+    // Display the server-generated code immediately. Do not wait for
+    // the Realtime Database listener before showing the room to its creator.
+    competitionRoomCode=generatedCode;
+    competitionRoomId=generatedRoomId;
+    competitionExerciseSelections={};competitionExerciseDrafts={};competitionExerciseTileDrafts={};
+    const creatorUid=currentUser?.id||firebaseAuth.currentUser.uid;
+    const creatorName=currentUser?.name||currentStudentProfile?.name||firebaseAuth.currentUser.displayName||"متعلّم";
+    competitionRoomData={
+      id:generatedRoomId,
+      code:generatedCode,
+      createdBy:creatorUid,
+      creatorName,
+      mode:competitionMode,
+      status:"waiting",
+      lessonIndices:selected.slice(),
+      lessonNames:selected.map(index=>index===10?"L7 A1.1 · Wie, wo und wann?":(lessons[index]?.name||`L${index+1}`)),
+      questionCount:competitionQuestionCount,
+      questions:[],
+      members:{
+        [creatorUid]:{
+          uid:creatorUid,name:creatorName,score:0,answeredCount:0,
+          correctCount:0,finished:false,joinedAt:Date.now()
+        }
+      }
+    };
+    renderCompetitionRoom();
+    listenCompetitionRoom(generatedRoomId);
+    showCompetitionCodeDialog(generatedCode);
+    showToast("تخلقات الغرفة! شارك الرمز مع أصحابك.");
+  }catch(error){
+    console.error("Create competition failed:",error);
+    showCompetitionCreationError(error);
+  }finally{competitionBusy=false;if(page==="competition")renderCompetition();}
+}
+async function joinCompetition(event){
+  if(event)event.preventDefault();
+  if(competitionBusy)return;
+  if(!firebaseReady||!firebaseAuth?.currentUser){showToast("خاصك تدخل بحساب التلميذ باش تنضم لمنافسة.");return;}
+  const code=(document.getElementById("competitionJoinCode")?.value||"").trim().toUpperCase();
+  if(!/^[A-Z0-9]{6}$/.test(code)){showToast("دخل رمز صحيح مكوّن من 6 حروف أو أرقام.");return;}
+  competitionBusy=true;renderCompetition();
+  try{
+    const result=await competitionCallable("joinCompetitionRoom",{code});
+    competitionRoomCode=code;
+    listenCompetitionRoom(result.data.roomId);
+  }catch(error){
+    console.error("Join competition failed:",error);
+    showToast(error.message||"ما قدرناش نلقاو هاد الغرفة أو راه عامرة.");
+  }finally{competitionBusy=false;if(page==="competition")renderCompetition();}
+}
+async function startCompetition(){
+  if(!competitionRoomId||competitionBusy)return;
+  competitionBusy=true;
+  try{
+    await competitionCallable("startCompetitionRoom",{roomId:competitionRoomId});
+  }catch(error){showToast(error.message||"ما قدرناش نبداو المنافسة.");}
+  finally{competitionBusy=false;}
+}
+async function submitCompetitionUebung(){
+  if(competitionSubmitting||competitionFeedback||!competitionRoomId||!competitionRoomData)return;
+  const roomId=competitionRoomId;
+  const questions=competitionRoomData.questions||[];
+  const startIndex=competitionQuestionIndex;
+  const question=questions[startIndex];
+  if(!question?.groupId)return;
+  let groupStart=startIndex,groupEnd=startIndex;
+  while(groupStart>0 && questions[groupStart-1]?.groupId===question.groupId)groupStart--;
+  while(groupEnd<questions.length && questions[groupEnd]?.groupId===question.groupId)groupEnd++;
+  const member=competitionRoomData.members?.[currentUser?.id]||{};
+  const serverCount=Number(member.answeredCount)||0;
+  for(let index=Math.max(serverCount,groupStart);index<groupEnd;index++){
+    if(!Number.isInteger(competitionExerciseSelections[index])){
+      showToast("جاوب على جميع جمل Übung قبل التصحيح.");return;
+    }
+  }
+  competitionSubmitting=true;
+  renderCompetitionRoom();
+  let right=0,scored=0,submitted=0;
+  try{
+    for(let index=Math.max(serverCount,groupStart);index<groupEnd;index++){
+      // All answers are checked securely in Supabase, just as in single-question mode.
+      const result=await competitionCallable("submitCompetitionAnswer",{
+        roomId,questionIndex:index,selectedIndex:competitionExerciseSelections[index]
+      });
+      right+=result.data.correct?1:0;
+      scored+=Number(result.data.pointsAwarded)||0;
+      submitted++;
+      const stateMember=competitionRoomData?.members?.[currentUser?.id];
+      if(stateMember){
+        stateMember.answeredCount=index+1;
+        stateMember.score=Number(result.data.score)||0;
+        stateMember.correctCount=(Number(stateMember.correctCount)||0)+(result.data.correct?1:0);
+        stateMember.finished=Boolean(result.data.finished);
+      }
+    }
+    competitionFeedback={groupEnd,correctCount:right,answeredCount:submitted,
+      pointsAwarded:scored};
+  }catch(error){
+    showToast(error.message||"ما قدرناش نسجلو شي جواب. الأجوبة اللي تسجلات ما تضيعش.");
+    // Return to the first unanswered question in the same Übung on refresh.
+    competitionFeedback=null;
+  }finally{
+    competitionSubmitting=false;
+    renderCompetitionRoom();
+  }
+}
+async function submitCompetitionChoice(selectedIndex){
+  if(competitionSubmitting||competitionFeedback||!competitionRoomId)return;
+  if(!Number.isInteger(selectedIndex)||selectedIndex<0||selectedIndex>3)return;
+  competitionSubmitting=true;renderCompetitionRoom();
+  const questionIndex=competitionQuestionIndex;
+  try{
+    const result=await competitionCallable("submitCompetitionAnswer",{
+      roomId:competitionRoomId,questionIndex,selectedIndex
+    });
+    competitionFeedback={
+      qIndex:questionIndex,selectedIndex,correct:Boolean(result.data.correct),
+      pointsAwarded:Number(result.data.pointsAwarded)||0
+    };
+  }catch(error){
+    showToast(error.message||"ما قدرناش نسجلو الجواب.");
+  }finally{competitionSubmitting=false;renderCompetitionRoom();}
+}
+async function finishCompetition(){
+  if(!competitionRoomId)return;
+  try{await competitionCallable("finishCompetitionRoom",{roomId:competitionRoomId});}
+  catch(error){showToast(error.message||"ما قدرناش نساليو المنافسة.");}
+}
+async function leaveCompetition(){
+  if(competitionRoomId){
+    try{await competitionCallable("leaveCompetitionRoom",{roomId:competitionRoomId});}
+    catch(error){console.warn("Leave competition:",error);}
+  }
+  stopCompetitionRoomListener();
+  competitionRoomId=null;competitionRoomCode="";competitionRoomData=null;
+  competitionQuestionIndex=0;competitionFeedback=null;competitionSubmitting=false;
+  competitionExerciseSelections={};competitionExerciseDrafts={};competitionExerciseTileDrafts={};
+  await loadCompetitionStats();
+  if(page==="competition")renderCompetition();
+}
+async function copyCompetitionCode(){
+  const code=competitionRoomCode||competitionRoomData?.code||"";
+  if(!code){showToast("رمز الغرفة مازال ما تجهزش.");return;}
+  try{
+    await navigator.clipboard.writeText(code);
+    showToast("تنسخ رمز المنافسة. صيفطو لصاحبك!");
+  }catch(error){
+    window.prompt("نسخ رمز المنافسة:",code);
+  }
+}
+async function shareCompetitionCode(){
+  const code=competitionRoomCode||competitionRoomData?.code||"";
+  if(!code){showToast("رمز الغرفة مازال ما تجهزش.");return;}
+  const text=`انضم للمنافسة ديالي في Deutsch A1. استعمل الرمز: ${code}`;
+  if(navigator.share){
+    try{await navigator.share({title:"منافسة Deutsch A1",text});return;}
+    catch(error){if(error?.name==="AbortError")return;}
+  }
+  await copyCompetitionCode();
+}
+
 function renderSessions(){
   const sessions = [
     {id:"a1-intro",level:"A1",title:"Sich vorstellen auf Deutsch",desc:"تدرّب على التعارف وتقديم النفس والأسئلة الأساسية.",tag:"للمبتدئين",duration:"15–20 دقيقة",icon:"👋"},
@@ -1796,6 +3266,8 @@ function adminResultPercent(result){
   return max>0 ? Math.max(0,Math.min(100,Math.round((Number(result.points)||0)/max*100))) : null;
 }
 function adminResultLessonIndex(result){
+  const explicitLesson=Number(result && result.lessonNumber);
+  if(Number.isInteger(explicitLesson) && explicitLesson>=1 && explicitLesson<=lessons.length) return explicitLesson-1;
   const raw=String(result && (result.moduleId||result.title)||"");
   const match=raw.match(/(?:lektion|podcast|kurs|course|test)[-_\s]?(\d{1,2})/i);
   if(match){
@@ -2644,8 +4116,10 @@ function renderAdmin(){
     <p class="admin-local-warning">☁️ Firebase: المجموعات، حسابات الطلبة، الأنشطة والنتائج محفوظة تحت deutschA1.</p>
   `;
 
-  const adminMainContent = adminSection==="groups" ? groupsMarkupPage : adminSection==="results" ? resultsMarkupPage : homeMarkup;
-  const adminTitle = adminSection==="groups" ? "المجموعات" : adminSection==="results" ? "النتائج" : "الرئيسية";
+  const contentLibraryMarkup = renderAdminContentSection();
+  const pagesManagerMarkup = renderAdminPagesSection();
+  const adminMainContent = adminSection==="groups" ? groupsMarkupPage : adminSection==="results" ? resultsMarkupPage : adminSection==="content" ? contentLibraryMarkup : adminSection==="pages" ? pagesManagerMarkup : homeMarkup;
+  const adminTitle = adminSection==="groups" ? "المجموعات" : adminSection==="results" ? "النتائج" : adminSection==="content" ? "المحتوى" : adminSection==="pages" ? "صفحات HTML" : "الرئيسية";
 
   app.innerHTML=`<div class="admin-page admin-layout-page">
     <header class="admin-topbar"><div class="admin-brand"><span class="admin-brand-mark">A1</span><div><strong>Admin Dashboard</strong><small>Deutsch A1 · Centre Alpha</small></div></div><div class="admin-user"><span>👤 Administrator</span><button class="logout-btn" data-action="logout">Abmelden</button></div></header>
@@ -2656,6 +4130,8 @@ function renderAdmin(){
           <button class="${adminSection==="home"?"active":""}" data-action="admin-nav" data-section="home"><span>⌂</span> الصفحة الرئيسية</button>
           <button class="${adminSection==="groups"?"active":""}" data-action="admin-nav" data-section="groups"><span>👥</span> المجموعات</button>
           <button class="${adminSection==="results"?"active":""}" data-action="admin-nav" data-section="results"><span>📊</span> النتائج</button>
+          <button class="${adminSection==="content"?"active":""}" data-action="admin-nav" data-section="content"><span>📚</span> الدروس والاختبارات</button>
+          <button class="${adminSection==="pages"?"active":""}" data-action="admin-nav" data-section="pages"><span>🧩</span> محرر صفحات HTML</button>
         </nav>
         <div class="admin-sidebar-foot"><small>القسم الحالي</small><strong>${adminTitle}</strong></div>
       </aside>
@@ -2748,26 +4224,60 @@ function studentResultsLineChartMarkup(results){
   </section>`;
 }
 
-function studentResultsLessonSummaryMarkup(byLesson){
-  const visible=(byLesson||[]).filter(item=>item.average!==null);
-  if(!visible.length){
-    return `<section class="admin-panel" id="resultsReview">
-      <div class="admin-section-head"><div><p class="admin-eyebrow">الدروس</p><h2>التقدم حسب الدروس</h2></div></div>
-      <p class="admin-empty-note">من بعد ما تدير اختبارات أكثر، غادي تبان هنا نتائج كل درس.</p>
-    </section>`;
-  }
-  return `<section class="admin-panel" id="resultsReview">
-    <div class="admin-section-head"><div><p class="admin-eyebrow">الدروس</p><h2>التقدم حسب الدروس</h2></div></div>
-    <div class="student-lesson-bars">${visible.map(item=>{
-      const state=item.average>=80?"strong":item.average>=60?"good":"weak";
-      return `<div class="student-lesson-bar-row">
-        <div class="student-lesson-bar-head"><strong>L${item.index+1}</strong><span>${item.average}%</span></div>
-        <div class="student-lesson-bar-track"><i class="${state}" style="width:${Math.max(6,item.average)}%"></i></div>
+function studentProgressLessonFilterMarkup(selectedLesson="all"){
+  const selected=String(selectedLesson||"all");
+  const options=[`<option value="all" ${selected==="all"?"selected":""}>Alle</option>`,...lessons.map((lesson,index)=>
+    `<option value="${index+1}" ${selected===String(index+1)?"selected":""}>L${index+1} · ${escapeHtml(lesson.name)}</option>`
+  )].join("");
+  return `<section class="student-progress-filter-card" aria-label="Fortschritt nach Lektionen filtern">
+    <div class="student-progress-filter-copy">
+      <span class="student-progress-filter-icon">☷</span>
+      <span><small>Filter</small><strong>Lektionen</strong></span>
+    </div>
+    <label class="student-progress-filter-select">
+      <select id="studentProgressLessonFilter" aria-label="Lektionen">${options}</select>
+    </label>
+  </section>`;
+}
+
+function studentResultsLessonSummaryMarkup(byLesson, selectedLesson="all"){
+  const allRows=lessons.map((lesson,index)=>{
+    const saved=(byLesson||[]).find(item=>Number(item.index)===index);
+    return saved || {index,lesson,average:null,completedExercises:0,totalExercises:0,status:"لم تبدأ بعد"};
+  });
+  const selected=String(selectedLesson||"all");
+  const shownRows=selected==="all" ? allRows : allRows.filter(item=>item.index===Number(selected)-1);
+  const evaluated=shownRows.filter(item=>item.average!==null).length;
+  // The overview follows the active lesson filter: all lessons for Alle,
+  // or only the selected lesson when a specific Lektion is chosen.
+  const completedTotal=shownRows.reduce((sum,item)=>sum+(Number(item.completedExercises)||0),0);
+  const exerciseTotal=shownRows.reduce((sum,item)=>sum+(Number(item.totalExercises)||0),0);
+  const completion=exerciseTotal>0?Math.max(0,Math.min(100,Math.round(completedTotal/exerciseTotal*100))):0;
+  return `<section class="admin-panel student-lesson-progress-panel" id="resultsReview">
+    <div class="admin-section-head"><div><p class="admin-eyebrow">Lektionen</p><h2>إنجاز التمارين حسب الدروس</h2></div></div>
+    <div class="student-lesson-overall">
+      <div class="student-lesson-overall-head"><div><strong>إنجاز التمارين</strong><small>${completedTotal} من ${exerciseTotal} تمريناً مكتملًا · ${evaluated} دروس لديها نتائج محفوظة</small></div><b>${completion}%</b></div>
+      <div class="student-lesson-overall-track"><i style="width:${completion}%"></i></div>
+    </div>
+    <div class="student-lesson-bars">${shownRows.map(item=>{
+      const hasScore=item.average!==null;
+      const average=hasScore?Math.max(0,Math.min(100,Number(item.average)||0)):0;
+      const done=Math.max(0,Number(item.completedExercises)||0);
+      const total=Math.max(0,Number(item.totalExercises)||0);
+      const hasExerciseProgress=total>0;
+      const progress=hasExerciseProgress?Math.max(0,Math.min(100,Math.round(done/total*100))):0;
+      const state=progress>=80?"strong":progress>=60?"good":"weak";
+      const hasActivity=hasScore||hasExerciseProgress;
+      const meta=hasExerciseProgress
+        ? `<b>الإنجاز ${progress}% · ${Math.min(done,total)}/${total} تمارين</b>${hasScore?`<small>النتيجة ${average}%</small>`:""}`
+        : hasScore?`<small>نتيجة الاختبار ${average}% · تفاصيل الإنجاز غير متوفرة</small>`:"لم تبدأ بعد";
+      return `<div class="student-lesson-bar-row ${hasActivity?"has-result":"no-result"}">
+        <div class="student-lesson-bar-head"><strong>L${item.index+1} · ${escapeHtml(item.lesson.name)}</strong><span class="student-lesson-bar-meta">${meta}</span></div>
+        <div class="student-lesson-bar-track"><i class="${hasExerciseProgress?state:"empty"}" style="width:${hasExerciseProgress?Math.max(0,progress):0}%"></i></div>
       </div>`;
     }).join("")}</div>
   </section>`;
 }
-
 function studentResultsHistoryMarkup(results){
   if(!results.length){
     return `<section class="admin-panel" id="resultsHistory">
@@ -2819,24 +4329,44 @@ function studentResultsAchievementsMarkup(totalTests, averageValue, completedLes
 
 function renderStudentResults(){
   if(!currentUser || currentUser.role!=="student"){page="login";return renderLogin();}
+  const selectedLesson=String(studentProgressLessonFilter||"all");
   const resultMap=readStudentResults(currentUser.id);
-  const results=Object.values(resultMap||{})
+  const allResults=Object.values(resultMap||{})
     .filter(item=>item && typeof item==="object")
     .sort((a,b)=>String(b.updatedAt||b.createdAt||"").localeCompare(String(a.updatedAt||a.createdAt||"")));
+  const results=selectedLesson==="all"
+    ? allResults
+    : allResults.filter(result=>adminResultLessonIndex(result)===Number(selectedLesson)-1);
   const testResults=results.filter(result=>adminResultType(result)==="test");
-  const report=adminStudentAnalytics(currentUser,{lesson:"all",type:"test"});
+  const report=adminStudentAnalytics(currentUser,{lesson:selectedLesson,type:"test"});
+  const timeReport=adminStudentAnalytics(currentUser,{lesson:selectedLesson,type:"all"});
   const averageValue=report && report.average!==null ? Number(report.average) : null;
   const average=averageValue===null ? "—" : `${averageValue}%`;
   const totalTests=testResults.length;
-  const totalTime=formatDuration(Number(report && report.totalSeconds)||0);
+  const selectedLessonKey=String(Number(selectedLesson));
+  const selectedLessonSeconds=selectedLesson==="all"
+    ? Number(timeReport && timeReport.totalSeconds)||0
+    : (Number(timeReport && timeReport.filteredSeconds)||Number(timeReport && timeReport.lessonSeconds && timeReport.lessonSeconds[selectedLessonKey])||0);
+  const totalTime=formatDuration(selectedLessonSeconds);
   const lessonRows=report && report.byLesson ? report.byLesson : [];
   const completedLessons=lessonRows.filter(item=>item.average!==null).length;
   const completedExercises=lessonRows.reduce((sum,item)=>sum+(Number(item.completedExercises)||0),0);
   const totalExercises=lessonRows.reduce((sum,item)=>sum+(Number(item.totalExercises)||0),0);
-  const progressPercent=totalExercises ? Math.max(0,Math.min(100,Math.round(completedExercises/totalExercises*100))) : 0;
+  // Completion and accuracy are different metrics: only completedExercises/totalExercises
+  // determines progress; average/percent is the score on the exercises already attempted.
+  const exerciseProgressPercent=totalExercises>0
+    ? Math.max(0,Math.min(100,Math.round(completedExercises/totalExercises*100)))
+    : 0;
   const remainingExercises=Math.max(0,totalExercises-completedExercises);
   const weakCount=(report && report.weakExercises ? report.weakExercises.length : 0);
   const levelLabel=String(selectedLevel||"A1.1").split(".")[0] || "A1";
+  const selectedLessonName=selectedLesson==="all"?"":(lessons[Number(selectedLesson)-1]?.name||"");
+  const progressTitle=selectedLesson==="all"
+    ? "إنجاز التمارين في جميع الدروس"
+    : `إنجاز التمارين في ${escapeHtml(selectedLessonName)}`;
+  const lessonCountLabel=selectedLesson==="all"
+    ? `${completedLessons} دروس لديها نتائج`
+    : (completedLessons?"لديك نتيجة محفوظة لهذا الدرس":"لا توجد نتائج محفوظة لهذا الدرس");
   const weakExerciseMarkup=report && report.weakExercises && report.weakExercises.length
     ? `<ul class="student-results-bullet-list">${report.weakExercises.slice(0,8).map(item=>`<li><strong>${escapeHtml(item.title)}</strong> · ${escapeHtml(item.key)} — ${item.percent}%</li>`).join("")}</ul>`
     : `<p class="admin-analytics-muted">لا توجد تمارين ضعيفة أقل من 60% في النتائج المسجلة حالياً.</p>`;
@@ -2867,10 +4397,14 @@ function renderStudentResults(){
     {icon:"♧",tone:"cyan",label:"الأصدقاء",action:"student-nav",tab:"community"},
     {icon:"◎",tone:"indigo",label:"الترتيب العالمي",action:"student-nav",tab:"community"},
     {icon:"✎",tone:"pink",label:"الميزات",action:"student-nav",tab:"learn"},
-    {icon:"♧",tone:"teal",label:"مع الآخرين",action:"student-nav",tab:"sessions"}
+    {icon:"♧",tone:"teal",label:"مع الآخرين",action:"student-nav",tab:"sessions"},
+    {icon:"▥",tone:"blue",label:"تقدم الدروس",target:"resultsLessonProgress"},
+    {icon:"✓",tone:"green",label:"إنجاز التمارين",target:"resultsCourseProgress"},
+    {icon:"▦",tone:"cyan",label:"تفاصيل التمارين",target:"resultsExercises"},
+    {icon:"◫",tone:"indigo",label:"تحليل المراحل",target:"resultsStages"}
   ];
   const shortcutMarkup=shortcuts.map(item=>{
-    const attrs=item.action=== "student-nav"
+    const attrs=item.action==="student-nav"
       ? `data-action="student-nav" data-tab="${item.tab}"`
       : `data-action="student-results-jump" data-target="${item.target}"`;
     return `<button type="button" class="progress-shortcut" ${attrs}>
@@ -2878,47 +4412,87 @@ function renderStudentResults(){
       <strong>${item.label}</strong>
     </button>`;
   }).join("");
-  const content=`
-    <section class="progress-course-card" id="resultsCourseProgress">
-      <div class="progress-course-top">
-        <div class="progress-level-badge">${escapeHtml(levelLabel)}</div>
-        <div class="progress-course-copy"><small>مستواك الحالي</small><h2>المسار التعليمي</h2><span>${completedLessons} من ${lessons.length} دروس لها نتائج محفوظة</span></div>
-        <div class="progress-course-count"><strong>${completedExercises}/${totalExercises||0}</strong><small>تمرين</small></div>
-      </div>
-      <div class="progress-course-track"><i style="width:${progressPercent}%"></i></div>
-      <div class="progress-course-foot"><span>${totalExercises?`أنجزت ${progressPercent}% من التمارين المسجلة`:"ابدأ أول اختبار باش يظهر تقدمك هنا"}</span><strong>${totalExercises?`${remainingExercises} متبقي`:"جاهز للبداية"}</strong></div>
-    </section>
+  // Keep the metrics and shortcut grid visible as the main Progress dashboard.
+  // Detailed analytics are opened one at a time in the full-screen tool view.
+  const mainProgressDashboard=`
     <section class="progress-metrics-grid" id="resultsStats">
       <article class="progress-metric-card"><span>🔥</span><strong>${totalTests}</strong><small>اختبارات محفوظة</small></article>
       <article class="progress-metric-card"><span>🎯</span><strong>${average}</strong><small>متوسط النتائج</small></article>
-      <article class="progress-metric-card"><span>📚</span><strong>${completedLessons}/${lessons.length}</strong><small>دروس تم تقييمها</small></article>
+      <article class="progress-metric-card"><span>📚</span><strong>${completedLessons}/${selectedLesson==="all"?lessons.length:1}</strong><small>دروس تم تقييمها</small></article>
       <article class="progress-metric-card"><span>⏱</span><strong>${escapeHtml(totalTime)}</strong><small>وقت التعلم</small></article>
     </section>
     <section class="progress-shortcuts-card">
-      <div class="progress-shortcuts-head"><div><small>مساحتك التعليمية</small><h2>أدوات تقدّمك</h2></div><span class="progress-shortcuts-count">${weakCount} نقطة للمراجعة</span></div>
+      <div class="progress-shortcuts-head"><div><small>مساحتك التعليمية</small><h2>أدوات النتائج</h2></div><span class="progress-shortcuts-count">${weakCount} نقطة للمراجعة</span></div>
       <div class="progress-shortcuts-grid">${shortcutMarkup}</div>
-    </section>
-    <section class="student-results-two-col">
-      ${studentResultsLessonSummaryMarkup(lessonRows)}
-      <section class="admin-panel" id="resultsWeakPoints">
-        <div class="admin-section-head"><div><p class="admin-eyebrow">تحليل الأداء</p><h2>نقاط تحتاج مراجعة</h2></div><span class="admin-count">${weakCount}</span></div>
-        <div class="student-results-analysis-block">
-          <h4>دروس تحتاج مراجعة</h4>
-          ${weakLessonMarkup}
-          <h4>تمارين ضعيفة</h4>
-          ${weakExerciseMarkup}
-        </div>
-      </section>
-    </section>
-    ${studentResultsAchievementsMarkup(totalTests,averageValue,completedLessons,completedExercises)}
-    ${studentResultsLineChartMarkup(testResults)}
-    ${stageDetail}
-    ${heatmap}
-    ${studentResultsHistoryMarkup(testResults)}
-    <section class="student-results-footer-cta"><button class="btn-primary" data-action="student-continue">تابع التعلّم <span class="arrow">←</span></button></section>`;
-  app.innerHTML=`<div class="student-results-promo">${studentLayout(content,"progress")}</div>`;
+    </section>`;
+  const courseProgressMarkup=`
+    <section class="progress-course-card" id="resultsCourseProgress">
+      <div class="progress-course-top">
+        <div class="progress-level-badge">${escapeHtml(levelLabel)}</div>
+        <div class="progress-course-copy"><small>مستواك الحالي</small><h2>${progressTitle}</h2><span>${completedExercises} من ${totalExercises} تمريناً مكتملًا · ${lessonCountLabel}</span></div>
+        <div class="progress-course-count"><strong>${completedExercises}/${totalExercises}</strong><small>تمارين</small></div>
+      </div>
+      <div class="progress-course-track"><i style="width:${exerciseProgressPercent}%"></i></div>
+      <div class="progress-course-foot"><span>${exerciseProgressPercent}% من التمارين مكتملة</span><strong>${remainingExercises} تمريناً متبقياً</strong></div>
+    </section>`;
+  const lessonProgressMarkup=studentResultsLessonSummaryMarkup(lessonRows,selectedLesson);
+  const weakPointsMarkup=`
+    <section class="admin-panel" id="resultsWeakPoints">
+      <div class="admin-section-head"><div><p class="admin-eyebrow">تحليل الأداء</p><h2>نقاط تحتاج مراجعة</h2></div><span class="admin-count">${weakCount}</span></div>
+      <div class="student-results-analysis-block">
+        <h4>دروس تحتاج مراجعة</h4>
+        ${weakLessonMarkup}
+        <h4>تمارين ضعيفة</h4>
+        ${weakExerciseMarkup}
+      </div>
+    </section>`;
+  const resultToolViews={
+    resultsExamReadiness:studentResultsLineChartMarkup(testResults),
+    resultsWeakPoints:weakPointsMarkup,
+    resultsAchievements:studentResultsAchievementsMarkup(totalTests,averageValue,completedLessons,completedExercises),
+    resultsHistory:studentResultsHistoryMarkup(testResults),
+    resultsStats:`<section class="progress-metrics-grid progress-metrics-grid-fullscreen" id="resultsStats">
+      <article class="progress-metric-card"><span>🔥</span><strong>${totalTests}</strong><small>اختبارات محفوظة</small></article>
+      <article class="progress-metric-card"><span>🎯</span><strong>${average}</strong><small>متوسط النتائج</small></article>
+      <article class="progress-metric-card"><span>📚</span><strong>${completedLessons}/${selectedLesson==="all"?lessons.length:1}</strong><small>دروس تم تقييمها</small></article>
+      <article class="progress-metric-card"><span>⏱</span><strong>${escapeHtml(totalTime)}</strong><small>وقت التعلم</small></article>
+    </section>`,
+    resultsStages:stageDetail || `<section class="admin-panel"><div class="admin-section-head"><div><p class="admin-eyebrow">المراحل والتمارين</p><h2>تحليل المراحل</h2></div></div><p class="admin-analytics-muted">لا توجد تفاصيل مراحل محفوظة لهذا الاختيار بعد.</p></section>`,
+    resultsExercises:heatmap || `<section class="admin-panel"><div class="admin-section-head"><div><p class="admin-eyebrow">أداء التمارين</p><h2>تفاصيل التمارين</h2></div></div><p class="admin-analytics-muted">لا توجد تفاصيل تمارين محفوظة لهذا الاختيار بعد.</p></section>`,
+    resultsCourseProgress:courseProgressMarkup,
+    resultsLessonProgress:lessonProgressMarkup
+  };
+  const resultToolTitles={
+    resultsExamReadiness:"استعدادك للامتحان",
+    resultsWeakPoints:"نقاط الضعف",
+    resultsAchievements:"الأوسمة والإنجازات",
+    resultsHistory:"سجل الامتحانات",
+    resultsStats:"النقاط والإحصائيات",
+    resultsStages:"تحليل المراحل",
+    resultsExercises:"تفاصيل التمارين",
+    resultsCourseProgress:"إنجاز التمارين",
+    resultsLessonProgress:"تقدم الدروس"
+  };
+  const activeToolMarkup=resultToolViews[studentResultsActiveTool]||"";
+  const activeToolTitle=resultToolTitles[studentResultsActiveTool]||"";
+  const fullscreenTool=activeToolMarkup?`
+    <section class="student-results-tool-overlay" role="dialog" aria-modal="true" aria-label="${escapeHtml(activeToolTitle)}">
+      <header class="student-results-tool-header">
+        <button type="button" class="student-results-tool-back" data-action="student-results-tool-back"><span aria-hidden="true">←</span> رجوع</button>
+        <div class="student-results-tool-heading"><small>أدوات النتائج</small><h1>${escapeHtml(activeToolTitle)}</h1></div>
+      </header>
+      <main class="student-results-tool-body">
+        ${studentProgressLessonFilterMarkup(selectedLesson)}
+        <div class="student-results-tool-content">${activeToolMarkup}</div>
+      </main>
+    </section>`:"";
+  // The main progress page contains only the dashboard and shortcuts. Each result tool
+  // opens alone in a full-screen view; no analysis panels remain stacked underneath.
+  const content=activeToolMarkup?"":`
+    ${studentProgressLessonFilterMarkup(selectedLesson)}
+    ${mainProgressDashboard}`;
+  app.innerHTML=`<div class="student-results-promo">${studentLayout(content,"progress")}${fullscreenTool}</div>`;
 }
-
 function logout(){
   demoMode = false;
   stopAdminResultsRealtimeSync();
@@ -2955,9 +4529,739 @@ async function resetStudentPassword(id){
   } catch(error) { showToast("Passwort-Link konnte nicht gesendet werden: "+error.message); }
 }
 function exportAdminBackup(){
-  const payload={exportedAt:new Date().toISOString(),users:readUsers(),results:readAllResults(),groups:cloudGroups,activity:cloudActivity};
+  const payload={exportedAt:new Date().toISOString(),users:readUsers(),results:readAllResults(),groups:cloudGroups,activity:cloudActivity,contentMeta:adminContentMeta};
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
   const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="deutsch-a1-backup.json";a.click();URL.revokeObjectURL(url);
+}
+
+
+function customContentArea(item){
+  const value = String(item?.area || item?.section || "").trim().toLowerCase();
+  if(["course","podcast","test","speaking"].includes(value)) return value;
+  // Backward compatibility for files uploaded before the four-section selector.
+  return item?.kind === "test" ? "test" : "course";
+}
+function customContentAreaLabel(item){
+  const labels = {
+    course: "Lernen · Kurs",
+    podcast: "Hören · Podcast",
+    test: "Üben · Test",
+    speaking: "Sprechen · محادثة"
+  };
+  return labels[customContentArea(item)] || "Lernen · Kurs";
+}
+function customContentEntries(kind, lessonNo, area){
+  return Object.entries(adminContentMeta || {})
+    .map(([id, item]) => ({id, ...(item || {})}))
+    .filter(item => item.active !== false &&
+      (!kind || item.kind === kind) &&
+      (!lessonNo || Number(item.lessonNumber) === Number(lessonNo)) &&
+      (!area || customContentArea(item) === area))
+    .sort((a,b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+}
+function customContentFileTypeLabel(item){
+  const mime = String(item?.mimeType || "");
+  if(mime === "application/pdf") return "PDF";
+  if(mime === "text/html") return "HTML تفاعلي";
+  if(mime.startsWith("image/")) return "صورة";
+  if(mime.startsWith("audio/")) return "ملف صوتي";
+  return "ملف";
+}
+function customContentIcon(item){
+  const mime = String(item?.mimeType || "");
+  if(mime === "application/pdf") return "📕";
+  if(mime === "text/html") return "🌐";
+  if(mime.startsWith("audio/")) return "🎧";
+  if(mime.startsWith("image/")) return "🖼️";
+  return "📎";
+}
+function renderCustomContentFeatureCards(area, lessonNo, heading){
+  const kind = area === "test" ? "test" : "lesson";
+  const items = customContentEntries(kind, lessonNo, area);
+  if(!items.length) return "";
+  const title = heading || ({
+    course: "مواد إضافية للكورس",
+    podcast: "ملفات الاستماع",
+    test: "اختبارات إضافية",
+    speaking: "مواد إضافية للمحادثة"
+  }[area] || "محتوى إضافي");
+  return `<section class="custom-content-feature-section">
+    <div class="custom-content-section-head"><div><p>محتوى أضافه الأستاذ</p><h3>${escapeHtml(title)}</h3></div><span>${items.length} ملف</span></div>
+    <div class="custom-content-feature-list">${items.map(item => `
+      <article class="stadt-feature custom-content-feature">
+        <div class="stadt-feature-icon">${customContentIcon(item)}</div>
+        <div class="stadt-feature-copy">
+          <h3>${escapeHtml(item.title || "محتوى إضافي")}</h3>
+          <p>${escapeHtml(item.description || customContentFileTypeLabel(item))} · ${customContentFileTypeLabel(item)}</p>
+        </div>
+        <button type="button" class="primary-btn" data-action="open-custom-content" data-id="${escapeHtml(item.id)}">فتح المحتوى <span class="arrow">←</span></button>
+      </article>`).join("")}</div>
+  </section>`;
+}
+function renderAdminContentSection(){
+  const entries = customContentEntries();
+  const lessonOptions = lessons.map((lesson,index) =>
+    `<option value="${index+1}">L${index+1} · ${escapeHtml(lesson.name)}</option>`
+  ).join("");
+  const rows = entries.length ? entries.map(item => `
+    <tr>
+      <td><strong>${escapeHtml(item.title || "محتوى بدون عنوان")}</strong><small>${escapeHtml(item.fileName || "")}</small></td>
+      <td>${customContentAreaLabel(item)}</td>
+      <td>L${Number(item.lessonNumber)||"—"}</td>
+      <td>${customContentFileTypeLabel(item)}</td>
+      <td>${item.sizeBytes ? (item.sizeBytes/1024/1024).toFixed(2)+" MB" : "—"}</td>
+      <td>${item.createdAt ? new Date(item.createdAt).toLocaleDateString("ar-MA") : "—"}</td>
+      <td><button type="button" class="tiny-btn danger" data-action="admin-content-delete" data-id="${escapeHtml(item.id)}">حذف</button></td>
+    </tr>`).join("") : `<tr><td colspan="7" class="empty-cell">مازال ما زدتي حتى ملف إضافي.</td></tr>`;
+  return `
+    <section class="admin-welcome"><div><p class="admin-eyebrow">إدارة المحتوى</p><h1>إضافة محتوى للدرس</h1><p>رفع PDF أو HTML تفاعلي أو صورة أو ملف صوتي وربطو بأحد الأقسام الأربعة في الدروس العشرة.</p></div><span class="admin-count">${entries.length} ملف محفوظ</span></section>
+    <section class="admin-panel custom-content-upload-panel">
+      <div class="admin-section-head"><div><p class="admin-eyebrow">ملف جديد</p><h2>إضافة محتوى للطلاب</h2><p>اختار الدرس والقسم اللي بغيتي يبان فيه الملف: Kurs أو Podcast أو Test أو Sprechen.</p></div><span class="admin-section-icon">＋</span></div>
+      <div class="admin-content-form-grid">
+        <label>فين يبان الملف؟
+          <select id="adminContentArea">
+            <option value="course">📚 Lernen · Kurs</option>
+            <option value="podcast">🎧 Hören · Podcast</option>
+            <option value="test">✓ Üben · Test</option>
+            <option value="speaking">🎙️ Sprechen · محادثة</option>
+          </select>
+        </label>
+        <label>الدرس
+          <select id="adminContentLesson">${lessonOptions}</select>
+        </label>
+        <label class="admin-content-title-field">عنوان المحتوى
+          <input id="adminContentTitle" type="text" maxlength="90" placeholder="مثلاً: Lektion 7 – Übung 4">
+        </label>
+        <label class="admin-content-description-field">وصف مختصر (اختياري)
+          <input id="adminContentDescription" type="text" maxlength="180" placeholder="شنو غادي يتعلم الطالب من هاد الملف؟">
+        </label>
+        <label class="admin-content-file-field">الملف
+          <input id="adminContentFile" type="file" accept=".pdf,.html,.htm,.png,.jpg,.jpeg,.webp,.gif,.mp3,.m4a,.wav,.ogg,.webm,application/pdf,text/html,image/png,image/jpeg,image/webp,image/gif,audio/mpeg,audio/mp4,audio/wav,audio/ogg,audio/webm">
+          <small>الأنواع المقبولة: PDF · HTML · صور · MP3 · M4A · WAV · OGG · WEBM. ما كاينش حد إضافي للحجم من طرف التطبيق؛ قد تطبق حدود Firebase والمتصفح.</small>
+        </label>
+      </div>
+      <div class="admin-content-test-results-help">
+        <strong>ربط نتيجة اختبار HTML بصفحة النتائج</strong>
+        <p>إذا كان ملف HTML يستعمل الدالة finish(id, correct, total) بحال الاختبارات الموجودة في المنصة، غادي يتسجل التنقيط تلقائياً. لأي اختبار HTML آخر، نادِ الدالة التالية عند نهاية الاختبار:</p>
+        <code>window.DeutschA1Results.submit({ points: score, maxPoints: total });</code>
+        <small>النتيجة كتتحفظ باسم الطالب، عنوان الاختبار، ورقم الدرس، وكتظهر في نتائج الطالب وAdmin. ملفات PDF والصور ما كتتنقطش تلقائياً.</small>
+      </div>
+      <div class="admin-form-actions"><button type="button" class="primary-btn" data-action="admin-content-save">حفظ وإظهار للطلاب</button></div>
+      <p class="admin-note">الملف كيتحفظ فـ Firebase Realtime Database بصلاحيات الأدمن فقط. HTML كيتعرض داخل إطار معزول (Sandbox)، والصوت كيتعرض بمشغل صوتي.</p>
+    </section>
+    <section class="admin-panel">
+      <div class="admin-section-head"><div><p class="admin-eyebrow">المكتبة</p><h2>الدروس والاختبارات المضافة</h2></div><span class="admin-count">${entries.length} محتوى</span></div>
+      <div class="admin-table-wrap"><table class="admin-table custom-content-admin-table"><thead><tr><th>العنوان / الملف</th><th>مكان العرض</th><th>الدرس</th><th>الصيغة</th><th>الحجم</th><th>تاريخ الإضافة</th><th>الإجراء</th></tr></thead><tbody>${rows}</tbody></table></div>
+    </section>`;
+}
+function normalizeManagedPagePath(path){
+  const value = String(path || "").trim().replace(/^\/+/, "");
+  if(!/^pages\/[a-zA-Z0-9_./-]+\.html$/i.test(value) || value.includes("..") || value.includes("\\") || value.includes("//")) return "";
+  return value;
+}
+function managedPageAssetUrl(path){
+  const normalized = normalizeManagedPagePath(path);
+  if(!normalized) return "";
+  try{
+    const appScript = Array.from(document.scripts).find(script=>script.src && /\/js\/app\.js(?:[?#]|$)/i.test(script.src));
+    if(appScript){
+      const scriptUrl = new URL(appScript.src, window.location.href);
+      const appRoot = new URL("../", scriptUrl);
+      return new URL(normalized, appRoot).href;
+    }
+    return new URL(normalized, document.baseURI || window.location.href).href;
+  }catch(error){
+    console.warn("Could not resolve managed page asset URL:", error);
+    return normalized;
+  }
+}
+function managedPageDefinition(path){
+  return managedHtmlPageDefinitions.find(item=>item.path===path) || null;
+}
+function getLocalAdminHtmlPages(){
+  try{
+    const rows = JSON.parse(localStorage.getItem(ADMIN_LOCAL_HTML_PAGES_KEY) || "[]");
+    return Array.isArray(rows) ? rows.filter(item=>item && normalizeManagedPagePath(item.path)) : [];
+  }catch(error){return [];}
+}
+function rememberLocalAdminHtmlPage(path,title){
+  const normalized = normalizeManagedPagePath(path);
+  if(!normalized) return;
+  const rows = getLocalAdminHtmlPages().filter(item=>item.path!==normalized);
+  rows.unshift({path:normalized,title:String(title||normalized.split("/").pop()),updatedAt:new Date().toISOString()});
+  localStorage.setItem(ADMIN_LOCAL_HTML_PAGES_KEY,JSON.stringify(rows.slice(0,100)));
+}
+function managedPageMetaForPath(path){
+  return getLocalAdminHtmlPages().find(item=>item.path===path) || null;
+}
+function managedPageHtmlWithBase(html,path){
+  const absolute = new URL(managedPageAssetUrl(path) || path, window.location.href);
+  const baseHref = absolute.href.slice(0, absolute.href.lastIndexOf("/")+1);
+  const baseTag = `<base href="${escapeHtml(baseHref)}">`;
+  const source = String(html || "");
+  if(/<base\b/i.test(source)) return source;
+  if(/<head\b[^>]*>/i.test(source)) return source.replace(/<head\b([^>]*)>/i, match=>match+baseTag);
+  return `<!doctype html><html><head><meta charset="utf-8">${baseTag}</head><body>${source}</body></html>`;
+}
+function loadManagedPageIntoFrame(frame,path){
+  if(!frame) return;
+  const normalized = normalizeManagedPagePath(path);
+  if(!normalized){frame.src="about:blank";return;}
+  frame.dataset.managedPagePath = normalized;
+  // Static delivery only: student pages load directly from the project's /pages folder.
+  // No Firebase lookup, srcdoc override, or managedPageFiles read is used here.
+  frame.removeAttribute("srcdoc");
+  frame.src = managedPageAssetUrl(normalized) || normalized;
+}
+
+function renderAdminManagedHtmlPage(){
+  if(!currentUser || currentUser.role!=="admin"){page="home";return renderHome();}
+  const path = normalizeManagedPagePath(managedHtmlPagePath);
+  const definition = managedPageDefinition(path) || {title:path.split("/").pop()};
+  app.innerHTML = `<div class="admin-page admin-managed-html-page"><header class="admin-topbar"><div class="admin-brand"><span class="admin-brand-mark">A1</span><div><strong>${escapeHtml(definition.title||"صفحة HTML")}</strong><small>معاينة صفحة مستقلة</small></div></div><div class="admin-user"><button class="outline-btn" data-action="admin-managed-html-back">رجوع إلى Admin</button></div></header><main class="admin-managed-html-frame-wrap"><iframe id="adminManagedHtmlFrame" title="${escapeHtml(definition.title||"صفحة HTML")}" loading="eager"></iframe></main></div>`;
+  const frame = document.getElementById("adminManagedHtmlFrame");
+  if(frame) loadManagedPageIntoFrame(frame,path);
+}
+function renderAdminPagesSection(){
+  const lessonOptions = lessons.map((lesson,index) =>
+    `<option value="${index+1}">L${index+1} · ${escapeHtml(lesson.name)}</option>`
+  ).join("");
+  const selected = adminPageSelectedPath || managedHtmlPageDefinitions[0].path;
+  const selectedMeta = managedPageMetaForPath(selected);
+  const selectedDef = managedPageDefinition(selected) || selectedMeta || {path:selected,title:selected.split("/").pop(),group:"صفحات مضافة"};
+  const grouped = {};
+  managedHtmlPageDefinitions.forEach(item=>(grouped[item.group] ||= []).push(item));
+  const dynamicPages = getLocalAdminHtmlPages().filter(item=>!managedPageDefinition(item.path));
+  if(dynamicPages.length) grouped["صفحات مضافة"] = dynamicPages;
+  const options = Object.entries(grouped).map(([group,items])=>`<optgroup label="${escapeHtml(group)}">${items.map(item=>`<option value="${escapeHtml(item.path)}" ${item.path===selected?"selected":""}>${escapeHtml(item.title || item.path)}</option>`).join("")}</optgroup>`).join("");
+  const status = selectedMeta ? "ملف محلي محفوظ في مجلد pages" : "ملف HTML أصلي داخل مجلد pages";
+  return `
+    <section class="admin-welcome admin-pages-welcome"><div><p class="admin-eyebrow">تحكم كامل في صفحات HTML</p><h1>محرر صفحات المنصة</h1><p>اختار صفحة من مجلد pages، حمّلها من مجلد المشروع أو من جهازك، عدّلها ثم احفظها مباشرة كملف HTML داخل pages. ملفات الصفحات لا تُخزَّن في Firebase.</p></div><span class="admin-count">${managedHtmlPageDefinitions.length + getLocalAdminHtmlPages().length} صفحة</span></section>
+    <section class="admin-panel admin-pages-editor-panel">
+      <div class="admin-section-head"><div><p class="admin-eyebrow">1 · اختيار الصفحة</p><h2>الصفحة اللي بغيتي تعدّل</h2></div><span class="admin-section-icon">✎</span></div>
+      <div class="admin-pages-select-grid">
+        <label>اختار الصفحة من اللائحة<select id="adminPageSelect">${options}</select></label>
+        <div class="admin-pages-load-actions">
+          <button type="button" class="outline-btn" data-action="admin-page-choose-folder">اختيار مجلد المشروع</button>
+          <button type="button" class="primary-btn" data-action="admin-page-load">تحميل من pages</button>
+          <button type="button" class="outline-btn" data-action="admin-page-import">تحميل من الجهاز</button>
+        </div>
+      </div>
+      <div class="admin-pages-meta-grid">
+        <label>عنوان الصفحة<input id="adminPageTitle" type="text" maxlength="120" value="${escapeHtml(selectedDef.title || selected.split("/").pop())}"></label>
+        <label>مسار HTML – قابل للتعديل<input id="adminPagePath" type="text" maxlength="240" autocomplete="off" spellcheck="false" placeholder="pages/new-page.html" value="${escapeHtml(selected)}"></label>
+      </div>
+      <p class="admin-note admin-pages-path-help">اختار مجلد المشروع اللي فيه <code>index.html</code> و<code>pages/</code>. تقدر تبدّل المسار مثلاً إلى <code>pages/lektion-6-neu.html</code>؛ الحفظ كيكتب الملف مباشرة داخل مجلد pages والصفحة الأصلية كتبقى كما هي. ما كاين حتى حفظ لملفات HTML في Firebase.</p>
+      <div class="admin-test-route-box">
+        <div><strong>ربط صفحة HTML باختبار الدرس</strong><p>اختار مجلد المشروع أولاً، ثم رقم الدرس. غادي نكتب الربط داخل js/test-page-routes.js باش يخدم عند جميع التلاميذ من نفس المشروع، بلا Firebase.</p></div>
+        <div class="admin-test-route-controls">
+          <label>الدرس<select id="adminTestRouteLesson"><option value="">اختار الدرس</option>${lessonOptions}</select></label>
+          <button type="button" class="primary-btn" data-action="admin-page-assign-test">ربط الصفحة باختبار الدرس</button>
+        </div>
+        <p class="admin-pages-status" id="adminTestRouteStatus">المسار الحالي: ${escapeHtml(selected)}</p>
+      </div>
+      <p class="admin-pages-status" id="adminPageStatus">الحالة: ${status}. اضغط على «تحميل الصفحة» باش تجيب الكود.</p>
+    </section>
+    <section class="admin-panel admin-pages-code-panel">
+      <div class="admin-section-head"><div><p class="admin-eyebrow">2 · تعديل HTML</p><h2>محرر الكود</h2><p>تقدر تبدّل HTML وCSS وJavaScript داخل نفس الملف. خليك محافظ على أسماء الملفات والمسارات ديال الصور والصوت.</p></div><span class="admin-section-icon">&lt;/&gt;</span></div>
+      <div class="admin-pages-file-actions">
+        <input id="adminPageImportFile" type="file" accept=".html,.htm,text/html" hidden>
+        <button type="button" class="outline-btn" data-action="admin-page-import">⬆️ استيراد ملف HTML من الجهاز</button>
+        <button type="button" class="outline-btn" data-action="admin-page-export">⬇️ تصدير الصفحة كـ HTML</button>
+      </div>
+      <p class="admin-note admin-pages-import-note">الاستيراد كيدخل محتوى ملف HTML للمحرر ديال الصفحة المختارة. التصدير كيحمّل آخر كود ظاهر فالمحرر كملف .html على جهازك. الملفات المرتبطة بحال الصور وCSS وJavaScript الخارجية ما كتندمجش تلقائياً داخل ملف HTML. الحفظ المباشر كيتطلب اختيار مجلد المشروع من جهازك.</p>
+      <textarea id="adminPageHtml" class="admin-page-html-editor" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="اضغط على تحميل الصفحة أو استيراد HTML باش يظهر الكود هنا..."></textarea>
+      <div class="admin-pages-actions">
+        <button type="button" class="outline-btn" data-action="admin-page-preview">معاينة التعديلات</button>
+        <button type="button" class="primary-btn" data-action="admin-page-save-draft">حفظ مباشرة داخل مجلد pages</button>
+        <button type="button" class="outline-btn" data-action="admin-page-export">تصدير HTML</button>
+      </div>
+      <p class="admin-note">الحفظ كيكتب ملف HTML مباشرة داخل مجلد pages اللي اخترتيه، بلا Firebase. إذا كانت المنصة منشورة على الإنترنت، خاصك من بعد ترفع مجلد pages المحدّث للاستضافة باش يشوفو الطلاب التغييرات.</p>
+    </section>
+    <section class="admin-panel admin-pages-preview-panel">
+      <div class="admin-section-head"><div><p class="admin-eyebrow">3 · المعاينة</p><h2>كيفاش غادي تبان الصفحة؟</h2></div><span class="admin-count">Preview</span></div>
+      <iframe id="adminPagePreviewFrame" title="معاينة صفحة HTML" sandbox="allow-scripts allow-forms allow-popups" referrerpolicy="no-referrer"></iframe>
+    </section>`;
+}
+async function chooseAdminProjectFolder(){
+  if(!currentUser || currentUser.role!=="admin"){showToast("خاصك تدخل بحساب الأدمن.");return;}
+  if(typeof window.showDirectoryPicker !== "function"){
+    showToast("المتصفح ما كيدعمش اختيار المجلدات. استعمل «تحميل من الجهاز» و«تصدير HTML».");
+    return;
+  }
+  try{
+    adminPagesRootDirectoryHandle = await window.showDirectoryPicker({mode:"readwrite",id:"deutsch-a1-project-root"});
+    let hasIndex = false;
+    try{await adminPagesRootDirectoryHandle.getFileHandle("index.html");hasIndex=true;}catch(_error){}
+    const status = document.getElementById("adminPageStatus");
+    if(status) status.textContent = hasIndex
+      ? "تم اختيار مجلد المشروع بنجاح. دابا تقدر تحمّل وتحفظ ملفات pages مباشرة."
+      : "تم اختيار المجلد. تأكد أنه هو مجلد المشروع اللي فيه index.html ومجلد pages.";
+    showToast("تم ربط مجلد المشروع محلياً. ما غادي يتحفظ حتى ملف HTML في Firebase.");
+  }catch(error){
+    if(error && error.name==="AbortError") return;
+    console.error("Project folder selection failed:",error);
+    showToast("ما قدرناش نختارو المجلد: "+(error.message||"خطأ غير معروف"));
+  }
+}
+async function getAdminLocalPageDirectory(path,create){
+  const normalized = normalizeManagedPagePath(path);
+  if(!normalized) throw new Error("مسار HTML غير صالح. خاصو يبدا بـ pages/ ويسالي بـ .html.");
+  if(!adminPagesRootDirectoryHandle) throw new Error("اختار مجلد المشروع أولاً.");
+  let directory = await adminPagesRootDirectoryHandle.getDirectoryHandle("pages",{create:Boolean(create)});
+  const parts = normalized.split("/").slice(1);
+  parts.pop();
+  for(const part of parts) directory = await directory.getDirectoryHandle(part,{create:Boolean(create)});
+  return directory;
+}
+async function readAdminLocalPageFile(path){
+  const normalized = normalizeManagedPagePath(path);
+  const directory = await getAdminLocalPageDirectory(normalized,false);
+  const fileName = normalized.split("/").pop();
+  const fileHandle = await directory.getFileHandle(fileName);
+  const file = await fileHandle.getFile();
+  return await file.text();
+}
+async function loadAdminPageIntoEditor(){
+  if(!currentUser || currentUser.role!=="admin") return showToast("خاصك تدخل بحساب الأدمن.");
+  const select = document.getElementById("adminPageSelect");
+  const pathInput = document.getElementById("adminPagePath");
+  const titleInput = document.getElementById("adminPageTitle");
+  const htmlInput = document.getElementById("adminPageHtml");
+  const status = document.getElementById("adminPageStatus");
+  const sourcePath = normalizeManagedPagePath(select?.value || adminPageSelectedPath || pathInput?.value);
+  const targetPath = normalizeManagedPagePath(pathInput?.value || sourcePath);
+  if(!sourcePath) return showToast("اختار الصفحة الأصلية من اللائحة أولاً.");
+  if(!targetPath) return showToast("مسار الحفظ غير صالح. استعمل pages/name.html.");
+  adminPageSelectedPath = sourcePath;
+  const definition = managedPageDefinition(sourcePath);
+  if(status) status.textContent = `جاري قراءة ${sourcePath} من مجلد pages...`;
+  try{
+    let html = "";
+    let sourceLabel = "مجلد pages المحلي";
+    if(adminPagesRootDirectoryHandle){
+      html = await readAdminLocalPageFile(sourcePath);
+    }else{
+      const response = await fetch(managedPageAssetUrl(sourcePath),{cache:"no-store",credentials:"same-origin"});
+      if(!response.ok) throw new Error(`تعذر تحميل ${sourcePath} (HTTP ${response.status}).`);
+      html = await response.text();
+      sourceLabel = "ملفات الموقع";
+    }
+    if(!html.trim()) throw new Error(`الملف ${sourcePath} فارغ.`);
+    if(titleInput) titleInput.value = definition?.title || managedPageMetaForPath(sourcePath)?.title || sourcePath.split("/").pop();
+    if(htmlInput){htmlInput.value=html;htmlInput.dataset.sourcePath=sourcePath;htmlInput.dataset.targetPath=targetPath;}
+    if(status) status.textContent = sourcePath===targetPath
+      ? `تم تحميل ${sourcePath} مباشرة من ${sourceLabel}.`
+      : `تم تحميل الأصل ${sourcePath} · مسار الحفظ الجديد: ${targetPath}.`;
+    showToast("تحمّل الملف مباشرة. ما استعملناش Firebase.");
+  }catch(error){
+    console.error("Static HTML page load failed:",error);
+    if(status) status.textContent = "فشل التحميل: "+(error.message||"خطأ غير معروف");
+    showToast("ما قدرناش نحملو الملف. اختار مجلد المشروع أو استعمل «تحميل من الجهاز». السبب: "+(error.message||"تعذر الوصول للملف"));
+  }
+}
+
+function previewAdminManagedPage(){
+  const path = normalizeManagedPagePath(document.getElementById("adminPagePath")?.value || adminPageSelectedPath);
+  const html = String(document.getElementById("adminPageHtml")?.value || "");
+  const frame = document.getElementById("adminPagePreviewFrame");
+  if(!path || !html.trim() || !frame){showToast("حمّل الصفحة أو كتب HTML قبل المعاينة.");return;}
+  frame.srcdoc = managedPageHtmlWithBase(html,path);
+}
+function syncAdminManagedPageOption(path,title){
+  const select = document.getElementById("adminPageSelect");
+  if(!select || !path) return;
+  let option = Array.from(select.options).find(item=>item.value===path);
+  if(!option){
+    let group = Array.from(select.querySelectorAll("optgroup")).find(item=>item.label==="صفحات مضافة");
+    if(!group){group=document.createElement("optgroup");group.label="صفحات مضافة";select.appendChild(group);}
+    option=document.createElement("option");option.value=path;group.appendChild(option);
+  }
+  option.textContent=title || path;
+  select.value=path;
+}
+async function saveAdminManagedPage(){
+  if(!currentUser || currentUser.role!=="admin"){showToast("خاصك تدخل بحساب الأدمن.");return;}
+  const path = normalizeManagedPagePath(document.getElementById("adminPagePath")?.value || adminPageSelectedPath);
+  const htmlInput = document.getElementById("adminPageHtml");
+  const html = String(htmlInput?.value || "");
+  const title = String(document.getElementById("adminPageTitle")?.value || "").trim();
+  if(!path){showToast("مسار الصفحة غير صالح. استعمل pages/name.html.");return;}
+  if(!title){showToast("كتب عنوان الصفحة.");return;}
+  if(!html.trim()){showToast("حمّل الصفحة أو استورد HTML أولاً.");return;}
+  const sourcePath = normalizeManagedPagePath(htmlInput?.dataset.sourcePath || adminPageSelectedPath);
+  if(sourcePath && sourcePath!==path){
+    if(!window.confirm(`غادي تنشئ/تحدّث ${path} بمحتوى ${sourcePath}. الصفحة الأصلية غتبقى كما هي. واش متأكد؟`)) return;
+  }
+  const button = app.querySelector('[data-action="admin-page-save-draft"]');
+  if(button){button.disabled=true;button.dataset.originalText=button.textContent;button.textContent="جاري الحفظ في pages...";}
+  try{
+    if(!adminPagesRootDirectoryHandle){
+      if(typeof window.showDirectoryPicker !== "function"){
+        exportAdminManagedPage();
+        showToast("المتصفح ما كيدعمش الحفظ المباشر للمجلد. تصدّر الملف وحطّو يدوياً داخل pages.");
+        return;
+      }
+      adminPagesRootDirectoryHandle = await window.showDirectoryPicker({mode:"readwrite",id:"deutsch-a1-project-root"});
+    }
+    let permission = "granted";
+    if(typeof adminPagesRootDirectoryHandle.queryPermission === "function"){
+      permission = await adminPagesRootDirectoryHandle.queryPermission({mode:"readwrite"});
+      if(permission!=="granted" && typeof adminPagesRootDirectoryHandle.requestPermission === "function"){
+        permission = await adminPagesRootDirectoryHandle.requestPermission({mode:"readwrite"});
+      }
+    }
+    if(permission!=="granted") throw new Error("المتصفح ما عطاش صلاحية الكتابة فالمجلد.");
+    const normalized = normalizeManagedPagePath(path);
+    const directory = await getAdminLocalPageDirectory(normalized,true);
+    const fileName = normalized.split("/").pop();
+    let exists = false;
+    try{await directory.getFileHandle(fileName);exists=true;}catch(error){if(error && error.name!=="NotFoundError") throw error;}
+    if(exists && sourcePath!==normalized && !window.confirm(`الملف ${normalized} موجود من قبل. واش بغيتي تعوّضو؟`)) return;
+    const fileHandle = await directory.getFileHandle(fileName,{create:true});
+    const writable = await fileHandle.createWritable();
+    await writable.write(new Blob(["\uFEFF",html],{type:"text/html;charset=utf-8"}));
+    await writable.close();
+    rememberLocalAdminHtmlPage(normalized,title);
+    adminPageSelectedPath = normalized;
+    if(htmlInput){htmlInput.dataset.sourcePath=normalized;htmlInput.dataset.targetPath=normalized;}
+    const pathInput = document.getElementById("adminPagePath");
+    if(pathInput) pathInput.value=normalized;
+    syncAdminManagedPageOption(normalized,title);
+    const status = document.getElementById("adminPageStatus");
+    if(status) status.textContent = `تحفظ الملف مباشرة داخل ${normalized}. لا توجد أي كتابة لصفحات HTML في Firebase.`;
+    showToast(`تحفظ ${normalized} بنجاح داخل مجلد pages.`);
+  }catch(error){
+    console.error("Local HTML page save failed:",error);
+    showToast("فشل الحفظ المحلي: "+(error.message||"خطأ غير معروف")+". تقدر تستعمل تصدير HTML كحل بديل.");
+  }finally{
+    if(button){button.disabled=false;button.textContent=button.dataset.originalText||"حفظ مباشرة داخل مجلد pages";delete button.dataset.originalText;}
+  }
+}
+
+function importAdminManagedPageFile(file){
+  if(!currentUser || currentUser.role!=="admin") {showToast("خاصك تدخل بحساب الأدمن.");return;}
+  if(!file) return;
+  const fileName = String(file.name || "");
+  if(!/\.html?$/i.test(fileName)) {showToast("اختار ملف HTML أو HTM فقط.");return;}
+  const path = normalizeManagedPagePath(document.getElementById("adminPagePath")?.value || adminPageSelectedPath);
+  if(!path) {showToast("اختار الصفحة اللي بغيتي تستورد فيها HTML أولاً.");return;}
+  const reader = new FileReader();
+  reader.onload = () => {
+    const html = String(reader.result || "");
+    if(!html.trim()) {showToast("ملف HTML فارغ.");return;}
+    const editor = document.getElementById("adminPageHtml");
+    if(!editor) {showToast("محرر HTML ما بقاش ظاهر. عاود افتح قسم الصفحات.");return;}
+    editor.value = html;
+    const sourcePath = normalizeManagedPagePath(document.getElementById("adminPageSelect")?.value || adminPageSelectedPath);
+    editor.dataset.sourcePath = sourcePath || path;
+    const status = document.getElementById("adminPageStatus");
+    if(status) status.textContent = `تم تحميل ${fileName} من جهازك. المصدر: ${sourcePath || fileName} · وجهة الحفظ: ${path}. عاين التعديلات قبل الحفظ أو النشر.`;
+    showToast("تم استيراد ملف HTML محلياً. عاين التغييرات قبل الحفظ داخل pages.");
+  };
+  reader.onerror = () => showToast("ما قدرناش نقراو ملف HTML من الجهاز.");
+  reader.readAsText(file, "UTF-8");
+}
+function exportAdminManagedPage(){
+  if(!currentUser || currentUser.role!=="admin") {showToast("خاصك تدخل بحساب الأدمن.");return;}
+  const path = normalizeManagedPagePath(document.getElementById("adminPagePath")?.value || adminPageSelectedPath);
+  const html = String(document.getElementById("adminPageHtml")?.value || "");
+  if(!path) {showToast("اختار صفحة صالحة قبل التصدير.");return;}
+  if(!html.trim()) {showToast("المحرر فارغ. حمّل الصفحة أو استورد ملف HTML أولاً.");return;}
+  const rawName = path.split("/").pop() || "page.html";
+  const fileName = /\.html?$/i.test(rawName) ? rawName : `${rawName}.html`;
+  try{
+    const blob = new Blob(["\uFEFF",html],{type:"text/html;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    link.style.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(()=>URL.revokeObjectURL(url),1500);
+    showToast(`تم تجهيز ${fileName} للتنزيل.`);
+  }catch(error){
+    console.error("HTML export failed:",error);
+    showToast("فشل تصدير HTML: "+(error.message||"خطأ غير معروف"));
+  }
+}
+
+function readFileAsDataUrl(file){
+  return new Promise((resolve,reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(reader.error || new Error("تعذر قراءة الملف."));
+    reader.readAsDataURL(file);
+  });
+}
+function customContentMime(file){
+  const name = String(file?.name || "").toLowerCase();
+  if(name.endsWith(".pdf")) return "application/pdf";
+  if(name.endsWith(".html") || name.endsWith(".htm")) return "text/html";
+  if(name.endsWith(".png")) return "image/png";
+  if(name.endsWith(".jpg") || name.endsWith(".jpeg")) return "image/jpeg";
+  if(name.endsWith(".webp")) return "image/webp";
+  if(name.endsWith(".gif")) return "image/gif";
+  if(name.endsWith(".mp3")) return "audio/mpeg";
+  if(name.endsWith(".m4a")) return "audio/mp4";
+  if(name.endsWith(".wav")) return "audio/wav";
+  if(name.endsWith(".ogg") || name.endsWith(".oga")) return "audio/ogg";
+  if(name.endsWith(".webm")) return "audio/webm";
+  const detected = String(file?.type || "");
+  return detected;
+}
+async function saveAdminContent(){
+  if(!currentUser || currentUser.role !== "admin" || !firebaseReady){
+    showToast("خاصك تدخل بحساب الأدمن باش تزيد المحتوى.");
+    return;
+  }
+  const titleInput = document.getElementById("adminContentTitle");
+  const descriptionInput = document.getElementById("adminContentDescription");
+  const areaInput = document.getElementById("adminContentArea");
+  const lessonInput = document.getElementById("adminContentLesson");
+  const fileInput = document.getElementById("adminContentFile");
+  const button = app.querySelector('[data-action="admin-content-save"]');
+  const title = String(titleInput?.value || "").trim();
+  const description = String(descriptionInput?.value || "").trim();
+  const allowedAreas = ["course","podcast","test","speaking"];
+  const area = allowedAreas.includes(String(areaInput?.value || "")) ? String(areaInput.value) : "course";
+  const kind = area === "test" ? "test" : "lesson";
+  const lessonNumber = Number(lessonInput?.value);
+  const file = fileInput?.files?.[0];
+  if(!title){showToast("كتب عنوان المحتوى.");titleInput?.focus();return;}
+  if(!Number.isInteger(lessonNumber) || lessonNumber < 1 || lessonNumber > 10){showToast("اختار الدرس المناسب.");return;}
+  if(!file){showToast("اختار PDF أو HTML أو صورة أو ملف صوتي.");fileInput?.focus();return;}
+  const mimeType = customContentMime(file);
+  const allowed = ["application/pdf","text/html","image/png","image/jpeg","image/webp","image/gif","audio/mpeg","audio/mp4","audio/wav","audio/x-wav","audio/ogg","audio/webm"];
+  if(!allowed.includes(mimeType)){showToast("هاد الصيغة ما مدعماش. استعمل PDF أو HTML أو PNG/JPG/WEBP/GIF أو MP3/M4A/WAV/OGG.");return;}
+  if(button){button.disabled=true;button.textContent="جاري الرفع والحفظ...";}
+  try{
+    const dataUrl = await readFileAsDataUrl(file);
+    const base64 = dataUrl.split(",")[1] || "";
+    if(!base64) throw new Error("الملف فارغ أو تعذر تحويله.");
+    const id = firebaseDb.ref(`${DEUTSCH_A1_PATH}/contentMeta`).push().key;
+    const now = new Date().toISOString();
+    const meta = {
+      id, title, description, kind, area, lessonNumber,
+      level: lessonNumber <= 5 ? "A1.1" : "A1.2",
+      fileName: String(file.name || "content").slice(0,160),
+      mimeType, sizeBytes: Number(file.size)||0,
+      createdAt: now, createdBy: currentUser.id, active: true
+    };
+    const updates = {};
+    updates[`${DEUTSCH_A1_PATH}/contentMeta/${id}`] = meta;
+    updates[`${DEUTSCH_A1_PATH}/contentFiles/${id}`] = {
+      base64, mimeType, fileName: meta.fileName, uploadedAt: now
+    };
+    await firebaseDb.ref().update(updates);
+    adminContentMeta[id] = meta;
+    if(titleInput) titleInput.value = "";
+    if(descriptionInput) descriptionInput.value = "";
+    if(fileInput) fileInput.value = "";
+    render();
+    showToast("تحفظ المحتوى وولا ظاهر للطلاب داخل الدرس المختار.");
+  }catch(error){
+    console.error("Admin content upload failed:", error);
+    showToast("ما قدرناش نحفظو الملف: " + (error.message || error.code || "خطأ غير معروف") + " · تأكد من Firebase Rules.");
+  }finally{
+    if(button){button.disabled=false;button.textContent="حفظ وإظهار للطلاب";}
+  }
+}
+async function deleteAdminContent(id){
+  if(!currentUser || currentUser.role !== "admin" || !firebaseReady || !id) return;
+  const item = adminContentMeta[id];
+  if(!item) return;
+  if(!window.confirm(`حذف "${item.title || item.fileName || "المحتوى"}" من المنصة؟`)) return;
+  try{
+    const updates = {};
+    updates[`${DEUTSCH_A1_PATH}/contentMeta/${id}`] = null;
+    updates[`${DEUTSCH_A1_PATH}/contentFiles/${id}`] = null;
+    await firebaseDb.ref().update(updates);
+    delete adminContentMeta[id];
+    render();
+    showToast("تحذف المحتوى من مكتبة المنصة.");
+  }catch(error){
+    showToast("ما قدرناش نحذفو المحتوى: " + (error.message || error.code || "خطأ غير معروف"));
+  }
+}
+function decodeBase64Utf8(base64){
+  const binary = atob(String(base64 || ""));
+  const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+  return new TextDecoder("utf-8").decode(bytes);
+}
+
+function customTestResultsBridgeScript(meta){
+  const config = {
+    id:String(meta && meta.id || ""),
+    title:String(meta && meta.title || "اختبار إضافي"),
+    lessonNumber:Number(meta && meta.lessonNumber) || 0
+  };
+  const safeConfig = JSON.stringify(config)
+    .replace(/</g,"\\u003c")
+    .replace(/\u2028/g,"\\u2028")
+    .replace(/\u2029/g,"\\u2029");
+  return `<script>
+(function(){
+  "use strict";
+  const config=${safeConfig};
+  const attemptId="admin-html-"+config.id+"-"+Date.now()+"-"+Math.random().toString(36).slice(2,10);
+  const exerciseScores=Object.create(null);
+  function send(report){
+    const input=report && typeof report==="object" ? report : {};
+    const points=Number(input.points ?? input.score ?? input.correct ?? 0);
+    const maxPoints=Number(input.maxPoints ?? input.totalPoints ?? input.total ?? 0);
+    if(!Number.isFinite(points)||!Number.isFinite(maxPoints)||maxPoints<=0) return false;
+    const payload={
+      type:"deutsch-a1-progress-report",
+      moduleId:"custom-test-"+config.id+"-lektion-"+config.lessonNumber,
+      title:config.title+" · Lektion "+config.lessonNumber,
+      lessonNumber:config.lessonNumber,
+      customContentId:config.id,
+      contentType:"test",
+      activityType:"test",
+      source:"admin-custom-test",
+      points:Math.max(0,points),
+      maxPoints:Math.max(0,maxPoints),
+      completedExercises:Number(input.completedExercises)||0,
+      totalExercises:Number(input.totalExercises)||0,
+      completed:input.completed && typeof input.completed==="object" ? input.completed : {},
+      visited:input.visited && typeof input.visited==="object" ? input.visited : {},
+      visitedStages:input.visitedStages && typeof input.visitedStages==="object" ? input.visitedStages : {},
+      exerciseSeconds:input.exerciseSeconds && typeof input.exerciseSeconds==="object" ? input.exerciseSeconds : {},
+      scores:input.scores && typeof input.scores==="object" ? input.scores : {},
+      scoreTotals:input.scoreTotals && typeof input.scoreTotals==="object" ? input.scoreTotals : {},
+      exerciseLabels:input.exerciseLabels && typeof input.exerciseLabels==="object" ? input.exerciseLabels : {},
+      stageByExercise:input.stageByExercise && typeof input.stageByExercise==="object" ? input.stageByExercise : {},
+      stageLabels:input.stageLabels && typeof input.stageLabels==="object" ? input.stageLabels : {},
+      attemptId,
+      updatedAt:new Date().toISOString()
+    };
+    try{window.parent.postMessage(payload,"*");return true;}catch(error){console.error("Deutsch A1 result bridge:",error);return false;}
+  }
+  window.DeutschA1Results=window.DeutschA1Results||{};
+  window.DeutschA1Results.submit=function(report,maxPoints){
+    if(typeof report==="number") return send({points:report,maxPoints});
+    return send(report);
+  };
+  window.DeutschA1Results.complete=window.DeutschA1Results.submit;
+  window.DeutschA1Results.update=window.DeutschA1Results.submit;
+
+  // Automatic compatibility with the existing lesson HTML tests:
+  // finish(exerciseId, correctAnswers, totalQuestions)
+  function hookExistingFinish(){
+    if(typeof window.finish!=="function" || window.finish.__deutschA1ResultBridge) return;
+    const originalFinish=window.finish;
+    const wrappedFinish=function(id,correct,total){
+      const output=originalFinish.apply(this,arguments);
+      const key=String(id||("exercise-"+Object.keys(exerciseScores).length));
+      const right=Math.max(0,Number(correct)||0);
+      const max=Math.max(0,Number(total)||0);
+      if(max>0){
+        exerciseScores[key]={correct:right,total:max};
+        const scoreTotals={},scores={},completed={},exerciseLabels={},stageByExercise={};
+        let points=0,maxPoints=0;
+        Object.entries(exerciseScores).forEach(([exerciseId,value])=>{
+          points+=value.correct;maxPoints+=value.total;
+          scores[exerciseId]={correct:value.correct,total:value.total};
+          scoreTotals[exerciseId]=value.total;
+          completed[exerciseId]=true;
+          const node=document.getElementById(exerciseId);
+          const heading=node && node.querySelector("h2,h3,h4,.exercise-title");
+          exerciseLabels[exerciseId]=heading ? String(heading.textContent||"").trim() : exerciseId;
+          stageByExercise[exerciseId]="custom-html-test";
+        });
+        const totalExercises=document.querySelectorAll("[data-exercise-stars]").length || Object.keys(exerciseScores).length;
+        send({
+          points,maxPoints,
+          completedExercises:Object.keys(exerciseScores).length,
+          totalExercises,
+          completed,
+          scores,
+          scoreTotals,
+          exerciseLabels,
+          stageByExercise,
+          stageLabels:{"custom-html-test":"اختبار HTML إضافي"}
+        });
+      }
+      return output;
+    };
+    wrappedFinish.__deutschA1ResultBridge=true;
+    window.finish=wrappedFinish;
+  }
+  hookExistingFinish();
+  document.addEventListener("DOMContentLoaded",hookExistingFinish,{once:true});
+})();
+</script>`;
+}
+function injectCustomTestResultsBridge(html,meta){
+  const source=String(html||"");
+  const bridge=customTestResultsBridgeScript(meta);
+  const bodyClose=source.search(/<\/body\s*>/i);
+  if(bodyClose>=0) return source.slice(0,bodyClose)+bridge+source.slice(bodyClose);
+  const htmlClose=source.search(/<\/html\s*>/i);
+  if(htmlClose>=0) return source.slice(0,htmlClose)+bridge+source.slice(htmlClose);
+  return source+bridge;
+}
+async function openCustomContent(id){
+  if(!currentUser || !firebaseReady) return;
+  const meta = adminContentMeta[id];
+  if(!meta || meta.active === false){showToast("هاد المحتوى ما بقاش متاح.");return;}
+  const lessonIndex = Number(meta.lessonNumber) - 1;
+  if(currentUser.role === "student" && !getStudentLessonAccess(lessonIndex)){
+    showToast("هاد الدرس مقفل حالياً من طرف الإدارة.");return;
+  }
+  activeCustomContentMeta = {...meta, id:String(meta.id || id)};
+  activeCustomContentFile = null;
+  customContentReturnPage = page || "lesson-hub";
+  page = "custom-content";
+  render();
+  try{
+    const fileSnap = await firebaseDb.ref(`${DEUTSCH_A1_PATH}/contentFiles/${id}`).once("value");
+    activeCustomContentFile = fileSnap.val();
+    if(!activeCustomContentFile?.base64) throw new Error("ملف المحتوى غير موجود.");
+    render();
+  }catch(error){
+    console.error("Custom content open failed:", error);
+    showToast("ما قدرناش نفتح الملف: " + (error.message || error.code || "خطأ غير معروف"));
+  }
+}
+function renderCustomContentPage(){
+  const meta = activeCustomContentMeta;
+  const file = activeCustomContentFile;
+  if(!meta){
+    page = "lesson-hub";
+    return render();
+  }
+  if(!file){
+    app.innerHTML = pageShell("محتوى الدرس", escapeHtml(meta.title || "محتوى إضافي"), "جاري تحميل الملف...", `<div class="custom-content-loading">جاري فتح المحتوى...</div>`);
+    return;
+  }
+  const dataUrl = `data:${file.mimeType || meta.mimeType};base64,${file.base64}`;
+  const fileName = escapeHtml(meta.fileName || "content");
+  let viewer = "";
+  if(meta.mimeType === "text/html"){
+    viewer = `<iframe id="customContentHtmlFrame" class="custom-content-html-frame" title="${escapeHtml(meta.title)}" sandbox="allow-scripts allow-forms" referrerpolicy="no-referrer"></iframe>`;
+  }else if(String(meta.mimeType || "").startsWith("image/")){
+    viewer = `<div class="custom-content-image-wrap"><img src="${dataUrl}" alt="${escapeHtml(meta.title)}"></div>`;
+  }else if(String(meta.mimeType || "").startsWith("audio/")){
+    viewer = `<div class="custom-content-audio-wrap"><div class="custom-content-audio-icon">🎧</div><h3>${escapeHtml(meta.title || "ملف صوتي")}</h3><audio class="custom-content-audio-player" controls preload="metadata" src="${dataUrl}">المتصفح لا يدعم تشغيل الصوت.</audio></div>`;
+  }else{
+    viewer = `<iframe class="custom-content-pdf-frame" title="${escapeHtml(meta.title)}" src="${dataUrl}"></iframe>`;
+  }
+  const content = `<div class="custom-content-viewer-actions"><span>${customContentFileTypeLabel(meta)} · Lektion ${Number(meta.lessonNumber)}</span><a class="outline-btn" href="${dataUrl}" download="${fileName}">تحميل الملف</a><button class="back-btn" type="button" data-action="custom-content-back">رجوع</button></div>${viewer}`;
+  app.innerHTML = pageShell(meta.kind === "test" ? "اختبار إضافي" : "درس إضافي", escapeHtml(meta.title || "محتوى إضافي"), escapeHtml(meta.description || lessons[Number(meta.lessonNumber)-1]?.name || ""), content);
+  if(meta.mimeType === "text/html"){
+    const frame = document.getElementById("customContentHtmlFrame");
+    if(frame){
+      const originalHtml = decodeBase64Utf8(file.base64);
+      const isTestContent = meta.area === "test" || meta.kind === "test";
+      frame.srcdoc = isTestContent
+        ? injectCustomTestResultsBridge(originalHtml, meta)
+        : originalHtml;
+    }
+  }
 }
 
 function renderLevels(){
@@ -2970,12 +5274,114 @@ function renderLevels(){
       <div class="level-icon">A1.2</div><h3>A1.2</h3><p>Weiterlernen: Alltag, Freizeit, Einkaufen und mehr.</p>
       <div class="card-foot"><span>Lektionen 6–10</span><span>↗</span></div>
     </button>
+    <button class="level-card" data-action="level-path" data-level="A2">
+      <div class="level-icon">A2</div><h3>A2</h3><p>Vier interaktive Lektionen mit Bild und deutscher Aussprache.</p>
+      <div class="card-foot"><span>Lektionen 2–5</span><span>↗</span></div>
+    </button>
   </div>`;
-  app.innerHTML = pageShell("مستواك","اختر مسارك","مستوى A1 مقسّم إلى A1.1 وA1.2 ويضم عشرة دروس.",content);
+  app.innerHTML = pageShell("مستواك","اختر مسارك","A1 يضم عشرة دروس، وأُضيفت أربعة دروس تفاعلية من مستوى A2.",content);
 }
 function levelLabel(){ return selectedLevel==="A1.1" ? "Grundlagen" : "Weiterlernen"; }
 function renderLevelHome(){
-  renderLessons();
+  const lessonMeta = [
+    {title:"التحية والتعارف", desc:"التعريف بنفسك وبلدك", icon:"🤝"},
+    {title:"العائلة", desc:"التحدث عن الأسرة", icon:"👨‍👩‍👧"},
+    {title:"السكن والمنزل", desc:"الغرف والأثاث ووصف البيت", icon:"🏠"},
+    {title:"الأكل والشرب", desc:"الطعام والشراب والطلبات", icon:"🍽️"},
+    {title:"الحياة اليومية", desc:"الروتين اليومي والوقت", icon:"⏰"},
+    {title:"وقت الفراغ والهوايات", desc:"الأنشطة والرياضة والهوايات", icon:"⚽"},
+    {title:"التسوق", desc:"الشراء والأسعار والمقاسات", icon:"🛍️"},
+    {title:"العمل والمهنة", desc:"المهن والعمل والحياة المهنية", icon:"💼"},
+    {title:"المدينة والمواصلات", desc:"الأماكن والتنقل ووسائل النقل", icon:"🚆"},
+    {title:"الصحة والمواعيد", desc:"الصحة والأعراض وحجز المواعيد", icon:"🩺"}
+  ];
+  const resultRows = Object.values(readStudentResults(currentUser?.id || "") || {}).filter(item=>item && typeof item==="object");
+  const completedForLesson = index => resultRows.some(result=>{
+    if(adminResultLessonIndex(result)!==index) return false;
+    const completedMap = result.completed && typeof result.completed==="object" ? result.completed : {};
+    const total = Number(result.totalExercises) || Object.keys(completedMap).length;
+    const completed = Number(result.completedExercises) || Object.values(completedMap).filter(Boolean).length;
+    return result.completed===true || (total>0 && completed>=total);
+  });
+  const statuses = lessons.map((lesson,index)=>({
+    index,
+    unlocked:getStudentLessonAccess(index),
+    completed:completedForLesson(index)
+  }));
+  const currentIndex = statuses.find(item=>item.unlocked && !item.completed)?.index ?? -1;
+  const firstUnlockedIndex = statuses.find(item=>item.unlocked)?.index ?? -1;
+  const nextLessonIndex = currentIndex >= 0 ? currentIndex : firstUnlockedIndex;
+  const completedCount = statuses.filter(item=>item.completed).length;
+  const progress = lessons.length ? Math.round(completedCount/lessons.length*100) : 0;
+  const lessonCards = statuses.map(item=>{
+    const meta = lessonMeta[item.index] || {title:lessons[item.index]?.name || `الدرس ${item.index+1}`,desc:"",icon:"📘"};
+    const state = !item.unlocked ? "locked" : item.completed ? "completed" : item.index===currentIndex ? "current" : "available";
+    const stateLabel = state === "locked" ? "مقفل" : state === "completed" ? "مكتمل" : state === "current" ? "قيد التعلّم" : "متاح";
+    const stateIcon = state === "locked" ? "🔒" : state === "completed" ? "✓" : state === "current" ? "●" : "•";
+    const disabled = item.unlocked ? "" : "disabled";
+    return `<button type="button" class="level-lesson-card is-${state}" data-action="lesson" data-lesson="${item.index}" ${disabled} aria-label="${escapeHtml(`الدرس ${item.index+1}: ${meta.title} · ${stateLabel}`)}">
+      <span class="level-lesson-art" aria-hidden="true">${meta.icon}</span>
+      <span class="level-lesson-copy">
+        <span class="level-lesson-number">الدرس ${item.index+1}</span>
+        <strong>${escapeHtml(meta.title)}</strong>
+        <small>${escapeHtml(meta.desc || lessons[item.index]?.name || "")}</small>
+      </span>
+      <span class="level-lesson-side">
+        <span class="level-lesson-status is-${state}"><i aria-hidden="true">${stateIcon}</i>${stateLabel}</span>
+        <span class="level-lesson-arrow" aria-hidden="true">${item.unlocked ? "←" : "🔒"}</span>
+      </span>
+    </button>`;
+  }).join("");
+  const nextCta = nextLessonIndex >= 0
+    ? `<button type="button" class="level-next-cta" data-action="lesson" data-lesson="${nextLessonIndex}">
+        <span class="level-next-cta-icon" aria-hidden="true">←</span>
+        <span class="level-next-cta-copy"><strong>${currentIndex >= 0 ? "ابدأ الدرس التالي" : "راجع الدروس"}</strong><small>${currentIndex >= 0 ? `الدرس ${nextLessonIndex+1} · ${escapeHtml(lessonMeta[nextLessonIndex]?.title || lessons[nextLessonIndex]?.name || "")}` : "يمكنك إعادة أي درس متاح"}</small></span>
+        <span class="level-next-cta-spark" aria-hidden="true">✦</span>
+      </button>`
+    : `<div class="level-complete-note"><span aria-hidden="true">🏆</span><strong>أحسنت! أكملت جميع الدروس</strong></div>`;
+
+  app.innerHTML = `<div class="student-app level-home-app" dir="rtl">
+    <header class="level-screen-topbar">
+      <button type="button" class="level-screen-back" data-action="back" aria-label="رجوع"><span aria-hidden="true">←</span></button>
+      <div class="level-screen-title"><small>مسارك التعليمي</small><strong>مستوى A1</strong></div>
+    </header>
+    <main class="level-home-main">
+      <section class="level-hero" aria-labelledby="levelHeroTitle">
+        <div class="level-hero-visual" aria-hidden="true">
+          <span class="level-hero-orbit"></span>
+          <span class="level-hero-cap">🎓</span>
+          <span class="level-hero-book">📚</span>
+          <span class="level-hero-star">✦</span>
+        </div>
+        <div class="level-hero-copy">
+          <span class="level-hero-kicker"><i aria-hidden="true"></i> رحلتك تبدأ من هنا</span>
+          <h1 id="levelHeroTitle"><strong>A1</strong><span>المستوى الأساسي</span></h1>
+          <p>ابدأ رحلتك في تعلّم الألمانية، خطوة بخطوة.</p>
+          <div class="level-hero-tags"><span>${lessons.length} دروس</span><span>أساسيات اللغة</span></div>
+        </div>
+      </section>
+
+      <section class="level-progress-card" aria-label="تقدمك في المستوى A1">
+        <div class="level-progress-top">
+          <div class="level-progress-title">
+            <span class="level-progress-icon" aria-hidden="true">▥</span>
+            <span><strong>تقدمك في المستوى</strong><small>${completedCount} من ${lessons.length} دروس مكتملة</small></span>
+          </div>
+          <span class="level-progress-percent">${progress}%</span>
+        </div>
+        <div class="level-progress-track" role="progressbar" aria-label="نسبة التقدم في المستوى A1" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}"><span style="width:${progress}%"></span></div>
+      </section>
+
+      <section class="level-lessons-section">
+        <div class="level-lessons-heading">
+          <div><span class="level-section-kicker">خطتك التعليمية</span><h2>دروس المستوى <b>${lessons.length}</b></h2></div>
+          <small>تابع من حيث توقفت</small>
+        </div>
+        <div class="level-lessons-list">${lessonCards}</div>
+      </section>
+    </main>
+    <div class="level-next-cta-wrap">${nextCta}</div>
+  </div>`;
 }
 function renderLessons(){
   const list = levelLessons().map(idx => {
@@ -2989,131 +5395,375 @@ function renderLessons(){
   const content = `<div class="pill">✦ ${selectedLevel} <span>·</span> ${levelLabel()}</div><div class="lesson-grid">${list}</div>`;
   app.innerHTML = pageShell("مسارك التعليمي",selectedLevel,"اختار درساً، وستجد داخله الشرح والاستماع والاختبار.",content);
 }
+const lessonSectionPageConfig = {
+  course: {folder:"Kurs", suffix:"kurs", label:"Kurs", title:"الكورس", icon:"📚"},
+  test: {folder:"Test", suffix:"test", label:"Test", title:"الاختبار", icon:"✓"},
+  podcast: {folder:"Podcast", suffix:"podcast", label:"Podcast", title:"Podcast", icon:"🎧"},
+  speaking: {folder:"Sprechen", suffix:"sprechen", label:"Sprechen", title:"المحادثة", icon:"🎙️"}
+};
+function getLessonSectionPagePath(section, lessonNo){
+  const config = lessonSectionPageConfig[section];
+  if(!config) return "";
+  const no = Number(lessonNo || lessonNumber());
+  if(!Number.isInteger(no) || no < 1 || no > lessons.length) return "";
+  if(section === "test"){
+    const routes = getAdminTestPageRoutes();
+    const assigned = normalizeManagedPagePath(routes[String(no)] || "");
+    if(assigned) return assigned;
+  }
+  return `pages/${config.folder}/lektion-${no}-${config.suffix}.html`;
+}
+function openLessonSectionPage(section){
+  if(!getStudentLessonAccess(currentLesson)){
+    showToast("Diese Lektion wurde vom Administrator gesperrt.");
+    return;
+  }
+  if(!lessonSectionPageConfig[section]){
+    showToast("هذا القسم غير متاح حالياً.");
+    return;
+  }
+  lessonSectionType = section;
+  lessonSectionReturnPage = "lesson-hub";
+  page = "lesson-section-html";
+  render();
+}
+function renderLessonSectionHtmlPage(){
+  const config = lessonSectionPageConfig[lessonSectionType] || lessonSectionPageConfig.course;
+  const path = getLessonSectionPagePath(lessonSectionType, lessonNumber());
+  if(!path){
+    page = lessonSectionReturnPage || "lesson-hub";
+    return render();
+  }
+  document.documentElement.classList.add("challenge-fullscreen-open");
+  document.body.classList.add("challenge-fullscreen-open");
+  app.innerHTML = `<div class="challenge-fullscreen-shell lesson-section-fullscreen-shell">
+    <button type="button" class="challenge-fullscreen-exit" data-action="close-lesson-section-page">← رجوع للدرس</button>
+    <iframe id="lessonSectionPageFrame" title="${escapeHtml(config.label)} – Lektion ${lessonNumber()}" loading="eager" allow="autoplay; fullscreen"></iframe>
+  </div>`;
+  const frame = document.getElementById("lessonSectionPageFrame");
+  if(frame) loadManagedPageIntoFrame(frame, path);
+}
+
 function renderLessonHub(){
   const unlocked=getStudentLessonAccess(currentLesson);
   if(!unlocked){
     app.innerHTML=pageShell(`Lektion ${lessonNumber()}`,escapeHtml(lessonData().name),"هذا الدرس مقفل حالياً من طرف الإدارة.",`<div class="empty-state">اختار درساً متاحاً للمتابعة.</div>`);
     return;
   }
-  const podcastCount=podcastLibrary.filter(item=>item.lesson===lessonNumber()).length;
-  const podcastDescription=podcastCount
-    ? `${podcastCount} Podcast${podcastCount>1?"s":""} ديال Lektion ${lessonNumber()} · Audio-Lesetraining`
-    : "Höre den Dialog dieser Lektion mit deutscher Aussprache und Übersetzung.";
+
+  const arabicTitles=[
+    "التحية والتعارف","العائلة والأسرة","الطعام والشراب","السكن والمنزل","وقت الفراغ والهوايات",
+    "الحياة اليومية","التسوق والشراء","العمل والمهن","المدينة والمواصلات","الصحة والمواعيد"
+  ];
+  const heroIcons=["👋","👨‍👩‍👧","🥐","🏡","⚽","⏰","🛍️","💼","🚌","🩺"];
+  const arabicDescriptions=[
+    "تعلّم عبارات التحية والتعارف وتقديم نفسك بالألمانية.",
+    "تعلّم كيف تتحدث عن عائلتك وأفرادها.",
+    "تعرّف على أسماء الأطعمة والمشروبات وكيفية الطلب.",
+    "تعلّم وصف المنزل والغرف والأثاث.",
+    "تحدّث عن وقت الفراغ والهوايات والأنشطة.",
+    "تعلّم الحديث عن الروتين اليومي والوقت والعمل.",
+    "تعلّم التسوق والسؤال عن الأسعار والكميات.",
+    "تعرّف على المهن ومكان العمل والخبرة.",
+    "تعلّم السؤال عن الطريق ووسائل النقل.",
+    "تعلّم وصف الحالة الصحية وحجز المواعيد."
+  ];
+  const arabicTitle=arabicTitles[currentLesson]||lessonData().name;
+  const heroIcon=heroIcons[currentLesson]||"📘";
+  const shortIntro=arabicDescriptions[currentLesson]||"تعلّم أهم الكلمات والعبارات واستعملها في مواقف الحياة اليومية.";
+  const levelShort=(selectedLevel||"A1.1").split(".")[0];
+  const hasDedicatedLessonTest=[5,6,7,8].includes(currentLesson);
+
+  const stages=[
+    {id:"explanation",number:"1",title:"شرح الدرس",desc:`تعلّم أهم العبارات حول ${arabicTitle} مع شرح وأمثلة واضحة.`,icon:"📖",tone:"blue",status:"ابدأ الآن",statusIcon:"▶"},
+    {id:"vocabulary",number:"2",title:"المفردات المهمة",desc:"أهم الكلمات مع النطق والترجمة والأمثلة.",icon:"🏷️",tone:"green",status:"المفردات",statusIcon:"Aa"},
+    {id:"practice",number:"3",title:"تمارين تطبيقية",desc:hasDedicatedLessonTest?"حل الاختبار التفاعلي الخاص بهذا الدرس وتعرّف على نتيجتك.":"اختبر فهمك وطبّق ما تعلّمته في الدرس.",icon:"📝",tone:"amber",status:hasDedicatedLessonTest?"ابدأ الاختبار":"تدرّب",statusIcon:"✓"},
+    {id:"speaking",number:"4",title:"المحادثة العملية",desc:"تدرّب على الحوار مع المعلّم الذكي وصحّح جملك.",icon:"🤖",tone:"pink",status:"تحدّث",statusIcon:"💬"}
+  ];
+  const stageMarkup=stages.map((stage,index)=>`
+    <button type="button" class="lesson-detail-stage lesson-detail-stage-${stage.tone} ${index===0?"is-primary":""}"
+      data-action="lesson-stage-open" data-stage="${stage.id}" aria-label="${escapeHtml(stage.title)}">
+      <span class="lesson-detail-stage-icon" aria-hidden="true">${stage.icon}</span>
+      <span class="lesson-detail-stage-copy">
+        <strong>${stage.number}. ${stage.title}</strong>
+        <small>${escapeHtml(stage.desc)}</small>
+      </span>
+      <span class="lesson-detail-stage-status"><i aria-hidden="true">${stage.statusIcon}</i>${stage.status}</span>
+      <span class="lesson-detail-stage-arrow" aria-hidden="true">←</span>
+    </button>`).join("");
+
   const content=`
-    <div class="lesson-hub-intro">
-      <div class="pill">✦ ${selectedLevel} <span>·</span> Lektion ${lessonNumber()}</div>
-      <h3>${escapeHtml(lessonData().name)}</h3>
-      <p>اختار شنو بغيتي تدير فهاد الدرس: تعلم، سمع، ولا اختبر راسك.</p>
-    </div>
-    <div class="lesson-hub-grid">
-      <button class="lesson-hub-card lesson-hub-course" data-action="open-course">
-        <span class="lesson-hub-icon">📚</span><span class="lesson-hub-tag">LERNEN</span>
-        <h3>Kurs</h3><p>Wörter, Grammatik, Erklärungen und Lernübungen dieser Lektion.</p>
-        <span class="lesson-hub-link">Kurs öffnen <b>→</b></span>
-      </button>
-      <button class="lesson-hub-card lesson-hub-podcast" data-action="open-lesson-podcasts">
-        <span class="lesson-hub-icon">🎧</span><span class="lesson-hub-tag">HÖREN</span>
-        <h3>Podcast</h3><p>${escapeHtml(podcastDescription)}</p>
-        <span class="lesson-hub-link">Podcast anhören <b>→</b></span>
-      </button>
-      <button class="lesson-hub-card lesson-hub-test" data-action="open-lesson-test">
-        <span class="lesson-hub-icon">✓</span><span class="lesson-hub-tag">ÜBEN</span>
-        <h3>Test</h3><p>Prüfe dein Wissen und übe die Inhalte aus Lektion ${lessonNumber()}.</p>
-        <span class="lesson-hub-link">Test starten <b>→</b></span>
-      </button>
-      <button class="lesson-hub-card lesson-hub-talk" data-action="lesson-open-talk">
-        <span class="lesson-hub-icon">🎙️</span><span class="lesson-hub-tag">SPRECHEN</span>
-        <h3>محادثة الدرس</h3><p>تدرّب على حوار خاص بموضوع ${escapeHtml(lessonData().name)} مع تصحيح الجمل.</p>
-        <span class="lesson-hub-link">ابدأ المحادثة <b>←</b></span>
-      </button>
-    </div>`;
-  app.innerHTML=pageShell(`Lektion ${lessonNumber()}`,selectedLevel,`مساحة التعلّم · ${escapeHtml(lessonData().name)}`,content);
+    <section class="lesson-detail-page" aria-label="محتوى الدرس">
+      <header class="lesson-detail-topbar">
+        <button type="button" class="lesson-detail-back" data-action="back" aria-label="رجوع">←</button>
+        <button type="button" class="lesson-detail-podcast-mini" data-action="open-lesson-podcasts" aria-label="Podcast الدرس" title="Podcast الدرس">🎧</button>
+        <div class="lesson-detail-level-label"><strong>${escapeHtml(levelShort)}</strong><span>مستوى</span></div>
+      </header>
+
+      <section class="lesson-detail-hero">
+        <div class="lesson-detail-hero-copy">
+          <span class="lesson-detail-hero-badge">${escapeHtml(selectedLevel||"A1.1")}</span>
+          <h1>الدرس ${lessonNumber()}</h1>
+          <h2>${escapeHtml(arabicTitle)}</h2>
+          <p dir="ltr">${escapeHtml(lessonData().name)}</p>
+          <small>${escapeHtml(shortIntro)}</small>
+        </div>
+        <div class="lesson-detail-hero-art" aria-hidden="true">
+          <span class="lesson-detail-art-spark">✦</span>
+          <span class="lesson-detail-art-bubble">Hallo!</span>
+          ${currentLesson===0?`<span class="lesson-detail-art-person person-one">👨🏻‍🎓</span><span class="lesson-detail-art-person person-two">👩🏻‍🎓</span>`:`<span class="lesson-detail-art-topic">${heroIcon}</span>`}
+        </div>
+      </section>
+
+      <section class="lesson-detail-progress-card" aria-label="تقدمك في الدرس">
+        <div class="lesson-detail-progress-ring"><strong>0%</strong></div>
+        <div class="lesson-detail-progress-copy">
+          <strong>تقدمك في الدرس</strong>
+          <small>أكمل جميع الأنشطة لإنهاء الدرس</small>
+          <div class="lesson-detail-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span></span></div>
+        </div>
+      </section>
+
+      <div class="lesson-detail-content-heading"><h2>محتوى الدرس</h2><span aria-hidden="true">▱</span></div>
+      <div class="lesson-detail-stage-list">${stageMarkup}</div>
+
+      <div class="lesson-detail-footer">
+        <button type="button" class="lesson-detail-start" data-action="lesson-stage-open" data-stage="explanation">
+          <span aria-hidden="true">▶</span><strong>ابدأ شرح الدرس</strong><i aria-hidden="true">←</i>
+        </button>
+      </div>
+    </section>`;
+  app.innerHTML=`<div class="student-app lesson-detail-app" dir="rtl"><main class="student-main lesson-detail-main">${content}</main></div>`;
+}
+function selectPodcast(type,id){
+  const normalizedType = type === "custom" ? "custom" : "builtin";
+  let lessonNo = null;
+  if(normalizedType === "builtin"){
+    const item = podcastLibrary.find(entry=>entry.id===String(id));
+    if(!item){showToast("هاد Podcast ما لقيناهش.");return;}
+    lessonNo = Number(item.lesson);
+  }else{
+    const item = customContentEntries("lesson",null,"podcast").find(entry=>entry.id===String(id));
+    if(!item){showToast("هاد الملف ما بقاش متاح.");return;}
+    lessonNo = Number(item.lessonNumber);
+  }
+  activePodcastSelection = {type:normalizedType,id:String(id||"")};
+  activePodcastFile = null;
+  activePodcastLoading = normalizedType === "custom";
+  activePodcastError = "";
+  if(Number.isInteger(lessonNo) && lessonNo>=1 && lessonNo<=lessons.length){
+    currentLesson = lessonNo-1;
+    selectedLevel = currentLesson<5 ? "A1.1" : "A1.2";
+  }
+  render();
+  if(normalizedType !== "custom") return;
+  if(!firebaseReady){
+    activePodcastLoading = false;
+    activePodcastError = "تعذر الاتصال بقاعدة البيانات لفتح ملف Podcast.";
+    render();
+    return;
+  }
+  firebaseDb.ref(`${DEUTSCH_A1_PATH}/contentFiles/${id}`).once("value")
+    .then(snapshot=>{
+      if(!activePodcastSelection || activePodcastSelection.type!=="custom" || activePodcastSelection.id!==String(id)) return;
+      const file = snapshot.val();
+      if(!file || !file.base64) throw new Error("ملف الصوت غير موجود في Firebase.");
+      activePodcastFile = file;
+      activePodcastLoading = false;
+      activePodcastError = "";
+      render();
+    })
+    .catch(error=>{
+      if(!activePodcastSelection || activePodcastSelection.type!=="custom" || activePodcastSelection.id!==String(id)) return;
+      console.error("Podcast file load failed:",error);
+      activePodcastLoading = false;
+      activePodcastError = error.message || "ما قدرناش نفتحو ملف Podcast.";
+      render();
+    });
+}
+function renderPodcastInlinePlayer(){
+  if(!activePodcastSelection) return `<div class="podcast-player-empty"><span>🎧</span><strong>اختار Podcast من اللائحة</strong><p>الصوت والنص غادي يبانوا هنا، بلا ما تخرج من هاد الصفحة.</p></div>`;
+  const selection = activePodcastSelection;
+  if(selection.type === "builtin"){
+    const item = podcastLibrary.find(entry=>entry.id===selection.id);
+    if(!item) return "";
+    const player = item.format === "html"
+      ? `<iframe id="podcastInlineFrame" class="podcast-inline-frame" title="${escapeHtml(item.title)}" src="${escapeHtml(item.file)}" loading="lazy" allow="autoplay"></iframe>`
+      : `<audio class="podcast-inline-audio" controls preload="metadata" src="${escapeHtml(item.file)}">المتصفح لا يدعم تشغيل الصوت.</audio>`;
+    return `<section class="podcast-inline-player"><div class="podcast-inline-head"><div><span class="podcast-inline-kicker">NOW PLAYING · LEKTION ${item.lesson}</span><h2>${escapeHtml(item.title)}</h2></div><button class="podcast-close-player" type="button" data-action="podcast-close-player" aria-label="إغلاق المشغل">×</button></div>${player}</section>`;
+  }
+  const meta = customContentEntries("lesson",null,"podcast").find(entry=>entry.id===selection.id);
+  if(!meta) return "";
+  if(activePodcastLoading) return `<section class="podcast-inline-player"><div class="podcast-inline-loading">جاري تحميل Podcast من Firebase...</div></section>`;
+  if(activePodcastError) return `<section class="podcast-inline-player"><div class="podcast-inline-error">${escapeHtml(activePodcastError)}</div></section>`;
+  if(!activePodcastFile?.base64) return `<section class="podcast-inline-player"><div class="podcast-inline-loading">اختار الملف مرة أخرى لفتحه.</div></section>`;
+  const mime = String(activePodcastFile.mimeType || meta.mimeType || "");
+  const dataUrl = `data:${mime};base64,${activePodcastFile.base64}`;
+  let viewer = "";
+  if(mime.startsWith("audio/")){
+    viewer = `<audio class="podcast-inline-audio" controls preload="metadata" src="${dataUrl}">المتصفح لا يدعم تشغيل الصوت.</audio>`;
+  }else if(mime === "text/html"){
+    viewer = `<iframe id="podcastInlineFrame" class="podcast-inline-frame" title="${escapeHtml(meta.title)}" sandbox="allow-scripts allow-forms" referrerpolicy="no-referrer"></iframe>`;
+  }else if(mime.startsWith("image/")){
+    viewer = `<div class="podcast-inline-image"><img src="${dataUrl}" alt="${escapeHtml(meta.title)}"></div>`;
+  }else if(mime === "application/pdf"){
+    viewer = `<iframe class="podcast-inline-frame podcast-inline-pdf" title="${escapeHtml(meta.title)}" src="${dataUrl}"></iframe>`;
+  }else{
+    viewer = `<div class="podcast-inline-error">صيغة الملف ما كتدعمش العرض داخل Podcast.</div>`;
+  }
+  return `<section class="podcast-inline-player"><div class="podcast-inline-head"><div><span class="podcast-inline-kicker">مضاف من ADMIN · LEKTION ${Number(meta.lessonNumber)}</span><h2>${escapeHtml(meta.title || "Podcast")}</h2><p>${escapeHtml(meta.description || customContentFileTypeLabel(meta))}</p></div><button class="podcast-close-player" type="button" data-action="podcast-close-player" aria-label="إغلاق المشغل">×</button></div>${viewer}</section>`;
+}
+function enterPodcastPage(returnPage,lessonNo=null){
+  podcastReturnPage = returnPage || "levels";
+  podcastFilterLesson = Number.isInteger(Number(lessonNo)) && Number(lessonNo)>=1 && Number(lessonNo)<=lessons.length ? Number(lessonNo) : null;
+  activePodcastSelection = null;
+  activePodcastFile = null;
+  activePodcastLoading = false;
+  activePodcastError = "";
+  page = "podcasts";
+  render();
+  // Refresh the metadata whenever the page opens so students already logged in
+  // can see podcasts that the administrator has just added.
+  if(firebaseReady){
+    firebaseDb.ref(`${DEUTSCH_A1_PATH}/contentMeta`).once("value")
+      .then(snapshot=>{
+        adminContentMeta = snapshot.val() || {};
+        if(page === "podcasts") render();
+      })
+      .catch(error=>console.warn("Podcast metadata refresh failed:",error));
+  }
 }
 function renderLessonPodcasts(){
-  const files=podcastLibrary.filter(item=>item.lesson===lessonNumber());
-  const list=files.length ? files.map(item=>`<button class="podcast-file-card" data-action="podcast-file-open" data-podcast-id="${escapeHtml(item.id)}">
-      <span class="podcast-file-icon">🎧</span><span class="podcast-file-copy"><strong>${escapeHtml(item.title)}</strong><small>Podcast · Lektion ${lessonNumber()} · Audio-Lesetraining</small></span><span class="podcast-file-arrow">▶</span>
-    </button>`).join("") : `<button class="lesson-hub-card lesson-hub-podcast lesson-dialogue-fallback" data-action="lesson-podcast-dialog">
-      <span class="lesson-hub-icon">💬</span><span class="lesson-hub-tag">DIALOG MIT AUDIO</span><h3>${escapeHtml(dialogues[currentLesson].title)}</h3>
-      <p>Höre den Dialog Satz für Satz auf Deutsch und lies die arabische Übersetzung.</p><span class="lesson-hub-link">Dialog anhören <b>→</b></span>
-    </button>`;
-  const content=`<div class="pill">🎧 Podcast <span>·</span> Lektion ${lessonNumber()}</div><div class="podcast-file-list lesson-podcast-list">${list}</div>`;
-  app.innerHTML=pageShell(`الدرس ${lessonNumber()}`,"الاستماع",escapeHtml(lessonData().name),content);
+  enterPodcastPage("lesson-hub",lessonNumber());
+}
+function renderPodcastFullscreenSelection(){
+  if(!activePodcastSelection) return "";
+  const selection=activePodcastSelection;
+  if(selection.type==="builtin"){
+    const item=podcastLibrary.find(entry=>entry.id===selection.id);
+    if(!item) return `<div class="podcast-fullscreen-message">هاد Podcast ما بقاش متاح.</div>`;
+    return `<div class="podcast-fullscreen-player"><iframe class="podcast-fullscreen-frame" title="${escapeHtml(item.title)}" src="${escapeHtml(item.file)}" loading="eager" allow="autoplay; fullscreen"></iframe></div>`;
+  }
+  const meta=customContentEntries("lesson",null,"podcast").find(entry=>entry.id===selection.id);
+  if(!meta) return `<div class="podcast-fullscreen-message">هاد الملف ما بقاش متاح.</div>`;
+  if(activePodcastLoading) return `<div class="podcast-fullscreen-message">جاري تحميل Podcast من Firebase...</div>`;
+  if(activePodcastError) return `<div class="podcast-fullscreen-message podcast-fullscreen-error">${escapeHtml(activePodcastError)}</div>`;
+  if(!activePodcastFile?.base64) return `<div class="podcast-fullscreen-message">ما قدرناش نحمّلو هاد الملف. رجع للائحة وعاود اختارو.</div>`;
+  const mime=String(activePodcastFile.mimeType||meta.mimeType||"");
+  const dataUrl=`data:${mime};base64,${activePodcastFile.base64}`;
+  if(mime.startsWith("audio/")){
+    return `<div class="podcast-fullscreen-audio-panel"><div class="podcast-fullscreen-audio-copy"><span>HÖREN · LEKTION ${Number(meta.lessonNumber)||"—"}</span><h2>${escapeHtml(meta.title||"Podcast")}</h2><p>${escapeHtml(meta.description||"ملف صوتي مضاف من Admin")}</p><audio class="podcast-fullscreen-audio" controls preload="metadata" src="${dataUrl}">المتصفح لا يدعم تشغيل الصوت.</audio></div></div>`;
+  }
+  if(mime==="text/html"){
+    return `<div class="podcast-fullscreen-player"><iframe id="podcastFullscreenFrame" class="podcast-fullscreen-frame" title="${escapeHtml(meta.title||"Podcast")}" sandbox="allow-scripts allow-forms" referrerpolicy="no-referrer"></iframe></div>`;
+  }
+  if(mime.startsWith("image/")){
+    return `<div class="podcast-fullscreen-image"><img src="${dataUrl}" alt="${escapeHtml(meta.title||"Podcast")}"></div>`;
+  }
+  if(mime==="application/pdf"){
+    return `<div class="podcast-fullscreen-player"><iframe class="podcast-fullscreen-frame" title="${escapeHtml(meta.title||"Podcast")}" src="${dataUrl}"></iframe></div>`;
+  }
+  return `<div class="podcast-fullscreen-message">صيغة الملف ما كتدعمش العرض داخل Podcast.</div>`;
+}
+function exitPodcastFullscreen(){
+  document.documentElement.classList.remove("challenge-fullscreen-open");
+  document.body.classList.remove("challenge-fullscreen-open");
+  podcastFilterLesson=null;
+  activePodcastSelection=null;
+  activePodcastFile=null;
+  activePodcastLoading=false;
+  activePodcastError="";
+  page=podcastReturnPage||"levels";
+  render();
+}
+function returnPodcastToList(){
+  activePodcastSelection=null;
+  activePodcastFile=null;
+  activePodcastLoading=false;
+  activePodcastError="";
+  renderPodcasts();
 }
 function renderPodcasts(){
-  const list = levelLessons().map(idx => {
-    const lessonNo = idx + 1;
-    const files = podcastLibrary.filter(item => item.lesson === lessonNo);
-    if(files.length){
-      const unlocked=getStudentLessonAccess(idx);
-      const entries = files.map(item => `<button class="podcast-file-card ${unlocked?"":"lesson-locked"}" data-action="podcast-file-open" data-podcast-id="${item.id}" ${unlocked?"":"disabled"}>
-        <span class="podcast-file-icon">🎧</span>
-        <span class="podcast-file-copy"><strong>${escapeHtml(item.title)}</strong><small>Audio-Lesetraining · Interaktiver Podcast</small></span>
-        <span class="podcast-file-arrow">▶</span>
-      </button>`).join("");
-      return `<section class="podcast-lesson-group">
-        <div class="podcast-lesson-head">
-          <span class="lesson-number">${String(lessonNo).padStart(2,"0")}</span>
-          <div><h3>Lektion ${lessonNo}</h3><p>${escapeHtml(lessons[idx].name)}</p></div>
-        </div>
-        <div class="podcast-file-list">${entries}</div>
-      </section>`;
-    }
-    const unlocked=getStudentLessonAccess(idx);
-    return `<button class="lesson-card ${unlocked?"":"lesson-locked"}" data-action="podcast-open" data-lesson="${idx}" ${unlocked?"":"disabled"}>
-      <span class="lesson-number">${String(lessonNo).padStart(2,"0")}</span>
-      <h3>Lektion ${lessonNo}</h3><p>${escapeHtml(dialogues[idx].title)}</p>
-      <div class="level-menu-foot"><span>Podcast anhören</span><span>▶</span></div>
-    </button>`;
-  }).join("");
-  const content = `<div class="pill">🎧 ${selectedLevel} <span>·</span> Podcast</div><div class="podcast-groups">${list}</div>`;
-  app.innerHTML = pageShell("الاستماع",selectedLevel,"اختار حواراً واستمع إلى الجمل بالنطق الألماني الصحيح.",content);
-}
-function renderPodcastPlayer(){
-  const item = podcastLibrary.find(podcast => podcast.id === currentPodcastId);
-  if(!item){ page="podcasts"; render(); return; }
-  const content = `<div class="pill">🎧 Podcast <span>·</span> Lektion ${item.lesson}</div>
-    <div class="podcast-player-card">
-      <iframe id="podcastPlayerFrame" title="${escapeHtml(item.title)}" allow="autoplay"></iframe>
-    </div>
-    <div class="podcast-player-actions"><button class="back-btn" data-action="back">← Zurück zur Podcast-Übersicht</button></div>`;
-  app.innerHTML = pageShell(`استماع · الدرس ${item.lesson}`,escapeHtml(item.title),"استمع إلى النص وتابع القراءة الصوتية واستعمل أدوات التدريب.",content);
-  const frame = document.getElementById("podcastPlayerFrame");
-  if(frame){
-    frame.addEventListener("load", function(){
-      const updateHeight = () => {
-        try {
-          const doc = frame.contentDocument;
-          if(!doc) return;
-          const main = doc.querySelector("main") || doc.querySelector(".wrap") || doc.body;
-          const contentHeight = Math.max(
-            doc.documentElement ? doc.documentElement.scrollHeight : 0,
-            doc.body ? doc.body.scrollHeight : 0,
-            main ? Math.ceil(main.getBoundingClientRect().height + 35) : 0
-          );
-          frame.style.height = Math.max(850, contentHeight + 20) + "px";
-        } catch(e) {}
-      };
-      updateHeight();
-      window.setTimeout(updateHeight,250);
-      window.setTimeout(updateHeight,900);
-      try {
-        frame.contentWindow.addEventListener("resize", updateHeight);
-        if(frame.contentWindow.ResizeObserver){
-          const observer = new frame.contentWindow.ResizeObserver(updateHeight);
-          const doc = frame.contentDocument;
-          if(doc && doc.documentElement) observer.observe(doc.documentElement);
-          if(doc && doc.body) observer.observe(doc.body);
-        }
-      } catch(e) {}
-    }, {once:true});
-    frame.src = item.file;
+  document.documentElement.classList.add("challenge-fullscreen-open");
+  document.body.classList.add("challenge-fullscreen-open");
+  const selected=!!activePodcastSelection;
+  let selectedTitle="Podcast";
+  let selectedSubtitle="Audio-Lesetraining";
+  if(selected && activePodcastSelection.type==="builtin"){
+    const item=podcastLibrary.find(entry=>entry.id===activePodcastSelection.id);
+    if(item){selectedTitle=item.title;selectedSubtitle=`Lektion ${item.lesson} · Audio-Lesetraining`;}
+  }else if(selected){
+    const meta=customContentEntries("lesson",null,"podcast").find(entry=>entry.id===activePodcastSelection.id);
+    if(meta){selectedTitle=meta.title||"Podcast";selectedSubtitle=`Lektion ${Number(meta.lessonNumber)||"—"} · مضاف من Admin`;}
   }
+  if(selected){
+    app.innerHTML=`<section class="podcast-fullscreen-shell">
+      <header class="podcast-fullscreen-header">
+        <div class="podcast-fullscreen-brand"><span class="podcast-fullscreen-mark">♫</span><div><strong>${escapeHtml(selectedTitle)}</strong><small>${escapeHtml(selectedSubtitle)}</small></div></div>
+        <div class="podcast-fullscreen-actions"><button type="button" class="podcast-fullscreen-back" data-action="podcast-back-list">رجوع للائحة</button><button type="button" class="podcast-fullscreen-close" data-action="podcast-exit" aria-label="إغلاق">×</button></div>
+      </header>
+      ${renderPodcastFullscreenSelection()}
+    </section>`;
+    const frame=document.getElementById("podcastFullscreenFrame");
+    if(frame && activePodcastSelection?.type==="custom" && activePodcastFile?.base64 && String(activePodcastFile.mimeType||"")==="text/html"){
+      frame.srcdoc=decodeBase64Utf8(activePodcastFile.base64);
+    }
+    return;
+  }
+  const customEntries=customContentEntries("lesson",null,"podcast");
+  const availableLessons=[...new Set([
+    ...podcastLibrary.map(item=>Number(item.lesson)),
+    ...customEntries.map(item=>Number(item.lessonNumber)).filter(value=>Number.isInteger(value)&&value>=1&&value<=lessons.length)
+  ])].sort((a,b)=>a-b);
+  const lessonNumbers=podcastFilterLesson?[Number(podcastFilterLesson)]:availableLessons;
+  const groups=lessonNumbers.map(lessonNo=>{
+    const lessonIndex=lessonNo-1;
+    const unlocked=getStudentLessonAccess(lessonIndex);
+    const lessonTitle=lessons[lessonIndex]?.name||`Lektion ${lessonNo}`;
+    if(!unlocked){
+      return `<section class="podcast-lesson-group podcast-lesson-locked"><div class="podcast-lesson-head"><span class="lesson-number">${String(lessonNo).padStart(2,"0")}</span><div><h3>Lektion ${lessonNo}</h3><p>${escapeHtml(lessonTitle)}</p></div><span class="podcast-lock-label">🔒 مقفل</span></div><p class="podcast-locked-note">هاد الدرس مقفل حالياً من طرف الإدارة.</p></section>`;
+    }
+    const nativeItems=podcastLibrary.filter(item=>Number(item.lesson)===lessonNo).map(item=>({
+      id:item.id,type:"builtin",title:item.title,subtitle:"نص كامل + صوت · Audio-Lesetraining",icon:"📖"
+    }));
+    const customItems=customEntries.filter(item=>Number(item.lessonNumber)===lessonNo).map(item=>({
+      id:item.id,type:"custom",title:item.title||"Podcast جديد",subtitle:`${item.description||customContentFileTypeLabel(item)} · مضاف من Admin`,icon:customContentIcon(item)
+    }));
+    const items=[...nativeItems,...customItems];
+    const cards=items.length?items.map(item=>`<button type="button" class="podcast-file-card podcast-single-page-card" data-action="podcast-select" data-type="${item.type}" data-id="${escapeHtml(item.id)}">
+      <span class="podcast-file-icon">${item.icon}</span><span class="podcast-file-copy"><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.subtitle)} · Lektion ${lessonNo}</small></span><span class="podcast-file-arrow">▶</span>
+    </button>`).join(""):`<div class="podcast-no-files">مازال ما تزاد حتى Podcast لهاد الدرس.</div>`;
+    return `<section class="podcast-lesson-group"><div class="podcast-lesson-head"><span class="lesson-number">${String(lessonNo).padStart(2,"0")}</span><div><h3>Lektion ${lessonNo}</h3><p>${escapeHtml(lessonTitle)}</p></div><span class="podcast-lesson-count">${items.length} ملف</span></div><div class="podcast-file-list">${cards}</div></section>`;
+  }).join("");
+  const totalCount=podcastFilterLesson
+    ? podcastLibrary.filter(item=>Number(item.lesson)===Number(podcastFilterLesson)).length+customEntries.filter(item=>Number(item.lessonNumber)===Number(podcastFilterLesson)).length
+    : podcastLibrary.length+customEntries.length;
+  const filterControl=podcastFilterLesson
+    ? `<button class="podcast-show-all" type="button" data-action="podcast-show-all">عرض جميع Podcasts</button>`
+    : `<span class="podcast-total-count">${totalCount} ملف استماع</span>`;
+  const empty=groups?`<div class="podcast-groups podcast-single-page-groups">${groups}</div>`:`<div class="podcast-fullscreen-message">مازال ما كاين حتى Podcast. الملفات اللي كتزيد من Admin غادي يبانوا هنا.</div>`;
+  app.innerHTML=`<section class="podcast-fullscreen-shell">
+    <header class="podcast-fullscreen-header">
+      <div class="podcast-fullscreen-brand"><span class="podcast-fullscreen-mark">♫</span><div><strong>مكتبة Podcast</strong><small>HÖREN · AUDIO-LESETRAINING</small></div></div>
+      <div class="podcast-fullscreen-actions">${filterControl}<button type="button" class="podcast-fullscreen-close" data-action="podcast-exit" aria-label="إغلاق">×</button></div>
+    </header>
+    <main class="podcast-fullscreen-list-body"><div class="podcast-fullscreen-intro"><h1>Podcast</h1><p>اختار الدرس ثم اختار التسجيل باش يتفتح بملء الشاشة.</p></div>${empty}</main>
+  </section>`;
+}
+
+function renderPodcastPlayer(){
+  if(currentPodcastId){
+    activePodcastSelection={type:"builtin",id:currentPodcastId};
+    const item=podcastLibrary.find(entry=>entry.id===currentPodcastId);
+    if(item) podcastFilterLesson=Number(item.lesson);
+  }
+  page="podcasts";
+  return renderPodcasts();
 }
 function renderTests(){
   const list = levelLessons().map(idx => {
     const standaloneTest = standaloneLessonTests[idx];
-    const testTitle = standaloneTest ? standaloneTest.title : lessons[idx].name;
+    const testTitle = lessons[idx].name;
     const unlocked=getStudentLessonAccess(idx);
     return `<button class="lesson-card ${unlocked?"":"lesson-locked"}" data-action="test-lesson-open" data-lesson="${idx}" ${unlocked?"":"disabled"}>
       <span class="lesson-number">${String(idx+1).padStart(2,"0")}</span>
@@ -3129,38 +5779,121 @@ function renderTests(){
 function openLessonTestEntry(returnPage){
   testCategoriesReturnPage = returnPage || "tests";
   testReturnPage = testCategoriesReturnPage;
-  if(standaloneLessonTests[currentLesson]){
-    page = "standalone-lesson-test";
-  }else{
-    page = "test-categories";
-  }
+  page = getLessonTestPage(currentLesson) ? "standalone-lesson-test" : "test-categories";
 }
 function renderStandaloneLessonTest(){
-  const testPage = standaloneLessonTests[currentLesson];
+  const testPage = getLessonTestPage(currentLesson);
   if(!testPage){ page = "test-categories"; return render(); }
   document.documentElement.classList.add("challenge-fullscreen-open");
   document.body.classList.add("challenge-fullscreen-open");
+  const exitLabel = testCategoriesReturnPage === "lesson-hub" ? "رجوع للدرس" : "رجوع للاختبارات";
   app.innerHTML = `<div class="challenge-fullscreen-shell">
+    <button type="button" class="challenge-fullscreen-exit" data-action="close-standalone-lesson-test">← ${exitLabel}</button>
     <iframe id="standaloneLessonTestFrame" title="${escapeHtml(testPage.title)} – Test Lektion ${lessonNumber()}" loading="eager"></iframe>
   </div>`;
   const frame = document.getElementById("standaloneLessonTestFrame");
-  if(frame) frame.src = testPage.file;
+  if(frame) loadManagedPageIntoFrame(frame, testPage.file);
+}
+
+let testCenterFrameMessageBound = false;
+
+function bindTestCenterFrameMessages(){
+  if(testCenterFrameMessageBound) return;
+  window.addEventListener("message", function(event){
+    const frame = document.getElementById("testCenterFrame");
+    if(!frame || event.source !== frame.contentWindow) return;
+    const message = event.data || {};
+
+    if(message.type === "test-center-height"){
+      const height = Math.max(300, Math.min(2200, Number(message.height) || 520));
+      frame.style.height = `${height}px`;
+      return;
+    }
+    if(message.type !== "test-center-action") return;
+
+    const action = message.action;
+    if(action === "category-test"){
+      currentCategory = String(message.category || "");
+      testIndex = 0; testScore = 0; testChoice = null; testAnswered = false;
+      testQuestionScores = {}; testQuestionLabels = {};
+      testReturnPage = "test-categories";
+      page = "test";
+    }else if(action === "open-standalone-lesson-test"){
+      page = "standalone-lesson-test";
+    }else if(action === "open-custom-content"){
+      openCustomContent(String(message.id || ""));
+      return;
+    }else if(action === "choice"){
+      if(!testAnswered) testChoice = Number(message.choice);
+    }else if(action === "check-answer"){
+      if(testChoice !== null && !testAnswered){
+        const question = items()[testIndex] || [];
+        const key = `q${testIndex+1}`;
+        const correct = testChoice === testIndex;
+        if(correct) testScore++;
+        testQuestionScores[key] = {correct:correct?1:0,total:1};
+        testQuestionLabels[key] = String(question[0] || `Frage ${testIndex+1}`);
+        testAnswered = true;
+      }
+    }else if(action === "next-question"){
+      if(testIndex < items().length-1){
+        testIndex++; testChoice = null; testAnswered = false;
+      }else{
+        page = "test-result";
+      }
+    }else if(action === "retry-test"){
+      testIndex = 0; testScore = 0; testChoice = null; testAnswered = false;
+      testQuestionScores = {}; testQuestionLabels = {};
+      page = "test";
+    }else if(action === "test-home"){
+      page = testReturnPage || "test-categories";
+    }else{
+      return;
+    }
+    render();
+  });
+  testCenterFrameMessageBound = true;
+}
+
+function renderTestCenterFrame(mode, eyebrow, title, subtitle, data){
+  bindTestCenterFrameMessages();
+  const content = `<iframe id="testCenterFrame" class="test-center-frame" title="Test – ${escapeHtml(title)}" src="pages/test-center.html" loading="eager"></iframe>`;
+  app.innerHTML = pageShell(eyebrow, escapeHtml(title), escapeHtml(subtitle), content);
+  const frame = document.getElementById("testCenterFrame");
+  if(!frame) return;
+  const payload = {type:"test-center-init", mode, ...data};
+  frame.addEventListener("load", function(){
+    try{ frame.contentWindow.postMessage(payload, "*"); }catch(error){ console.error("Test center init failed:",error); }
+  }, {once:true});
 }
 
 function renderTestCategories(){
-  const standaloneTest = standaloneLessonTests[currentLesson];
-  const cats = standaloneTest ? "" : Object.keys(categoryMeta).map(cat => `<button class="category-card" data-action="category-test" data-category="${cat}">
-    <span class="category-icon">${categoryMeta[cat].icon}</span><h3>${cat}</h3><p>${(lessonData().data[cat]||[]).length} Fragen</p>
-  </button>`).join("");
-  const extraTest = standaloneTest ? `<button class="category-card" data-action="open-standalone-lesson-test">
-    <span class="category-icon">${standaloneTest.icon}</span><h3>${escapeHtml(standaloneTest.title)}</h3><p>${escapeHtml(standaloneTest.description)}</p>
-  </button>` : "";
-  const intro = standaloneTest
-    ? `Starte den vollständigen interaktiven Test zu ${escapeHtml(standaloneTest.title)}.`
-    : "Wähle einen Bereich, den du testen möchtest.";
-  const subtitle = standaloneTest ? escapeHtml(standaloneTest.title) : escapeHtml(lessonData().name);
-  const content = `<div class="pill">✓ Teste <span>·</span> Lektion ${lessonNumber()}</div><div class="section-card" style="margin-top:18px"><p class="subtitle">${intro}</p><div class="category-grid">${cats}${extraTest}</div></div>`;
-  app.innerHTML = pageShell(`الدرس ${lessonNumber()}`,"اختبر معلوماتك",subtitle,content);
+  const directTestPage = getLessonTestPage(currentLesson);
+  if(directTestPage){
+    page = "standalone-lesson-test";
+    return renderStandaloneLessonTest();
+  }
+  const standaloneTest = null;
+  const categories = Object.keys(categoryMeta).map(name => ({
+    name,
+    icon: categoryMeta[name].icon,
+    count: (lessonData().data[name] || []).length
+  }));
+  const customTestsHtml = renderCustomContentFeatureCards("test",lessonNumber(),"اختبارات إضافية من الأستاذ");
+  renderTestCenterFrame(
+    "categories",
+    `الدرس ${lessonNumber()}`,
+    "اختبر معلوماتك",
+    lessonData().name,
+    {
+      lessonNumber: lessonNumber(),
+      lessonName: lessonData().name,
+      level: selectedLevel,
+      categories,
+      standaloneTest,
+      customTestsHtml
+    }
+  );
 }
 function renderLesson(){
   const cats = Object.keys(categoryMeta).map(cat => `<button class="category-card" data-action="category" data-category="${cat}">
@@ -3193,16 +5926,12 @@ function renderLesson(){
       <div class="freizeit-feature-copy"><h3>Freizeit – interaktive Vokabeln</h3><p>Lerne Freizeitaktivitäten mit einer interaktiven Bildkarte. Klicke auf eine Aktivität und höre die deutsche Aussprache.</p></div>
       <button class="primary-btn" data-action="open-freizeit">Freizeit öffnen <span class="arrow">→</span></button>
     </div>` : ""}
-    ${currentLesson===5 ? `<div class="stadt-feature">
-      <div class="stadt-feature-icon">🏙️</div>
-      <div class="stadt-feature-copy"><h3>Meine Stadt, meine Wohnung</h3><p>Entdecke Orte und Wörter rund um die Stadt und die Wohnung. Klicke auf das Bild, sieh die arabische Übersetzung und höre die deutsche Aussprache.</p></div>
-      <button class="primary-btn" data-action="open-stadt">Interaktive Karte öffnen <span class="arrow">→</span></button>
-    </div>` : ""}
     ${interactiveLessonPosters[currentLesson] ? `<div class="stadt-feature">
       <div class="stadt-feature-icon">${interactiveLessonPosters[currentLesson].icon}</div>
       <div class="stadt-feature-copy"><h3>${escapeHtml(interactiveLessonPosters[currentLesson].title)} – interaktive Lernkarte</h3><p>${escapeHtml(interactiveLessonPosters[currentLesson].description)}. Klicke auf die Bildbereiche, um die Wörter und arabischen Übersetzungen zu entdecken und die deutsche Aussprache zu hören.</p></div>
       <button class="primary-btn" data-action="open-interactive-poster">Interaktive Lernkarte öffnen <span class="arrow">→</span></button>
     </div>` : ""}
+    ${renderCustomContentFeatureCards("course",lessonNumber(),"مواد إضافية للكورس")}
     <div class="section-card"><p class="subtitle">Oder wähle einen Lernbereich aus.</p><div class="category-grid">${cats}</div></div>`;
   app.innerHTML = pageShell(`Lektion ${lessonNumber()}`,escapeHtml(lessonData().name),"تعلّم الكلمات، وتدرّب على القواعد، واستعمل الألمانية في مواقف الحياة اليومية.",content);
 }
@@ -3240,7 +5969,7 @@ function renderInteractiveLessonPoster(){
         }
       }catch(e){}
     },{once:true});
-    frame.src=poster.file;
+    loadManagedPageIntoFrame(frame, poster.file);
   }
 }
 
@@ -3279,7 +6008,7 @@ function renderNumbers(){
         }
       } catch(e) {}
     });
-    frame.src = "pages/numbers.html";
+    loadManagedPageIntoFrame(frame, "pages/numbers.html");
   }
 }
 
@@ -3317,7 +6046,7 @@ function renderEssen(){
         }
       } catch(e) {}
     });
-    frame.src = "pages/essen.html";
+    loadManagedPageIntoFrame(frame, "pages/essen.html");
   }
 }
 
@@ -3359,7 +6088,7 @@ function renderStadtWohnung(){
         if(image && !image.complete) image.addEventListener("load", updateHeight, {once:true});
       } catch(e) {}
     });
-    frame.src = "pages/meine-stadt.html";
+    loadManagedPageIntoFrame(frame, "pages/meine-stadt.html");
   }
 }
 
@@ -3397,7 +6126,7 @@ function renderFreizeit(){
         }
       } catch(e) {}
     });
-    frame.src = "pages/freizeit.html";
+    loadManagedPageIntoFrame(frame, "pages/freizeit.html");
   }
 }
 function renderFamilyTree(){
@@ -3430,7 +6159,7 @@ function renderFamilyTree(){
         }
       } catch(e) {}
     });
-    frame.src = "pages/family-tree.html";
+    loadManagedPageIntoFrame(frame, "pages/family-tree.html");
   }
 }
 
@@ -3492,7 +6221,7 @@ function renderIntroDialogue(){
         }
       } catch(e) {}
     });
-    frame.src = "pages/intro-dialogue.html";
+    loadManagedPageIntoFrame(frame, "pages/intro-dialogue.html");
   }
 }
 function renderDialogue(){
@@ -3630,27 +6359,24 @@ function renderLearning(){
 }
 function renderTest(){
   const all = items();
-  if(testIndex>=all.length){page="test-result";render();return;}
-  const question = all[testIndex];
-  const options = all.map((it,idx)=>({text:it[1],idx}));
-  const answerMarkup = options.map((opt,i)=>{
-    let cls = "answer-option";
-    if(testChoice===opt.idx) cls += " selected";
-    if(testAnswered && opt.idx===testIndex) cls += " correct";
-    else if(testAnswered && testChoice===opt.idx && testChoice!==testIndex) cls += " wrong";
-    return `<button class="${cls}" data-action="choice" data-choice="${opt.idx}" ${testAnswered?"disabled":""}><span class="option-letter">${String.fromCharCode(65+i)}</span>${escapeHtml(opt.text)}</button>`;
-  }).join("");
-  const feedback = testAnswered ? `<div class="feedback ${testChoice===testIndex?"good":"bad"}">${testChoice===testIndex?"Richtig! Sehr gut.":"Noch nicht ganz. Die richtige Antwort ist: "+escapeHtml(question[1])}</div>` : "";
-  const action = testAnswered
-    ? `<button class="primary-btn" data-action="next-question">${testIndex===all.length-1?"Ergebnis ansehen":"Nächste Frage"} <span class="arrow">→</span></button>`
-    : `<button class="primary-btn" data-action="check-answer" ${testChoice===null?"disabled":""} style="${testChoice===null?"opacity:.45;cursor:not-allowed":""}">Antwort prüfen</button>`;
-  const content = `<div class="test-card">
-    <div class="test-top"><span class="pill">${currentCategory}</span><span class="progress-label">Frage ${testIndex+1} von ${all.length}</span></div>
-    <div class="progress-track"><div class="progress-fill" style="width:${((testIndex+1)/all.length)*100}%"></div></div>
-    <h3 class="question">Was bedeutet „${escapeHtml(question[0])}“?</h3><p class="question-help">Wähle die passende Bedeutung auf Arabisch.</p>
-    <div class="answer-list">${answerMarkup}</div>${feedback}<div class="test-actions">${action}</div>
-  </div>`;
-  app.innerHTML = pageShell("اختبر معلوماتك",currentCategory,`الدرس ${lessonNumber()} · أجب عن الأسئلة وتحقق من نتيجتك.`,content);
+  if(testIndex >= all.length){page="test-result";render();return;}
+  const question = all[testIndex] || [];
+  renderTestCenterFrame(
+    "question",
+    "اختبر معلوماتك",
+    currentCategory,
+    `الدرس ${lessonNumber()} · أجب عن الأسئلة وتحقق من نتيجتك.`,
+    {
+      lessonNumber: lessonNumber(),
+      lessonName: lessonData().name,
+      category: currentCategory,
+      questions: all,
+      testIndex,
+      testChoice,
+      testAnswered,
+      testScore
+    }
+  );
 }
 function renderResult(){
   const allQuestions=items();
@@ -3673,34 +6399,50 @@ function renderResult(){
     scores:questionScores,completed:questionCompleted,exerciseLabels:questionLabels,
     stageByExercise:questionStages,stageLabels:questionStageLabels,contentType:"test"
   });
-  const emoji = percent===100?"🏆":percent>=60?"🌟":"💪";
-  const message = percent===100?"Perfekt! Du hast alle Fragen richtig beantwortet.":percent>=60?"Gut gemacht! Wiederhole die Wörter, die noch schwierig waren.":"Weiter üben! Schau dir den Lernbereich noch einmal an und versuche es erneut.";
-  const content = `<div class="result"><div class="result-emoji">${emoji}</div><h3>Test abgeschlossen!</h3><p>${escapeHtml(lessonData().name)} · ${currentCategory}</p><div class="result-score">${testScore} / ${total}</div><p>${message}</p>
-    <button class="primary-btn" data-action="retry-test">Noch einmal testen <span class="arrow">↻</span></button>
-    <button class="back-btn" data-action="test-home" style="margin-left:8px">Zurück</button></div>`;
-  app.innerHTML = pageShell("نتيجتك","أحسنت في التدريب!","كل خطوة تقرّبك أكثر من هدفك في تعلّم الألمانية.",content);
+  renderTestCenterFrame(
+    "result",
+    "نتيجتك",
+    "أحسنت في التدريب!",
+    "كل خطوة تقرّبك أكثر من هدفك في تعلّم الألمانية.",
+    {
+      lessonNumber: lessonNumber(),
+      lessonName: lessonData().name,
+      category: currentCategory,
+      score: testScore,
+      total,
+      percent
+    }
+  );
 }
 function render(){
   if(!currentUser){page="login";return renderLogin();}
+  if(currentUser.role==="admin" && page==="admin-managed-html") return renderAdminManagedHtmlPage();
   if(currentUser.role==="admin"){page="admin";return renderAdmin();}
   if(page==="login"||page==="admin") page="home";
   if(page==="student-results") return renderStudentResults();
+  if(page==="custom-content") return renderCustomContentPage();
   if(page==="learn-hub") return renderLearnHub();
   if(page==="talk") return renderTalk();
   if(page==="sessions") return renderSessions();
   if(page==="community") return renderCommunity();
+  if(page==="competition") return renderCompetition();
   if(page==="settings") return renderSettings();
   if(page==="home") return renderHome();
   if(page==="levels") return renderLevels();
   if(page==="level-home") return renderLevelHome();
+  if(page==="a2-level-home") return renderA2LevelHome();
+  if(page==="a2-lesson-html") return renderA2LessonHtmlPage();
+  if(page==="a2-course-content") return renderA2CourseContentPage();
+  if(page==="a2-test-html") return renderA2TestHtmlPage();
   if(page==="lessons") return renderLessons();
   if(page==="lesson-hub") return renderLessonHub();
-  if(page==="lesson-podcasts") return renderLessonPodcasts();
+  if(page==="lesson-podcasts"){podcastReturnPage="lesson-hub";podcastFilterLesson=lessonNumber();page="podcasts";return renderPodcasts();}
   if(page==="podcasts") return renderPodcasts();
   if(page==="podcast-player") return renderPodcastPlayer();
   if(page==="tests") return renderTests();
   if(page==="test-categories") return renderTestCategories();
   if(page==="standalone-lesson-test") return renderStandaloneLessonTest();
+  if(page==="lesson-section-html") return renderLessonSectionHtmlPage();
   if(page==="lesson") return renderLesson();
   if(page==="interactive-lesson-poster") return renderInteractiveLessonPoster();
   if(page==="dialogue") return renderDialogue();
@@ -3716,17 +6458,40 @@ function render(){
   if(page==="test-result") return renderResult();
 }
 function back(){
+  if(page==="admin-managed-html"){page="admin";return render();}
   if(page==="community" && communityRoom){communityRoom=null;return render();}
   if(page==="student-results") page="home";
-  else if(page==="learn-hub"||page==="talk"||page==="sessions"||page==="community"||page==="settings") page="home";
+  else if(page==="talk"){
+    page=talkReturnPage||"home";
+    if(page==="lesson-hub") currentLesson=talkReturnLesson;
+    tutorToolOpen=false;
+    tutorKeyboardOpen=false;
+  }
+  else if(page==="learn-hub"||page==="sessions"||page==="community"||page==="competition"||page==="settings") page="home";
   else if(page==="levels") page="home";
-  else if(page==="level-home") page="levels";
-  else if(page==="lessons"||page==="podcasts"||page==="tests") page="levels";
-  else if(page==="lesson-hub") page="lessons";
-  else if(page==="lesson-podcasts") page="lesson-hub";
-  else if(page==="podcast-player") page=podcastReturnPage||"podcasts";
+  else if(page==="level-home") page="learn-hub";
+  else if(page==="a2-level-home") page="learn-hub";
+  else if(page==="a2-course-content"){
+    document.documentElement.classList.remove("challenge-fullscreen-open");
+    document.body.classList.remove("challenge-fullscreen-open");
+    page="a2-lesson-html";
+  }
+  else if(page==="a2-lesson-html" || page==="a2-test-html"){
+    document.documentElement.classList.remove("challenge-fullscreen-open");
+    document.body.classList.remove("challenge-fullscreen-open");
+    page="a2-level-home";
+  }
+  else if(page==="lessons"||page==="tests") page="levels";
+  else if(page==="podcasts"){
+    document.documentElement.classList.remove("challenge-fullscreen-open");document.body.classList.remove("challenge-fullscreen-open");
+    page=podcastReturnPage||"levels";podcastFilterLesson=null;activePodcastSelection=null;activePodcastFile=null;activePodcastLoading=false;activePodcastError="";
+  }
+  else if(page==="lesson-hub") page=lessonHubReturnPage||"level-home";
+  else if(page==="lesson-podcasts"){page="podcasts";podcastReturnPage="lesson-hub";podcastFilterLesson=lessonNumber();}
+  else if(page==="podcast-player") page="podcasts";
   else if(page==="test-categories") page=testCategoriesReturnPage||"tests";
   else if(page==="standalone-lesson-test"){document.documentElement.classList.remove("challenge-fullscreen-open");document.body.classList.remove("challenge-fullscreen-open");page=testCategoriesReturnPage||"tests";}
+  else if(page==="lesson-section-html"){document.documentElement.classList.remove("challenge-fullscreen-open");document.body.classList.remove("challenge-fullscreen-open");page=lessonSectionReturnPage||"lesson-hub";}
   else if(page==="lesson") page=courseReturnPage||"lessons";
   else if(page==="interactive-lesson-poster") page="lesson";
   else if(page==="dialogue") page=dialogueReturnPage;
@@ -3736,8 +6501,9 @@ function back(){
   else if(page==="freizeit") page="lesson";
   else if(page==="stadt") page="lesson";
   else if(page==="family-tree") page="lesson";
-  else if(page==="category") page="lesson";
+  else if(page==="category"){page=categoryReturnPage||"lesson";categoryReturnPage="lesson";}
   else if(page==="learning") page="category";
+  else if(page==="custom-content") page=customContentReturnPage||"lesson-hub";
   else if(page==="test"||page==="test-result") page=testReturnPage;
   render();
 }
@@ -3774,13 +6540,14 @@ document.addEventListener("keydown",function(event){
   if(event.key === "Escape"){
     closePodcastWordPopup();
     closeAdminStudentDetails();
+    if(page==="student-results" && studentResultsActiveTool){studentResultsActiveTool="";render();}
   }
 });
 document.addEventListener("click",function(event){
   if(event.target && event.target.id==="adminStudentDetailsModal") closeAdminStudentDetails();
 });
 window.addEventListener("message",function(event){
-  const frame = document.getElementById("podcastPlayerFrame");
+  const frame = document.getElementById("podcastInlineFrame") || document.getElementById("podcastPlayerFrame");
   if(!frame || event.source !== frame.contentWindow) return;
   const data = event.data;
   if(!data || data.type !== "podcast-word-translation") return;
@@ -3793,6 +6560,47 @@ window.addEventListener("message",function(event){
 document.addEventListener("change",function(event){
   const target=event.target;
   if(!target)return;
+  if(target.id==="adminPageImportFile"){
+    const file = target.files && target.files[0];
+    target.value = "";
+    if(file) importAdminManagedPageFile(file);
+    return;
+  }
+  if(target.id==="adminPageSelect"){
+    const path = normalizeManagedPagePath(target.value);
+    if(path){
+      const pathInput = document.getElementById("adminPagePath");
+      if(pathInput) pathInput.value = path;
+      adminPageSelectedPath = path;
+      const status = document.getElementById("adminPageStatus");
+      if(status) status.textContent = `تم اختيار ${path}. اضغط «تحميل من pages» لجلب محتواها قبل التعديل.`;
+    }
+    return;
+  }
+  if(target.id==="competitionWholeExercises"){
+    competitionWholeExercises=Boolean(target.checked);
+    competitionExerciseSelections={};competitionExerciseDrafts={};competitionExerciseTileDrafts={};
+    renderCompetition();return;
+  }
+  if(target.matches('select[data-competition-exercise-question]')){
+    const index=Number(target.dataset.competitionExerciseQuestion);
+    if(Number.isInteger(index)&&index>=0){
+      if(target.value==="")delete competitionExerciseSelections[index];
+      else competitionExerciseSelections[index]=Number(target.value);
+    }
+    competitionUpdateExerciseSubmitButton();
+    return;
+  }
+  if(target.id==="competitionCustomCount"){
+    const count=Number(target.value), max=competitionAvailableQuestionCount();
+    if(!Number.isInteger(count)||count<1||count>max){
+      showToast(`اختار عدد بين 1 و ${max}.`);
+      target.value=String(competitionQuestionCount);
+      return;
+    }
+    competitionQuestionCount=count;
+    renderCompetition();return;
+  }
   if(target.id==="adminStudentFilter"){adminStudentFilter=target.value||"all";render();return;}
   if(target.id==="adminGroupFilter"){adminGroupFilter=target.value||"all";render();return;}
   if(target.id==="adminAnalyticsGroupFilter"){adminAnalyticsGroupFilter=target.value||"all";render();return;}
@@ -3801,6 +6609,7 @@ document.addEventListener("change",function(event){
   if(target.id==="adminResultsStudentFilter"){adminResultsStudentId=target.value||"all";render();return;}
   if(target.id==="adminResultsLessonFilter"){adminResultsLessonFilter=target.value||"all";render();return;}
   if(target.id==="adminResultsTypeFilter"){adminResultsTypeFilter=target.value||"all";render();return;}
+  if(target.id==="studentProgressLessonFilter"){studentProgressLessonFilter=target.value||"all";render();return;}
   if(target.matches('[data-action="admin-assign-group"]')){
     assignStudentGroup(target.dataset.id,target.value);return;
   }
@@ -3808,13 +6617,32 @@ document.addEventListener("change",function(event){
 
 window.addEventListener("message",function(event){
   const ownedTestFrame=document.getElementById("standaloneLessonTestFrame");
+  const customContentFrame=document.getElementById("customContentHtmlFrame");
   const fromOwnedTestFrame=!!ownedTestFrame && event.source===ownedTestFrame.contentWindow;
+  const fromCustomContentFrame=!!customContentFrame && event.source===customContentFrame.contentWindow;
   const sameOrigin=event.origin===window.location.origin ||
     (window.location.protocol==="file:" && event.origin==="null");
-  if(!sameOrigin && !fromOwnedTestFrame) return;
+  if(!sameOrigin && !fromOwnedTestFrame && !fromCustomContentFrame) return;
   const data=event.data;
   if(!data || typeof data!=="object") return;
   if(data.type==="deutsch-a1-progress-report"){
+    if(fromCustomContentFrame){
+      const meta=activeCustomContentMeta;
+      const isActiveAdminTest=!!meta && (meta.area==="test" || meta.kind==="test") &&
+        String(data.customContentId||"")===String(meta.id||"");
+      if(!isActiveAdminTest || currentUser?.role!=="student") return;
+      saveEmbeddedProgressReport({
+        ...data,
+        moduleId:"custom-test-"+String(meta.id)+"-lektion-"+Number(meta.lessonNumber),
+        title:String(meta.title||"اختبار إضافي")+" · Lektion "+Number(meta.lessonNumber),
+        lessonNumber:Number(meta.lessonNumber),
+        customContentId:String(meta.id||""),
+        contentType:"test",
+        activityType:"test",
+        source:"admin-custom-test"
+      });
+      return;
+    }
     saveEmbeddedProgressReport(data);
     return;
   }
@@ -3846,11 +6674,24 @@ document.addEventListener("submit",function(event){
   if(event.target && event.target.id==="loginForm"){event.preventDefault();loginFromForm();return;}
   if(event.target && event.target.id==="tutorForm"){sendTutorMessage(event);return;}
   if(event.target && event.target.id==="communityForm"){sendCommunityMessage(event);return;}
+  if(event.target && event.target.id==="competitionJoinForm"){joinCompetition(event);return;}
 });
 
 document.addEventListener("input",function(event){
   const target=event.target;
   if(!target)return;
+  if(target.matches("[data-competition-text-question]")){
+    const index=Number(target.dataset.competitionTextQuestion);
+    const question=competitionRoomData?.questions?.[index];
+    if(Number.isInteger(index)&&question){
+      competitionExerciseDrafts[index]=target.value;
+      const resolved=competitionResolveExerciseText(question,target.value);
+      if(resolved===null)delete competitionExerciseSelections[index];
+      else competitionExerciseSelections[index]=resolved;
+      competitionUpdateExerciseSubmitButton();
+    }
+    return;
+  }
   if(target.id==="uiTextScale" || target.id==="uiIconScale"){
     const preferences=readUiDisplayPreferences();
     if(target.id==="uiTextScale") preferences.textScale=Math.min(1.30,Math.max(0.90,(Number(target.value)||108)/100));
@@ -3870,12 +6711,121 @@ document.addEventListener("click",function(event){
     const tab=el.dataset.tab;
     if(tab==="home") page="home";
     else if(tab==="learn") page="learn-hub";
-    else if(tab==="talk"){tutorLessonIndex=currentLesson;tutorTool="conversation";tutorToolOpen=false;tutorMessages=[];page="talk";}
+    else if(tab==="talk"){talkReturnPage="home";talkReturnLesson=currentLesson;tutorLessonIndex=currentLesson;tutorTool="conversation";tutorToolOpen=false;tutorMessages=[];page="talk";}
     else if(tab==="sessions") page="sessions";
     else if(tab==="community"){page="community";communityRoom=null;}
-    else if(tab==="progress") page="student-results";
+    else if(tab==="competition"){page="competition";loadCompetitionStats();}
+    else if(tab==="progress"){page="student-results";studentResultsExpanded=false;studentResultsActiveTool="";}
+    else studentResultsActiveTool="";
     render();return;
   }
+  else if(action==="competition-mode"){
+    competitionMode=el.dataset.mode==="group"?"group":"duel";renderCompetition();return;
+  }
+  else if(action==="competition-lesson"){
+    const idx=Number(el.dataset.lesson);
+    if(!Number.isInteger(idx)||idx<0||idx>10||!(idx===10?getStudentLessonAccess(6):getStudentLessonAccess(idx)))return;
+    if(competitionSelectedLessons.includes(idx)){
+      // Clicking a checked lesson removes its tick, including the last lesson.
+      competitionSelectedLessons=competitionSelectedLessons.filter(i=>i!==idx);
+      delete competitionSelectedTestTypes[idx];
+      if(competitionExpandedLesson===idx)competitionExpandedLesson=competitionSelectedLessons[0]??null;
+    }else{
+      competitionSelectedLessons=[...competitionSelectedLessons,idx].sort((a,b)=>a-b);
+      competitionEnsureTypes(idx);
+      competitionExpandedLesson=idx;
+    }
+    renderCompetition();
+    return;
+  }
+  else if(action==="competition-open-lesson"){
+    const idx=Number(el.dataset.lesson);
+    if(competitionSelectedLessons.includes(idx)){
+      competitionExpandedLesson=idx;
+      renderCompetition();
+    }
+    return;
+  }
+  else if(action==="competition-lesson-remove"){
+    const idx=Number(el.dataset.lesson);
+    if(!competitionSelectedLessons.includes(idx))return;
+    competitionSelectedLessons=competitionSelectedLessons.filter(i=>i!==idx);
+    delete competitionSelectedTestTypes[idx];
+    competitionExpandedLesson=competitionSelectedLessons[0]??null;
+    renderCompetition();return;
+  }
+  else if(action==="competition-types-all"){
+    const idx=Number(el.dataset.lesson);
+    if(!competitionSelectedLessons.includes(idx))return;
+    competitionSelectedTestTypes[idx]=(competitionTestCatalog[idx]?.types||[]).map((_,i)=>i);
+    renderCompetition();return;
+  }
+  else if(action==="competition-type"){
+    const idx=Number(el.dataset.lesson),typeIndex=Number(el.dataset.type);
+    const types=competitionTestCatalog[idx]?.types||[];
+    if(!competitionSelectedLessons.includes(idx)||!Number.isInteger(typeIndex)||!types[typeIndex])return;
+    const selected=competitionEnsureTypes(idx).slice();
+    if(selected.includes(typeIndex)){
+      // Permit unticking the last question type too; creation stays disabled until valid.
+      competitionSelectedTestTypes[idx]=selected.filter(n=>n!==typeIndex);
+    }else competitionSelectedTestTypes[idx]=[...selected,typeIndex].sort((a,b)=>a-b);
+    renderCompetition();return;
+  }
+  else if(action==="competition-count"){
+    const count=Number(el.dataset.count);
+    const available=competitionAvailableQuestionCount();
+    if(Number.isInteger(count)&&count>=1&&count<=available)competitionQuestionCount=count;
+    renderCompetition();return;
+  }
+  else if(action==="competition-create"){createCompetition();return;}
+  else if(action==="competition-copy-code"){copyCompetitionCode();return;}
+  else if(action==="competition-share-code"){shareCompetitionCode();return;}
+  else if(action==="competition-start"){startCompetition();return;}
+  else if(action==="competition-answer"){submitCompetitionChoice(Number(el.dataset.option));return;}
+  else if(action==="competition-exercise-choice"){
+    const index=Number(el.dataset.questionIndex),option=Number(el.dataset.option);
+    const question=competitionRoomData?.questions?.[index];
+    if(!question||!Number.isInteger(option)||option<0||option>3||option>=(question.options||[]).length)return;
+    competitionExerciseSelections[index]=option;
+    renderCompetitionRoom();
+    competitionUpdateExerciseSubmitButton();
+    return;
+  }
+  else if(action==="competition-exercise-tile"){
+    const index=Number(el.dataset.questionIndex),tileIndex=Number(el.dataset.tileIndex);
+    const question=competitionRoomData?.questions?.[index];
+    if(!question||!Number.isInteger(tileIndex))return;
+    const kind=el.dataset.tileKind==="letters"?"letters":"words";
+    const tiles=kind==="letters"?(question.letters||Array.from(String(question.scramble||"").replace(/\s+/g,""))):(question.tiles||[]);
+    if(tileIndex<0||tileIndex>=tiles.length)return;
+    const draft=Array.isArray(competitionExerciseTileDrafts[index])?competitionExerciseTileDrafts[index].slice():[];
+    const at=draft.indexOf(tileIndex);
+    if(at>=0)draft.splice(at,1);else draft.push(tileIndex);
+    competitionExerciseTileDrafts[index]=draft;
+    if(draft.length===tiles.length){
+      const answer=draft.map(i=>tiles[i]).join(kind==="letters"?"":" ");
+      const resolved=competitionResolveExerciseText(question,answer);
+      competitionExerciseSelections[index]=resolved===null?Number(question.invalidIndex)||0:resolved;
+    }else delete competitionExerciseSelections[index];
+    renderCompetitionRoom();
+    competitionUpdateExerciseSubmitButton();
+    return;
+  }
+  else if(action==="competition-next"){
+    const currentQuestion=competitionRoomData?.questions?.[competitionQuestionIndex];
+    if(currentQuestion?.groupId){
+      while(competitionRoomData?.questions?.[competitionQuestionIndex]?.groupId===currentQuestion.groupId){
+        competitionQuestionIndex++;
+      }
+    }else competitionQuestionIndex++;
+    competitionFeedback=null;
+    competitionExerciseSelections={};competitionExerciseDrafts={};competitionExerciseTileDrafts={};
+    renderCompetitionRoom();
+    return;
+  }
+  else if(action==="competition-submit-uebung"){submitCompetitionUebung();return;}
+  else if(action==="competition-finish"){finishCompetition();return;}
+  else if(action==="competition-leave"){leaveCompetition();return;}
   else if(action==="student-settings"){page="settings";render();return;}
   else if(action==="ui-reset-display"){
     saveUiDisplayPreferences({...UI_DISPLAY_DEFAULTS});
@@ -3886,44 +6836,122 @@ document.addEventListener("click",function(event){
   }
   else if(action==="student-notifications"){showToast("ما كايناش إشعارات جديدة حالياً.");return;}
   else if(action==="demo-login"){
-    demoMode=true;
-    currentStudentProfile={name:"Sara",email:"sara@example.com",active:true,lessonAccess:{}};
-    currentStudentGroup=null;
-    currentUser={id:"demo-student",role:"student",name:"Sara",email:"sara@example.com"};
-    selectedLevel="A1.1";currentLesson=0;tutorLessonIndex=0;tutorTool="conversation";page="home";tutorScenario="cafe";tutorMessages=[];communityRoom=null;
-    applyTabFromHash();render();return;
+    startDemoSession();
+    return;
   }
   else if(action==="home-start-lesson"){
     currentLesson=getHomeLessonIndex();rememberHomeLesson(currentLesson);selectedLevel=currentLesson<5?"A1.1":"A1.2";
     if(!getStudentLessonAccess(currentLesson)){showToast("Diese Lektion wurde vom Administrator gesperrt.");return;}
-    markDailyLessonStarted();page="lesson-hub";render();return;
+    lessonHubReturnPage="level-home";markDailyLessonStarted();page="lesson-hub";render();return;
+  }
+  else if(action==="learn-open-voice"){
+    tutorLessonIndex=getHomeLessonIndex();currentLesson=tutorLessonIndex;rememberHomeLesson(tutorLessonIndex);
+    selectedLevel=tutorLessonIndex<5?"A1.1":"A1.2";
+    talkReturnPage="learn-hub";talkReturnLesson=tutorLessonIndex;
+    tutorTool="conversation";tutorToolOpen=true;tutorMessages=loadTutorMessages();
+    page="talk";render();return;
+  }
+  else if(action==="learn-reset-conversation"){
+    tutorLessonIndex=getHomeLessonIndex();tutorTool="conversation";
+    localStorage.removeItem(tutorStorageKey());tutorMessages=[];
+    showToast("تم مسح المحادثة.");
+    renderLearnHub();return;
+  }
+  else if(action==="learn-placement-test"){
+    showToast("اختبار تحديد المستوى قيد الإعداد حالياً.");
+    return;
   }
   else if(action==="daily-open"){openDailyTask(el.dataset.task);return;}
   else if(action==="daily-complete"){setDailyTaskDone(el.dataset.task);renderHome();return;}
   else if(action==="level-path"){
-    if(el.dataset.level==="A1"){selectedLevel="A1.1";page="levels";render();}
-    else showToast(`محتوى ${el.dataset.level} قيد الإعداد، والمتاح حالياً هو A1.`);
+    if(el.dataset.level==="A1"){selectedLevel="A1.1";page="level-home";render();}
+    else if(el.dataset.level==="A2"){currentA2LessonNo=1;page="a2-level-home";render();}
+    else showToast(`محتوى ${el.dataset.level} قيد الإعداد، والمتاح حالياً هو A1 وA2.`);
     return;
   }
-  else if(action==="student-open-a1"){selectedLevel="A1.1";page="levels";render();return;}
+  else if(action==="a2-lesson"){
+    const lessonNo=Number(el.dataset.lessonNo);
+    if(a2CourseLessons.some(item=>item.number===lessonNo)){
+      currentA2LessonNo=lessonNo;page="a2-lesson-html";render();
+    }
+    return;
+  }
+  else if(action==="a2-stage-open"){
+    const stage=el.dataset.stage||"explanation";
+    if(stage==="practice"){
+      const lesson=a2CourseLessons.find(item=>item.number===Number(currentA2LessonNo));
+      if(lesson && lesson.test){
+        // Open the dedicated A2 test that belongs to the lesson currently being viewed.
+        currentA2TestNo=lesson.number;
+        a2TestReturnPage="a2-lesson-html";
+        page="a2-test-html";
+        render();
+      }else{
+        showToast("اختبار هذا الدرس غير موجود حالياً داخل ملفات A2.");
+      }
+    }else{
+      page="a2-course-content";render();
+    }
+    return;
+  }
+  else if(action==="close-a2-course-content"){
+    document.documentElement.classList.remove("challenge-fullscreen-open");
+    document.body.classList.remove("challenge-fullscreen-open");
+    page="a2-lesson-html";render();return;
+  }
+  else if(action==="a2-test"){
+    const lessonNo=Number(el.dataset.lessonNo);
+    const lesson=a2CourseLessons.find(item=>item.number===lessonNo);
+    if(lesson && lesson.test){currentA2TestNo=lessonNo;a2TestReturnPage="a2-level-home";page="a2-test-html";render();}
+    return;
+  }
+  else if(action==="close-a2-lesson" || action==="close-a2-test"){
+    document.documentElement.classList.remove("challenge-fullscreen-open");
+    document.body.classList.remove("challenge-fullscreen-open");
+    page=action==="close-a2-test" ? a2TestReturnPage : "a2-level-home";render();return;
+  }
+  else if(action==="student-open-a1"){selectedLevel="A1.1";page="level-home";render();return;}
   else if(action==="student-open-tests"){selectedLevel="A1.1";page="tests";render();return;}
-  else if(action==="student-open-podcasts"){page="podcasts";render();return;}
+  else if(action==="student-open-podcasts"){enterPodcastPage(page||"learn-hub");return;}
   else if(action==="student-open-grammar"){selectedLevel="A1.1";currentLesson=0;currentCategory="Grammatik";page="category";render();return;}
   else if(action==="student-open-vocab"){selectedLevel="A1.1";currentLesson=0;currentCategory="Nomen";page="category";render();return;}
   else if(action==="student-open-writing"){selectedLevel="A1.1";currentLesson=0;page="lesson";render();return;}
   else if(action==="lesson-open-talk"){
-    tutorLessonIndex=currentLesson;tutorTool="conversation";tutorToolOpen=false;tutorMessages=[];page="talk";render();return;
+    if(!getStudentLessonAccess(currentLesson)){showToast("Diese Lektion wurde vom Administrator gesperrt.");return;}
+    talkReturnPage="lesson-hub";
+    talkReturnLesson=currentLesson;
+    tutorLessonIndex=currentLesson;
+    tutorTool="conversation";
+    tutorToolOpen=true;
+    tutorKeyboardOpen=false;
+    tutorExamplesOpen=false;
+    tutorLessonFilterOpen=false;
+    tutorMessages=loadTutorMessages();
+    page="talk";
+    render();
+    return;
   }
   else if(action==="tutor-lesson"){
     const idx=Number(el.dataset.lesson);
     if(Number.isInteger(idx) && idx>=0 && idx<lessons.length){
-      tutorLessonIndex=idx;rememberHomeLesson(idx);selectedLevel=idx<5?"A1.1":"A1.2";markDailyLessonStarted();tutorTool="conversation";tutorToolOpen=false;tutorMessages=loadTutorMessages();renderTalk();
+      tutorLessonIndex=idx;rememberHomeLesson(idx);selectedLevel=idx<5?"A1.1":"A1.2";markDailyLessonStarted();tutorTool="conversation";tutorToolOpen=false;tutorKeyboardOpen=false;tutorLessonFilterOpen=false;tutorMessages=loadTutorMessages();renderTalk();
     }
+    return;
+  }
+  else if(action==="tutor-toggle-lesson-filter"){
+    tutorLessonFilterOpen=!tutorLessonFilterOpen;
+    renderTalk();
+    return;
+  }
+  else if(action==="tutor-toggle-examples"){
+    tutorExamplesOpen=!tutorExamplesOpen;
+    renderTalk();
     return;
   }
   else if(action==="tutor-tool"){
     tutorTool=el.dataset.tool||"conversation";
     tutorMessages=loadTutorMessages();
+    tutorKeyboardOpen=false;
     tutorToolOpen=true;
     renderTalk();
     if(tutorTool==="repeat") speak(getTutorProfile().sample);
@@ -3931,12 +6959,26 @@ document.addEventListener("click",function(event){
   }
   else if(action==="tutor-tools-back"){
     tutorToolOpen=false;
+    tutorKeyboardOpen=false;
     renderTalk();
     return;
   }
   else if(action==="tutor-prompt"){
+    if(tutorToolOpen && tutorTool==="conversation" && !tutorKeyboardOpen){
+      tutorKeyboardOpen=true;
+      renderTalk();
+    }
     const input=document.getElementById("tutorInput");
     if(input){input.value=el.dataset.prompt||"";input.focus();}
+    return;
+  }
+  else if(action==="tutor-keyboard-toggle"){
+    tutorKeyboardOpen=!tutorKeyboardOpen;
+    renderTalk();
+    if(tutorKeyboardOpen){
+      const input=document.getElementById("tutorInput");
+      if(input) input.focus();
+    }
     return;
   }
   else if(action==="tutor-scenario"){
@@ -3950,13 +6992,53 @@ document.addEventListener("click",function(event){
   else if(action==="community-back"){communityRoom=null;renderCommunity();return;}
   else if(action==="admin-heatmap-mode"){adminExerciseHeatmapMode=el.dataset.mode==="time"?"time":"performance";render();return;}
   if(action==="admin-nav"){adminSection=el.dataset.section||"home";render();return;}
+  else if(action==="admin-page-choose-folder"){chooseAdminProjectFolder();return;}
+  else if(action==="admin-page-load"){loadAdminPageIntoEditor();return;}
+  else if(action==="admin-page-import"){
+    const path = normalizeManagedPagePath(document.getElementById("adminPagePath")?.value || adminPageSelectedPath);
+    if(!path){showToast("اختار الصفحة الهدف أولاً.");return;}
+    document.getElementById("adminPageImportFile")?.click();
+    return;
+  }
+  else if(action==="admin-page-export"){exportAdminManagedPage();return;}
+  else if(action==="admin-page-preview"){previewAdminManagedPage();return;}
+  else if(action==="admin-page-save-draft"){saveAdminManagedPage();return;}
+  else if(action==="admin-page-publish"){saveAdminManagedPage();return;}
+  else if(action==="admin-page-assign-test"){
+    if(!currentUser || currentUser.role!=="admin"){showToast("خاصك تدخل بحساب الأدمن.");return;}
+    const lessonNo = Number(document.getElementById("adminTestRouteLesson")?.value);
+    const path = normalizeManagedPagePath(document.getElementById("adminPagePath")?.value || adminPageSelectedPath);
+    if(!Number.isInteger(lessonNo) || lessonNo<1 || lessonNo>lessons.length){showToast("اختار الدرس أولاً.");return;}
+    if(!path){showToast("دخل مسار HTML صحيح داخل pages/ ويسالي بـ .html.");return;}
+    saveAdminTestPageRoute(lessonNo,path).then(()=>{
+      const status = document.getElementById("adminTestRouteStatus");
+      if(status) status.textContent = `تم الربط داخل js/test-page-routes.js: Lektion ${lessonNo} ← ${path}. غادي يفتح الاختبار مباشرة بملء الشاشة.`;
+      showToast(`تم ربط ${path} باختبار الدرس ${lessonNo} داخل المشروع.`);
+    }).catch(error=>{
+      console.error("Saving test page route failed:",error);
+      showToast(error.message || "تعذر حفظ ربط الاختبار داخل مجلد المشروع.");
+    });
+    return;
+  }
+  else if(action==="admin-page-restore"){showToast("النسخ الاحتياطية كتدار من نظام الملفات ديالك. استعمل نسخة احتياطية من الملف داخل pages.");return;}
+  else if(action==="admin-managed-html-back"){page="admin";render();return;}
+  else if(action==="admin-content-save"){saveAdminContent();return;}
+  else if(action==="admin-content-delete"){deleteAdminContent(el.dataset.id);return;}
+  else if(action==="open-custom-content"){openCustomContent(el.dataset.id);return;}
+  else if(action==="custom-content-back"){page=customContentReturnPage||"lesson-hub";activeCustomContentMeta=null;activeCustomContentFile=null;render();return;}
   if(action==="admin-open-group"){adminSelectedGroupId=el.dataset.id||null;adminSection="groups";render();return;}
   if(action==="login-submit"){loginFromForm();return;}
   else if(action==="logout"){logout();return;}
-  else if(action==="student-results"){page="student-results";render();return;}
+  else if(action==="student-results"){page="student-results";studentResultsExpanded=false;studentResultsActiveTool="";render();return;}
+  else if(action==="student-results-toggle"){studentResultsExpanded=!studentResultsExpanded;render();if(studentResultsExpanded){const panel=document.getElementById("studentResultsDetails");if(panel)panel.scrollIntoView({behavior:"smooth",block:"start"});}return;}
   else if(action==="student-results-jump"){
-    const target=document.getElementById(el.dataset.target||"");
-    if(target) target.scrollIntoView({behavior:"smooth",block:"start"});
+    const targetId=el.dataset.target||"";
+    if(targetId){studentResultsActiveTool=targetId;render();}
+    return;
+  }
+  else if(action==="student-results-tool-back"){
+    studentResultsActiveTool="";
+    render();
     return;
   }
   else if(action==="student-continue"){page="levels";render();return;}
@@ -4015,28 +7097,60 @@ document.addEventListener("click",function(event){
   else if(action==="admin-activity-details"){showStudentActivityDetails(el.dataset.id);return;}
   else if(action==="admin-save-student-minutes"){saveStudentDailyMinutes(el.dataset.id);return;}
   else if(action==="admin-export"){exportAdminBackup();return;}
-  else if(action==="admin-open-vocabulary"){window.location.href="pages/admin-vocabulary.html";return;}
+  else if(action==="admin-open-vocabulary"){managedHtmlPagePath="pages/admin-vocabulary.html";page="admin-managed-html";render();return;}
   else if(action==="start"){page="levels";}
   else if(action==="back"){back();return;}
   else if(action==="level"){selectedLevel=el.dataset.level;page="lessons";}
   else if(action==="open-lessons"){page="lessons";}
-  else if(action==="open-podcasts"){page="podcasts";}
+  else if(action==="open-podcasts"){enterPodcastPage(page||"levels");return;}
   else if(action==="open-tests"){page="tests";}
   else if(action==="lesson"){
     const idx=Number(el.dataset.lesson);if(!getStudentLessonAccess(idx)){showToast("Diese Lektion wurde vom Administrator gesperrt.");return;}
+    lessonHubReturnPage = page==="lessons" ? "lessons" : "level-home";
     rememberHomeLesson(idx);selectedLevel=idx<5?"A1.1":"A1.2";markDailyLessonStarted();activeVerbCard=null;page="lesson-hub";
   }
-  else if(action==="open-course"){if(!getStudentLessonAccess(currentLesson)){showToast("Diese Lektion wurde vom Administrator gesperrt.");return;}courseReturnPage="lesson-hub";activeVerbCard=null;page="lesson";}
-  else if(action==="open-lesson-podcasts"){if(!getStudentLessonAccess(currentLesson)){showToast("Diese Lektion wurde vom Administrator gesperrt.");return;}page="lesson-podcasts";}
-  else if(action==="lesson-podcast-dialog"){dialogueReturnPage="lesson-podcasts";page=(currentLesson===0 ? "intro-dialogue" : "dialogue");}
-  else if(action==="open-lesson-test"){if(!getStudentLessonAccess(currentLesson)){showToast("Diese Lektion wurde vom Administrator gesperrt.");return;}openLessonTestEntry("lesson-hub");}
+  else if(action==="lesson-stage-open"){
+    if(!getStudentLessonAccess(currentLesson)){showToast("هاد الدرس مقفل حالياً من طرف الإدارة.");return;}
+    const stage=el.dataset.stage||"explanation";
+    if(stage==="explanation"){
+      activeVerbCard=null;
+      if([5,6,7,8].includes(currentLesson)){openLessonSectionPage("course");return;}
+      courseReturnPage="lesson-hub";page="lesson";render();return;
+    }
+    if(stage==="vocabulary"){
+      currentCategory="Nomen";categoryReturnPage="lesson-hub";activeVerbCard=null;page="category";render();return;
+    }
+    if(stage==="practice"){
+      if([5,6,7,8].includes(currentLesson)){openLessonSectionPage("test");return;}
+      currentCategory="Grammatik";categoryReturnPage="lesson-hub";activeVerbCard=null;page="category";render();return;
+    }
+    if(stage==="speaking"){
+      tutorLessonIndex=currentLesson;talkReturnPage="lesson-hub";talkReturnLesson=currentLesson;
+      tutorTool="conversation";tutorToolOpen=true;tutorKeyboardOpen=false;tutorMessages=loadTutorMessages();page="talk";renderTalk();return;
+    }
+    return;
+  }
+  else if(action==="open-course"){activeVerbCard=null;openLessonSectionPage("course");return;}
+  else if(action==="open-lesson-podcasts"){
+    if(!getStudentLessonAccess(currentLesson)){showToast("هاد الدرس مقفل حالياً من طرف الإدارة.");return;}
+    enterPodcastPage("lesson-hub",lessonNumber());return;
+  }
+  else if(action==="lesson-podcast-dialog"){dialogueReturnPage="podcasts";page=(currentLesson===0 ? "intro-dialogue" : "dialogue");}
+  else if(action==="open-lesson-test"){openLessonSectionPage("test");return;}
   else if(action==="podcast-open"){const idx=Number(el.dataset.lesson);if(!getStudentLessonAccess(idx)){showToast("Diese Lektion wurde vom Administrator gesperrt.");return;}currentLesson=idx;dialogueReturnPage="podcasts";page="dialogue";}
-  else if(action==="podcast-file-open"){currentPodcastId=el.dataset.podcastId || "";podcastReturnPage=page==="lesson-podcasts"?"lesson-podcasts":"podcasts";page="podcast-player";}
+  else if(action==="podcast-section-open"){const idx=Number(el.dataset.lesson);if(!getStudentLessonAccess(idx)){showToast("Diese Lektion wurde vom Administrator gesperrt.");return;}currentLesson=idx;enterPodcastPage("podcasts",idx+1);return;}
+  else if(action==="podcast-select"){selectPodcast(el.dataset.type||"builtin",el.dataset.id||"");return;}
+  else if(action==="podcast-back-list"){returnPodcastToList();return;}
+  else if(action==="podcast-exit"){exitPodcastFullscreen();return;}
+  else if(action==="podcast-close-player"){activePodcastSelection=null;activePodcastFile=null;activePodcastLoading=false;activePodcastError="";render();return;}
+  else if(action==="podcast-show-all"){podcastFilterLesson=null;activePodcastSelection=null;activePodcastFile=null;activePodcastLoading=false;activePodcastError="";render();return;}
+  else if(action==="podcast-file-open"){currentPodcastId=el.dataset.podcastId||"";podcastFilterLesson=null;selectPodcast("builtin",currentPodcastId);return;}
   else if(action==="test-lesson-open"){const idx=Number(el.dataset.lesson);if(!getStudentLessonAccess(idx)){showToast("Diese Lektion wurde vom Administrator gesperrt.");return;}currentLesson=idx;openLessonTestEntry("tests");}
   else if(action==="category-test"){currentCategory=el.dataset.category;testIndex=0;testScore=0;testChoice=null;testAnswered=false;testQuestionScores={};testQuestionLabels={};testReturnPage="test-categories";page="test";}
   else if(action==="open-standalone-lesson-test"){page="standalone-lesson-test";}
   else if(action==="close-standalone-lesson-test"){document.documentElement.classList.remove("challenge-fullscreen-open");document.body.classList.remove("challenge-fullscreen-open");page=testCategoriesReturnPage||"tests";render();return;}
-  else if(action==="category"){currentCategory=el.dataset.category;activeVerbCard=null;page="category";}
+  else if(action==="close-lesson-section-page"){document.documentElement.classList.remove("challenge-fullscreen-open");document.body.classList.remove("challenge-fullscreen-open");page=lessonSectionReturnPage||"lesson-hub";render();return;}
+  else if(action==="category"){currentCategory=el.dataset.category;categoryReturnPage="lesson";activeVerbCard=null;page="category";}
   else if(action==="learn"){learningTab="Bilder";activeVerbCard=null;page="learning";}
   else if(action==="open-dialogue"){dialogueReturnPage="lesson";page=(currentLesson===0 ? "intro-dialogue" : "dialogue");}
   else if(action==="open-numbers"){page="numbers";}
@@ -4136,7 +7250,33 @@ window.addEventListener("storage",function(event){
 });
 window.addEventListener("resize",refreshUiTextBaselines);
 
+function startDemoSession(){
+  demoMode=true;
+  currentStudentProfile={name:"Sara",email:"sara@example.com",active:true,lessonAccess:{}};
+  currentStudentGroup=null;
+  currentUser={id:"demo-student",role:"student",name:"Sara",email:"sara@example.com"};
+  selectedLevel="A1.1";
+  currentLesson=0;
+  currentA2LessonNo=2;
+  tutorLessonIndex=0;
+  tutorTool="conversation";
+  page="home";
+  tutorScenario="cafe";
+  tutorMessages=[];
+  communityRoom=null;
+  applyTabFromHash();
+  render();
+}
+
 async function bootDeutschA1(){
+  // Opening index.html directly from the extracted folder is a local preview.
+  // It must not depend on Firebase Authentication or an internet connection.
+  const localPreview = window.location.protocol === "file:" ||
+    new URLSearchParams(window.location.search).get("preview") === "1";
+  if(localPreview){
+    startDemoSession();
+    return;
+  }
   if (!firebaseReady) { renderLogin(); setLoginMessage("Firebase konnte nicht initialisiert werden."); return; }
   firebaseAuth.onAuthStateChanged(async authUser => {
     if (demoMode) return;
@@ -4170,3 +7310,31 @@ async function bootDeutschA1(){
   });
 }
 bootDeutschA1();
+
+
+
+/* =========================================================
+   V13 — Hide the student topbar on scroll down, show on scroll up
+   ========================================================= */
+function handleStudentTopbarScroll(event){
+  const scroller = event.target;
+  if(!scroller || !scroller.classList || !scroller.classList.contains("student-main")) return;
+  const appRoot = scroller.closest(".student-app");
+  if(!appRoot) return;
+
+  const currentTop = Math.max(0, scroller.scrollTop || 0);
+  const previousTop = Number(appRoot.dataset.topbarScrollTop || 0);
+  const delta = currentTop - previousTop;
+
+  if(currentTop <= 8){
+    appRoot.classList.remove("student-topbar-hidden");
+  }else if(delta > 4){
+    appRoot.classList.add("student-topbar-hidden");
+  }else if(delta < -4){
+    appRoot.classList.remove("student-topbar-hidden");
+  }
+
+  appRoot.dataset.topbarScrollTop = String(currentTop);
+}
+
+document.addEventListener("scroll", handleStudentTopbarScroll, {capture:true, passive:true});
