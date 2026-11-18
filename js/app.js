@@ -1406,6 +1406,11 @@ function getCourseProgress(level, no){
 function courseProgressPercent(progress){
   if(!progress) return 0;
   if(progress.completed) return 100;
+  // For slider lessons a stage counts as learned only when its quiz is finished.
+  // Merely clicking a vocabulary tab must not be mistaken for finishing exercises.
+  if(Array.isArray(progress.nativeStages) && progress.nativeStages.length){
+    return Math.min(99,Math.round(progress.nativeStages.filter(item=>item?.done).length/progress.nativeStages.length*100));
+  }
   const visited=Array.isArray(progress.visitedTabs) ? progress.visitedTabs.length : 0;
   const total=Math.max(0,Number(progress.totalTabs)||0);
   return total>1 ? Math.min(99,Math.round(visited/total*100)) : 0;
@@ -1459,7 +1464,7 @@ function closeCourseResumeDialog(){
 function askCourseResume(level,no,onLaunch){
   const existing=getCourseProgress(level,no);
   pendingCourseLaunch={level,no,onLaunch};
-  if(existing && !existing.completed && existing.startedAt){
+  if(existing && existing.startedAt){
     const percent=courseProgressPercent(existing);
     const label=existing.lastTabLabel ? `آخر جزء: ${escapeHtml(existing.lastTabLabel)}` : "تقدر ترجع لنفس المكان اللي وقفتي فيه.";
     const overlay=document.createElement("div");
@@ -1485,13 +1490,6 @@ function askCourseResume(level,no,onLaunch){
     overlay.querySelector(".course-resume-primary")?.focus();
     return;
   }
-  if(existing?.completed){
-    // Reviewing a completed course must not erase its 100% completion status.
-    pendingCourseLaunch=null;
-    courseResumeMode="review";
-    onLaunch();
-    return;
-  }
   launchPendingCourse("new");
 }
 function launchPendingCourse(mode){
@@ -1503,18 +1501,160 @@ function launchPendingCourse(mode){
   if(mode==="restart" || mode==="new"){
     saveCourseProgress(pending.level,pending.no,{completed:false,lastTab:0,
       lastTabLabel:"",totalTabs:0,visitedTabs:[],scrollTop:0,scrollRatio:0,
+      nativeStages:null,nativeQuiz:null,nativeStageResults:null,courseResultSignature:null,scorePerStage:10,legacyUnscoredStages:0,formDraft:null,
       startedAt:new Date().toISOString(),restartAt:mode==="restart"?new Date().toISOString():null},false);
-  }else{
-    saveCourseProgress(pending.level,pending.no,{},false);
   }
+  // Resuming is a READ operation. Do not bump updatedAt on the parent record;
+  // it could otherwise outrank the course's last real navigation checkpoint.
   pending.onLaunch();
 }
+/* ===== Embedded Kurs HTML bridge =====
+  Runs inside same-origin lesson documents after they load. The back control is
+  part of the lesson's own header, not a fixed button outside its content. */
+function addLessonInternalBackButton(doc,level,no){
+  if(!doc?.body || doc.getElementById("deutschLessonInternalBack")) return;
+  const header=doc.querySelector("main > header,.shell > header,.wrap > header,.app > header,body > header,.top,.header");
+  const parent=header || doc.querySelector("main,.shell,.wrap,.app") || doc.body;
+  const button=doc.createElement("button");
+  button.type="button";
+  button.id="deutschLessonInternalBack";
+  button.textContent=`← رجوع إلى الدرس ${Number(no)}`;
+  button.setAttribute("aria-label","الرجوع إلى صفحة الدرس مع حفظ التقدم");
+  button.addEventListener("click",()=>{
+    saveActiveCourseBeforeExit();
+    document.documentElement.classList.remove("challenge-fullscreen-open");
+    document.body.classList.remove("challenge-fullscreen-open");
+    page=level==="A2"?"a2-lesson-html":(lessonSectionReturnPage||"lesson-hub");
+    render();
+  });
+  if(header){
+    // Keep both navigation actions together at the right of the title.
+    const nativeExit=doc.getElementById("deutschLessonInternalExit");
+    if(nativeExit?.parentElement===header) header.insertBefore(button,nativeExit);
+    else header.appendChild(button);
+  } else parent.insertBefore(button,parent.firstChild);
+  // Apps that don't have a standard header get their own in-page row.
+  if(!header)button.classList.add("deutsch-lesson-back-no-header");
+
+  // A real exit control inside the course HTML. Unlike "رجوع إلى الدرس",
+  // it returns to the lesson list, preserving the active slide and quiz.
+  let exitButton=doc.getElementById("deutschLessonInternalExit");
+  if(!exitButton){
+    exitButton=doc.createElement("button");
+    exitButton.type="button";
+    exitButton.id="deutschLessonInternalExit";
+    exitButton.textContent="🚪 الخروج من الدرس";
+    if(header) header.appendChild(exitButton);
+    else parent.insertBefore(exitButton,button.nextSibling);
+  }
+  exitButton.setAttribute("aria-label","الخروج من الدرس والرجوع إلى قائمة الدروس مع حفظ التقدم");
+  exitButton.addEventListener("click",event=>{
+    // Capturing also takes precedence over the standalone-page fallback.
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    saveActiveCourseBeforeExit();
+    document.documentElement.classList.remove("challenge-fullscreen-open");
+    document.body.classList.remove("challenge-fullscreen-open");
+    page=level==="A2"?"a2-level-home":"level-home";
+    render();
+  },true);
+  if(!header)exitButton.classList.add("deutsch-lesson-back-no-header");
+  const backStyle=doc.createElement("style");
+  backStyle.id="deutschLessonBackStyle";
+  backStyle.textContent=`
+    #deutschLessonInternalBack{flex:0 0 auto;display:inline-flex;align-items:center;
+      justify-content:center;white-space:nowrap;margin-inline-start:auto;
+      min-height:39px;padding:8px 13px;border:1px solid #c8d9ec;border-radius:12px;
+      background:#fff;color:#21589c;font-family:Tahoma,Arial,sans-serif;
+      font-size:13px;font-weight:700;box-shadow:0 3px 10px #24598a11;
+      cursor:pointer;direction:rtl;position:relative;z-index:2}
+    #deutschLessonInternalBack:hover{background:#edf5ff}
+    #deutschLessonInternalBack:focus-visible{outline:3px solid #efac4e;outline-offset:2px}
+    #deutschLessonInternalBack.deutsch-lesson-back-no-header{display:flex;margin:10px 12px 10px auto}
+    #deutschLessonInternalExit{flex:0 0 auto;display:inline-flex;align-items:center;
+      justify-content:center;white-space:nowrap;margin-inline-start:6px;
+      min-height:39px;padding:8px 13px;border:1px solid #efc9c9;border-radius:12px;
+      background:#fff8f8;color:#a12c36;font-family:Tahoma,Arial,sans-serif;
+      font-size:13px;font-weight:700;box-shadow:0 3px 10px #9d33330a;
+      cursor:pointer;direction:rtl;position:relative;z-index:2}
+    #deutschLessonInternalExit:hover{background:#ffebed;border-color:#e5a4a9}
+    #deutschLessonInternalExit:focus-visible{outline:3px solid #efac4e;outline-offset:2px}
+    #deutschLessonInternalExit.deutsch-lesson-back-no-header{display:flex;margin:10px auto 10px 12px}
+    @media(max-width:700px){
+      #deutschLessonInternalBack,#deutschLessonInternalExit{font-size:12px;padding:7px 9px;white-space:normal}
+      .top,main>header,.shell>header{flex-wrap:wrap}
+    }
+  `;
+  (doc.head||doc.documentElement).appendChild(backStyle);
+  // An official integration API for course HTML pages with custom interactions.
+  // No marks are invented: report only returns real points sent by the lesson.
+  try{
+    doc.defaultView.DeutschLessonIntegration={
+      level,lessonNumber:no,
+      save(state){
+        if(activeCourseFrame?.initializing || !state || typeof state!=="object")return;
+        const updates={};
+        if(Number.isInteger(Number(state.slideIndex))&&Number(state.slideIndex)>=0)updates.lastTab=Number(state.slideIndex);
+        if(typeof state.label==="string")updates.lastTabLabel=state.label.slice(0,85);
+        if(Number.isInteger(Number(state.totalSlides))&&Number(state.totalSlides)>0)updates.totalTabs=Number(state.totalSlides);
+        if(state.completed===true)updates.completed=true;
+        if(Object.keys(updates).length)saveCourseProgress(level,no,updates);
+      },
+      result(stageIndex,points,maxPoints,label){
+        if(!Number.isInteger(Number(stageIndex))||!Number.isFinite(Number(points))||Number(maxPoints)<=0)return;
+        const stage=Math.max(0,Math.floor(Number(stageIndex)));
+        const record=getCourseProgress(level,no)||{};
+        const results={...(record.nativeStageResults||{}),[stage]:{
+          points:Math.max(0,Math.min(Number(maxPoints),Number(points))),
+          maxPoints:Number(maxPoints),label:String(label||`المرحلة ${stage+1}`).slice(0,85)}};
+        saveCourseProgress(level,no,{nativeStageResults:results});
+        storeCourseStageResults(level,no,null,results);
+      }
+    };
+  }catch(error){console.warn("Lesson integration could not be attached",error);}
+}
+
+function storeCourseStageResults(level,no,native,explicitResults){
+  if(!currentUser || currentUser.role!=="student")return;
+  const stages=Array.isArray(native?.stages)?native.stages:[];
+  const saved=getCourseProgress(level,no)||{};
+  const manual=explicitResults||saved.nativeStageResults||{};
+  const count=stages.length||Math.max(0,Number(saved.totalTabs)||0);
+  if(!count && !Object.keys(manual).length)return;
+  const totalPerStage=Math.max(1,Number(native?.quizTotal)||Number(saved.scorePerStage)||10);
+  const scores={},scoreTotals={},completedMap={},exerciseLabels={},stageByExercise={},stageLabels={};
+  let points=0,maxPoints=0,finished=0;
+  for(let i=0;i<count;i++){
+    const unscoredLegacy=Math.max(0,Number(saved.legacyUnscoredStages)||0);
+    const item=manual[i]||(i>=unscoredLegacy && stages[i]?.done ? {points:stages[i].score,maxPoints:totalPerStage} : null);
+    if(!item)continue;
+    const max=Math.max(1,Number(item.maxPoints)||totalPerStage);
+    const correct=Math.max(0,Math.min(max,Number(item.points)||0));
+    const key=`kurs-stage-${i+1}`;
+    scores[key]={correct,total:max};scoreTotals[key]=max;completedMap[key]=true;
+    exerciseLabels[key]=String(item.label||`المرحلة ${i+1}`);stageByExercise[key]=key;stageLabels[key]=exerciseLabels[key];
+    points+=correct;maxPoints+=max;finished++;
+  }
+  if(!finished)return; // No quiz has actually been graded yet.
+  const signature=JSON.stringify({points,maxPoints,finished,count,scores});
+  if(saved.courseResultSignature===signature)return;
+  saveCourseProgress(level,no,{courseResultSignature:signature,scorePerStage:totalPerStage},false);
+  const moduleId=`kurs-${level.toLowerCase()}-lektion-${no}`;
+  const attemptId=`${moduleId}-${saved.restartAt||saved.startedAt||"initial"}`;
+  saveStudentResult(moduleId,`Kurs ${level} · Lektion ${no}`,points,maxPoints,{
+    contentType:"kurs",activityType:"kurs",source:"lesson-html-bridge",
+    lessonNumber:no,level,completedExercises:finished,totalExercises:count,
+    completed:completedMap,scores,scoreTotals,exerciseLabels,stageByExercise,stageLabels,
+    attemptId
+  });
+}
+
 function findCourseTabs(doc){
   if(!doc) return [];
-  const groupSelectors='[role="tablist"],.tabs,.tab-nav,.tab-bar,.tab-buttons,.nav-tabs,.course-tabs,.lesson-tabs,.section-tabs,.section-nav,.topic-tabs,.topic-nav,.unit-tabs,.slides-nav,.category-tabs,.nav-pills';
+  const groupSelectors='[role="tablist"],.tabs,.tab-nav,.tab-bar,.tab-buttons,.nav-tabs,.course-tabs,.lesson-tabs,.section-tabs,.section-nav,.topic-tabs,.topic-nav,.unit-tabs,.slides-nav,.category-tabs,.nav-pills,.steps,.lesson-navigation';
   const candidates=Array.from(doc.querySelectorAll(groupSelectors));
   for(const group of candidates){
-    const elements=Array.from(group.querySelectorAll('button,[role="tab"],a[data-tab],a[data-slide]'));
+    const elements=Array.from(group.querySelectorAll('button,[role="tab"],a[data-tab],a[data-slide],a[href^="#"]'));
     if(elements.length>=2 && elements.length<=32 && elements.every(node=>node.offsetParent!==null)) return elements;
   }
   const direct=Array.from(doc.querySelectorAll('[role="tab"],button[data-tab],button[data-slide],button[data-section],button.tab,button.tab-btn,button.section-tab,button.topic-tab'));
@@ -1530,7 +1670,7 @@ function findCourseTabs(doc){
 }
 function activeCourseTabIndex(tabs){
   return tabs.findIndex(tab=>tab.getAttribute("aria-selected")==="true" ||
-    tab.getAttribute("aria-current")==="page" ||
+    ["page","step","true"].includes(tab.getAttribute("aria-current")) ||
     ["active","is-active","selected","current"].some(name=>tab.classList.contains(name)));
 }
 function fitCoursePageToViewport(doc){
@@ -1551,7 +1691,20 @@ function fitCoursePageToViewport(doc){
         max-width:none!important;width:100%!important;min-width:0!important;margin-inline:0!important;
       }
       img,svg,video,canvas{max-width:100%;}
-      @media(max-width:650px){body{padding-inline:8px!important;} }
+      /* The course's own shell and deck must be edge-to-edge, not a 1060px panel. */
+      body > main.shell,body > main.wrap,body > main,body > .wrap,body > .shell,
+      body > .app,body > .container,body > #app,body > #root{
+        width:100%!important;max-width:none!important;min-width:0!important;
+        margin:0!important;padding:clamp(10px,1.4vw,20px)!important;
+        border:0!important;border-radius:0!important;box-shadow:none!important;
+      }
+      main.shell > .deck,main > .deck,main > .panel,main > .course-card,
+      .shell > .deck,.wrap > .deck{
+        width:100%!important;max-width:none!important;margin-inline:0!important;
+        border:0!important;border-radius:0!important;box-shadow:none!important;
+        padding:clamp(10px,1.2vw,18px)!important;
+      }
+      @media(max-width:650px){body{padding-inline:0!important;} }
     `;
     (doc.head||doc.documentElement).appendChild(style);
   }
@@ -1602,90 +1755,317 @@ function fitCoursePageToViewport(doc){
   }
 }
 
+/* Read course-owned quiz/slider state without rewriting the independent lesson files.
+   Supports the original staged Kurs HTML (SECTIONS/progress/goTo/startQuiz).
+   Other course layouts still use the general tab/scroll fallback. */
+function installNativeCourseChangeHook(win){
+  if(!win) return;
+  try{
+    win.eval(`(function(){
+      if(window.__deutschStageBridgeV6)return;
+      window.__deutschStageBridgeV6=true;
+      for(const name of ['goTo','startQuiz','renderQuestion','finishQuiz','forward','backward']){
+        let fn;try{fn=eval(name);}catch(error){continue;}
+        if(typeof fn!=='function')continue;
+        // Assignment works with classic inline <script> function declarations.
+        const wrap=function(...args){
+          const value=fn.apply(this,args);
+          window.dispatchEvent(new Event('deutsch-course-state-changed'));
+          return value;
+        };
+        try{eval(name+' = wrap')}catch(error){}
+      }
+    })()`);
+  }catch(error){console.warn('Native stage hooks unavailable',error);}
+}
+function readNativeCourseState(win){
+  if(!win) return null;
+  try{
+    const raw=win.eval(`(function(){
+      if(typeof progress==='undefined' || !Array.isArray(progress) || !progress.length || progress.length>64 ||
+         !progress.every(p=>p && typeof p==='object' && typeof p.done==='boolean')) return null;
+      const state={stages:progress.map(p=>({done:!!p.done,score:Number.isFinite(+p.score)?Math.max(0,+p.score):0})),
+        current:typeof current==='number' && Number.isInteger(current)?current:null,
+        quizTotal:typeof QUIZ_TOTAL==='number'&&QUIZ_TOTAL>0&&QUIZ_TOTAL<=100?QUIZ_TOTAL:10};
+      if(typeof quizMode==='boolean' && quizMode && typeof quizIndex==='number'){
+        state.quiz={active:true,index:quizIndex,score:typeof quizScore==='number'?quizScore:0,
+          answered:typeof quizAnswered==='boolean' ? quizAnswered:false,
+          questions:typeof quizQuestions!=='undefined' && Array.isArray(quizQuestions)?quizQuestions:null};
+      }
+      return JSON.stringify(state);
+    })()`);
+    if(typeof raw!=='string' || raw.length>250000) return null;
+    const parsed=JSON.parse(raw);
+    return parsed && Array.isArray(parsed.stages) ? parsed : null;
+  }catch(error){return null;}
+}
+function restoreNativeCourseState(win,before){
+  const currentNative=readNativeCourseState(win);
+  if(!currentNative) return false;
+  let stages=Array.isArray(before.nativeStages)?before.nativeStages.slice(0,64):[];
+  // Compatibility with progress saved by the previous version of this app:
+  // in these sequential courses reaching stage N requires passing all previous quizzes.
+  if(!stages.length && Number(before.lastTab)>0){
+    const last=Math.max(0,Math.min(currentNative.stages.length-1,Math.trunc(Number(before.lastTab))));
+    stages=currentNative.stages.map((_,i)=>({done:i<last,score:0}));
+    // Previously saved cursors had no grade information: do not invent zero-mark grades.
+    saveCourseProgress(activeCourseFrame?.level||"A1",activeCourseFrame?.no||0,{legacyUnscoredStages:last},false);
+  }
+  const selected=Math.max(0,Math.min(currentNative.stages.length-1,
+    Number.isFinite(Number(before.lastTab))?Math.trunc(Number(before.lastTab)):0));
+  try{
+    // JSON.stringify ensures the state is a JS literal, never executable course text.
+    const stageData=JSON.stringify(stages.map(item=>({done:!!item?.done,
+      score:Number.isFinite(+item?.score)?Math.max(0,+item.score):0})));
+    win.eval(`(function(saved){
+      if(typeof progress==='undefined'||!Array.isArray(progress))return;
+      saved.forEach((value,i)=>{if(progress[i] && typeof progress[i]==='object'){
+        progress[i].done=!!value.done; progress[i].score=value.score||0;
+      }});
+      if(typeof updateTabs==='function') updateTabs();
+    })(${stageData})`);
+    // goTo must run after the prerequisite quiz results have been restored.
+    if(typeof win.eval('typeof goTo')==='string' && win.eval('typeof goTo')==='function'){
+      win.eval(`goTo(${selected})`);
+    }
+    const quiz=before.nativeQuiz;
+    const actual=Number(win.eval("typeof current==='number'?current:-1"));
+    if(actual!==selected) return false;
+    if(quiz?.active){
+      const safeQuiz={index:Math.max(0,Math.min(99,Math.trunc(Number(quiz.index)||0))),
+        score:Math.max(0,Math.trunc(Number(quiz.score)||0)),
+        answered:quiz.answered===true,
+        questions:Array.isArray(quiz.questions) ? quiz.questions.slice(0,100) : null};
+      const payload=JSON.stringify(safeQuiz).replace(/</g,'\\u003c');
+      win.eval(`(function(saved){
+        if(typeof startQuiz!=='function'||typeof quizMode==='undefined')return;
+        if(!quizMode)startQuiz();
+        if(saved.questions && typeof quizQuestions!=='undefined'&&Array.isArray(quizQuestions)){
+          quizQuestions.splice(0,quizQuestions.length,...saved.questions);
+        }
+        if(typeof quizQuestions!=='undefined'&&quizQuestions.length){
+          quizScore=saved.score;
+          if(saved.answered && saved.index>=quizQuestions.length-1){
+            quizIndex=quizQuestions.length-1;
+            if(typeof finishQuiz==='function')finishQuiz();
+          }else{
+            quizIndex=Math.max(0,Math.min(saved.index+(saved.answered?1:0),quizQuestions.length-1));
+            if(typeof renderQuestion==='function')renderQuestion();
+          }
+        }
+      })(${payload})`);
+    }
+    return true;
+  }catch(error){
+    console.warn('Could not restore native course state; using tab fallback',error);
+    return false;
+  }
+}
+function readCourseFormDraft(doc){
+  const fields=Array.from(doc.querySelectorAll('input:not([type="file"]):not([type="password"]),textarea,select')).slice(0,80);
+  const entries={};
+  fields.forEach((field,i)=>{
+    if(field.disabled||field.closest('[hidden]'))return;
+    const key=(field.id ? '#'+field.id : field.name ? `[name="${field.name}"]` : `@${i}`);
+    const value=field.type==="checkbox"||field.type==="radio" ? !!field.checked : String(field.value||'').slice(0,500);
+    if(value!=='' && value!==false)entries[key]={value,index:i};
+  });
+  return Object.keys(entries).length ? entries : null;
+}
+function restoreCourseFormDraft(doc,draft){
+  if(!draft || typeof draft!=="object")return;
+  const fields=Array.from(doc.querySelectorAll('input:not([type="file"]):not([type="password"]),textarea,select')).slice(0,80);
+  for(const [key,item] of Object.entries(draft)){
+    if(!item || !Object.prototype.hasOwnProperty.call(item,"value"))continue;
+    let node=null;
+    if(key[0]==="#")node=doc.getElementById(key.slice(1));
+    else if(key[0]==="@")node=fields[item.index];
+    else try{node=doc.querySelector(key);}catch(error){}
+    if(!node||node.disabled)continue;
+    if(node.type==="checkbox"||node.type==="radio")node.checked=!!item.value;
+    else node.value=String(item.value);
+  }
+}
 function trackCourseIframe(frame,level,no){
   if(!frame) return;
-  activeCourseFrame={frame,level,no};
-  frame.addEventListener("load",()=>{
-    // File pages and site pages are same-origin. External/cross-origin pages cannot be inspected.
+  const launchMode=courseResumeMode;
+  // Freeze the progress record BEFORE the embedded HTML can send any message.
+  const launchSnapshot={...(getCourseProgress(level,no)||{})};
+  activeCourseFrame={frame,level,no,initializing:true};
+  frame.addEventListener('load',()=>{
     let doc,win;
-    try{doc=frame.contentDocument;win=frame.contentWindow;if(!doc?.body || !win) return;}catch(error){return;}
+    try{
+      doc=frame.contentDocument;win=frame.contentWindow;
+      if(!doc?.body || !win) return;
+      // Ignore the temporary about:blank iframe: otherwise it overwrites the
+      // previous position with slide 1 before the REAL lesson finishes loading.
+      const expected=frame.dataset.managedPagePath || '';
+      if(expected && (doc.location.href==='about:blank' || doc.location.href==='about:srcdoc')) return;
+    }catch(error){return;}
     fitCoursePageToViewport(doc);
-    // Some lessons create the content slider after load. Recheck after their
-    // inline scripts render, and again when images/font metrics settle.
+    addLessonInternalBackButton(doc,level,no);
     [80,350,900,1800].forEach(delay=>win.setTimeout(()=>{
       if(frame.isConnected && frame.contentDocument===doc) fitCoursePageToViewport(doc);
     },delay));
-    const before=getCourseProgress(level,no)||{};
+    const before=launchSnapshot;
     const priorTabs=Array.isArray(before.visitedTabs)?before.visitedTabs:[];
     let trackedIndex=Number.isInteger(Number(before.lastTab))?Number(before.lastTab):0;
-    let restoreInProgress=courseResumeMode==="resume";
-    let lastSignature="";
-    function snapshot(preferredIndex){
+    let restoreInProgress=launchMode==='resume';
+    let lastSignature='';
+    function snapshot(){
       if(!frame.isConnected || frame.contentDocument!==doc || restoreInProgress) return;
       const tabs=findCourseTabs(doc);
+      const native=readNativeCourseState(win);
       const active=activeCourseTabIndex(tabs);
-      const index=Number.isInteger(preferredIndex) && preferredIndex>=0 ? preferredIndex : active;
-      if(index>=0) trackedIndex=index;
-      const visited=Array.from(new Set([...(getCourseProgress(level,no)?.visitedTabs||priorTabs),...(tabs.length?[trackedIndex]:[])].filter(i=>Number.isInteger(i)&&i>=0&&(!tabs.length||i<tabs.length)))).sort((a,b)=>a-b);
+      const actualIndex=native && Number.isInteger(native.current)?native.current:active;
+      if(actualIndex>=0 && (!tabs.length || actualIndex<tabs.length)) trackedIndex=actualIndex;
+      const existing=getCourseProgress(level,no)||{};
+      const visited=Array.from(new Set([
+        ...(existing.visitedTabs||priorTabs),...(tabs.length?[trackedIndex]:[])
+      ].filter(i=>Number.isInteger(i)&&i>=0&&(!tabs.length||i<tabs.length)))).sort((a,b)=>a-b);
       const top=Math.max(0,Math.round(win.scrollY||doc.scrollingElement?.scrollTop||0));
       const maxScroll=Math.max(0,(doc.scrollingElement?.scrollHeight||0)-win.innerHeight);
       const ratio=maxScroll?Math.min(1,top/maxScroll):0;
-      const completed=!!getCourseProgress(level,no)?.completed || (tabs.length>1 && visited.length>=tabs.length);
-      const value={lastTab:trackedIndex,totalTabs:tabs.length,visitedTabs:visited,
-        lastTabLabel:tabs[trackedIndex]?.textContent?.replace(/\s+/g," ").trim().slice(0,85)||"",
-        scrollTop:top,scrollRatio:ratio,completed};
+      // A lesson with quizzes is only complete when they are all finished;
+      // visiting every visual tab is NOT course completion.
+      const finishedNative=native && native.stages.every(stage=>stage.done);
+      const completed=!!existing.completed || !!finishedNative;
+      const value={lastTab:trackedIndex,totalTabs:tabs.length||native?.stages.length||0,
+        visitedTabs:visited,lastTabLabel:tabs[trackedIndex]?.textContent?.replace(/\s+/g,' ').trim().slice(0,85)||'',
+        scrollTop:top,scrollRatio:ratio,completed,formDraft:readCourseFormDraft(doc)};
+      if(native){
+        value.nativeStages=native.stages;
+        value.nativeQuiz=native.quiz||null;
+        value.scorePerStage=native.quizTotal||10;
+      }
       const signature=JSON.stringify(value);
-      if(signature!==lastSignature){lastSignature=signature;saveCourseProgress(level,no,value);}
+      if(signature!==lastSignature){
+        lastSignature=signature;
+        saveCourseProgress(level,no,value);
+        if(native)storeCourseStageResults(level,no,native);
+      }
     }
-    if(courseResumeMode==="resume"){
-      // Delay allows each original course script to build its slider before selecting the saved tab.
-      win.setTimeout(()=>{
+    if(activeCourseFrame?.frame===frame) activeCourseFrame.persist=snapshot;
+    // Listen directly to the lesson's navigation/quiz lifecycle. Clicking
+    // "next" changes the native index inside goTo(); a 700ms poll can miss
+    // short visits (e.g. clicking Exit immediately afterwards).
+    win.addEventListener('deutsch-course-state-changed',()=>{
+      if(restoreInProgress)return;
+      snapshot();
+    });
+    installNativeCourseChangeHook(win);
+    if(launchMode==='resume'){
+      // The saved index is authoritative until a real restore succeeds. Never
+      // let a newly booted HTML page at stage 1 overwrite the saved stage.
+      let attempts=0;
+      const restoreSavedLocation=()=>{
+        if(!frame.isConnected || frame.contentDocument!==doc) return;
+        attempts++;
+        let restored=false;
         try{
-          const tabs=findCourseTabs(doc);
-          const idx=Math.min(tabs.length-1,Math.max(0,Number(before.lastTab)||0));
-          if(tabs.length && idx>=0 && idx<tabs.length && idx!==activeCourseTabIndex(tabs))tabs[idx].click();
-          if(doc.scrollingElement){
-            const max=Math.max(0,doc.scrollingElement.scrollHeight-win.innerHeight);
-            const top=Math.min(max,Math.max(0,Number(before.scrollTop)||Math.round(max*(Number(before.scrollRatio)||0))));
-            win.scrollTo({top,behavior:"instant"});
+          const savedIndex=Math.max(0,Number(before.lastTab)||0);
+          // New HTML courses restore state before their first paint. Trust it
+          // when it matches the stored stage; otherwise use the parent bridge.
+          const nativeNow=readNativeCourseState(win);
+          const nativeAlreadyRestored=!!((win.DeutschCourseNativeSyncV8?.restored || win.DeutschCourseNativeSyncV7?.restored) && nativeNow);
+          if(nativeAlreadyRestored){
+            // The HTML owns the cursor: a newer native snapshot may repair a
+            // stale parent record incorrectly overwritten with slide 1.
+            before.lastTab=nativeNow.current;
+            before.nativeStages=nativeNow.stages;
+            before.nativeQuiz=nativeNow.quiz||null;
+            trackedIndex=nativeNow.current;
+            restored=true;
+          }else{
+            restored=restoreNativeCourseState(win,before);
           }
-        }catch(error){console.warn("Could not restore course slide",error);}
-        restoreInProgress=false;
-        snapshot();
-      },450);
+          const tabs=findCourseTabs(doc);
+          const idx=Math.min(tabs.length-1,savedIndex);
+          if(!restored && tabs.length && idx>=0 && idx!==activeCourseTabIndex(tabs)){
+            tabs[idx].click();
+            restored=activeCourseTabIndex(tabs)===idx;
+          }
+          if(!restored && savedIndex===0)restored=true;
+          if(restored){
+            const max=Math.max(0,(doc.scrollingElement?.scrollHeight||0)-win.innerHeight);
+            const top=Math.min(max,Math.max(0,Number(before.scrollTop)||Math.round(max*(Number(before.scrollRatio)||0))));
+            win.scrollTo({top,behavior:'instant'});
+            restoreCourseFormDraft(doc,before.formDraft);
+          }
+        }catch(error){console.warn('Could not restore course slide',error);}
+        if(restored || attempts>=8){
+          restoreInProgress=false;
+          if(activeCourseFrame?.frame===frame)activeCourseFrame.initializing=false;
+          // An unsupported HTML file must not erase a lastTab we couldn't restore.
+          if(restored) snapshot();
+          else console.warn('This Kurs HTML needs an internal stage restore bridge:',level,no,before.lastTab);
+        }else win.setTimeout(restoreSavedLocation,250);
+      };
+      // Fast first render; also retry for lessons that render their navigation asynchronously.
+      win.setTimeout(restoreSavedLocation,80);
     }else{
       restoreInProgress=false;
       win.setTimeout(()=>{
+        if(activeCourseFrame?.frame===frame)activeCourseFrame.initializing=false;
         const tabs=findCourseTabs(doc);
-        if(courseResumeMode==="restart" && tabs.length){
+        if(launchMode==='restart' && tabs.length){
           try{tabs[0].click();win.scrollTo(0,0);}catch(error){}
         }
-        snapshot(0);
+        snapshot();
       },400);
     }
-    doc.addEventListener("click",event=>{
+    doc.addEventListener('click',event=>{
       const clicked=event.target?.closest?.('button,[role="tab"],a');
       if(!clicked)return;
-      const text=(clicked.textContent||"").trim();
+      const clickedTab=findCourseTabs(doc).indexOf(clicked);
+      if(clickedTab>=0 && !clicked.disabled){
+        win.setTimeout(()=>{
+          const tabs=findCourseTabs(doc);
+          if(!tabs.length || activeCourseTabIndex(tabs)>=0)return; // real state wins
+          trackedIndex=clickedTab;
+          snapshot();
+        },250);
+      }
+      const text=(clicked.textContent||'').trim();
       if(/(?:إنهاء|إكمال|أكملت|أنهيت)\s*(?:هذا\s*)?الدرس|finish\s*(?:the\s*)?lesson|complete\s*(?:the\s*)?lesson|lektion\s*abschlie(?:ß|ss)en/i.test(text) ||
-        /(?:complete|finish)[-_]?(?:lesson|course)/i.test(clicked.dataset.action||"")){
+         /(?:complete|finish)[-_]?(?:lesson|course)/i.test(clicked.dataset.action||'')){
         saveCourseProgress(level,no,{completed:true});
       }
-      const tabs=findCourseTabs(doc);
-      const idx=tabs.findIndex(tab=>tab===clicked || tab.contains(clicked));
-      win.setTimeout(()=>snapshot(idx>=0?idx:undefined),130);
+      // A click can be blocked by the original course's prerequisites. Read
+      // ACTUAL active slide after the event instead of trusting clicked tab.
+      win.setTimeout(snapshot,150);
     },true);
-    doc.addEventListener("scroll",()=>snapshot(),{capture:true,passive:true});
-    win.addEventListener("pagehide",()=>snapshot());
+    doc.addEventListener('scroll',snapshot,{capture:true,passive:true});
+    doc.addEventListener('input',()=>win.setTimeout(snapshot,50),{capture:true,passive:true});
+    doc.addEventListener('change',()=>win.setTimeout(snapshot,50),{capture:true,passive:true});
+    const watchNodes=doc.querySelectorAll('.tabs,.tab-nav,.course-tabs,.section-tabs,#slideCount,.section-bar,.dots,#quizPanel');
+    if(watchNodes.length && typeof win.MutationObserver==='function'){
+      let queued=false;
+      const changes=new win.MutationObserver(()=>{
+        if(restoreInProgress || queued)return;
+        queued=true;
+        win.setTimeout(()=>{queued=false;snapshot();},0);
+      });
+      watchNodes.forEach(node=>changes.observe(node,{subtree:true,childList:true,attributes:true,characterData:true,
+        attributeFilter:['aria-selected','aria-current','class','hidden']}));
+      win.addEventListener('pagehide',()=>changes.disconnect(),{once:true});
+    }
+    win.addEventListener('pagehide',snapshot);
+    doc.addEventListener('visibilitychange',()=>{if(doc.hidden)snapshot();});
     const timer=win.setInterval(()=>{
       if(!frame.isConnected || frame.contentDocument!==doc){win.clearInterval(timer);return;}
       snapshot();
-    },1500);
+    },700);
   });
 }
 function saveActiveCourseBeforeExit(){
   // iframe click/scroll/poll and pagehide already persist the last position.
   if(activeCourseFrame){
+    // Persist synchronously while the iframe still exists, before render() removes it.
+    try{
+      (activeCourseFrame.frame.contentWindow?.DeutschCourseNativeSyncV8 || activeCourseFrame.frame.contentWindow?.DeutschCourseNativeSyncV7)?.save?.();
+      activeCourseFrame.persist?.();
+    }catch(error){}
     const record=getCourseProgress(activeCourseFrame.level,activeCourseFrame.no);
     if(record && firebaseReady && firebaseDb && !demoMode){
       const {level,no}=activeCourseFrame;
@@ -1695,6 +2075,17 @@ function saveActiveCourseBeforeExit(){
   }
   activeCourseFrame=null;
 }
+window.addEventListener("message",event=>{
+  if(event.data?.type!=="deutsch-course-exit-request") return;
+  const active=activeCourseFrame;
+  if(!active?.frame || event.source!==active.frame.contentWindow) return;
+  if(!["lesson-section-html","a2-course-content"].includes(page)) return;
+  saveActiveCourseBeforeExit();
+  document.documentElement.classList.remove("challenge-fullscreen-open");
+  document.body.classList.remove("challenge-fullscreen-open");
+  page=active.level==="A2"?"a2-level-home":"level-home";
+  render();
+});
 /* ===== end course resume ===== */
 
 function renderA2LevelHome(){
@@ -1867,7 +2258,6 @@ function renderA2CourseContentPage(){
   document.documentElement.classList.add("challenge-fullscreen-open");
   document.body.classList.add("challenge-fullscreen-open");
   app.innerHTML = `<div class="challenge-fullscreen-shell lesson-section-fullscreen-shell">
-    <button type="button" class="challenge-fullscreen-exit" data-action="close-a2-course-content">← رجوع إلى الدرس ${lesson.number}</button>
     <iframe id="a2LessonPageFrame" title="A2 – Lektion ${lesson.number} – ${escapeHtml(lesson.title)}" loading="eager" allow="autoplay; fullscreen"></iframe>
   </div>`;
   const frame=document.getElementById("a2LessonPageFrame");
@@ -4911,9 +5301,24 @@ function renderStudentResults(){
     </section>`:"";
   // The main progress page contains only the dashboard and shortcuts. Each result tool
   // opens alone in a full-screen view; no analysis panels remain stacked underneath.
+  const allCourseRecords=courseProgressRecords();
+  const courseLines=Object.entries(allCourseRecords)
+    .filter(([key,value])=>/^(A1|A2)_\d+$/.test(key) && value?.startedAt &&
+      (selectedLesson==="all" || Number(value.lessonNumber)===Number(selectedLesson)))
+    .sort((a,b)=>a[0].localeCompare(b[0]))
+    .map(([key,record])=>{
+      const pct=courseProgressPercent(record);
+      const scored=allResults.find(result=>result?.moduleId===`kurs-${String(record.level).toLowerCase()}-lektion-${record.lessonNumber}`);
+      return `<div class="course-results-item"><div><strong>${escapeHtml(record.level)} · Lektion ${record.lessonNumber}</strong>
+      <small>${record.completed?"الدرس مكتمل":`المتابعة محفوظة · ${escapeHtml(record.lastTabLabel||"آخر مرحلة")}`}</small></div>
+      <span>${pct}%</span>${scored&&Number(scored.maxPoints)>0 ? `<span>التمارين: ${Number(scored.points)||0}/${Number(scored.maxPoints)||0}</span>`:""}</div>`;
+    }).join("");
+  const courseResultsMarkup=`<section class="course-results-panel"><h2>📚 التقدّم فالكورسات</h2>
+    ${courseLines||"<p>مازال ما بديتي حتى كورس.</p>"}</section>`;
   const content=activeToolMarkup?"":`
     ${studentProgressLessonFilterMarkup(selectedLesson)}
-    ${mainProgressDashboard}`;
+    ${mainProgressDashboard}
+    ${courseResultsMarkup}`;
   app.innerHTML=`<div class="student-results-promo">${studentLayout(content,"progress")}${fullscreenTool}</div>`;
 }
 function logout(){
@@ -5134,7 +5539,32 @@ function loadManagedPageIntoFrame(frame,path){
   // Static delivery only: student pages load directly from the project's /pages folder.
   // No Firebase lookup, srcdoc override, or managedPageFiles read is used here.
   frame.removeAttribute("srcdoc");
-  frame.src = managedPageAssetUrl(normalized) || normalized;
+  const sourceUrl = managedPageAssetUrl(normalized) || normalized;
+  // Give the real HTML document its OWN course snapshot BEFORE its inline
+  // JavaScript initializes stage 1. The two windows share sessionStorage when
+  // the course file is on the same origin as this app.
+  let targetUrl=sourceUrl;
+  if(activeCourseFrame?.frame===frame && currentUser?.role==="student"){
+    const {level,no}=activeCourseFrame;
+    try{
+      const address=new URL(sourceUrl,window.location.href);
+      const saved=getCourseProgress(level,no)||null;
+      if(courseResumeMode==='resume' && saved && Number(saved.lastTab)>0 &&
+         !Array.isArray(saved.nativeStages) && !Number(saved.legacyUnscoredStages)){
+        // Cursor-only legacy progress doesn't contain any quiz scores.
+        saveCourseProgress(level,no,{legacyUnscoredStages:Number(saved.lastTab)},false);
+      }
+      sessionStorage.setItem("deutsch_course_launch_v8:"+address.pathname,JSON.stringify({
+        version:8,mode:courseResumeMode,level,no,student:String(currentUser.id),
+        saved,issuedAt:Date.now()
+      }));
+      // Cache-bust the HTML too, not just index/app.js. Otherwise a browser
+      // can still execute an older stage-1-only course file.
+      address.searchParams.set("deutsch-resume-v","8_20261118");
+      targetUrl=address.href;
+    }catch(error){console.warn("Could not share course bootstrap",error);}
+  }
+  frame.src=targetUrl;
 }
 
 function renderAdminManagedHtmlPage(){
@@ -5865,7 +6295,6 @@ function renderLessonSectionHtmlPage(){
   document.documentElement.classList.add("challenge-fullscreen-open");
   document.body.classList.add("challenge-fullscreen-open");
   app.innerHTML = `<div class="challenge-fullscreen-shell lesson-section-fullscreen-shell">
-    <button type="button" class="challenge-fullscreen-exit" data-action="close-lesson-section-page">← رجوع للدرس</button>
     <iframe id="lessonSectionPageFrame" title="${escapeHtml(config.label)} – Lektion ${lessonNumber()}" loading="eager" allow="autoplay; fullscreen"></iframe>
   </div>`;
   const frame = document.getElementById("lessonSectionPageFrame");
@@ -7060,7 +7489,37 @@ window.addEventListener("message",function(event){
   if(!sameOrigin && !fromOwnedTestFrame && !fromCustomContentFrame) return;
   const data=event.data;
   if(!data || typeof data!=="object") return;
+  if(["deutsch-course-native-state-v8","deutsch-course-native-state-v7"].includes(data.type) &&
+     activeCourseFrame?.frame?.contentWindow===event.source && sameOrigin){
+    const {level,no}=activeCourseFrame;
+    if(activeCourseFrame.initializing || data.level!==level || Number(data.lessonNumber)!==Number(no))return;
+    const state=data.state;
+    if(!state || !Number.isInteger(Number(state.lastTab)) ||
+      Number(state.lastTab)<0 || Number(state.lastTab)>63)return;
+    const native=readNativeCourseState(activeCourseFrame.frame.contentWindow);
+    if(native && native.current!==Number(state.lastTab))return;
+    const previous=getCourseProgress(level,no)||{};
+    const updates={nativeResumeVersion:Number(state.nativeResumeVersion)||8,lastTab:Number(state.lastTab),nativeStages:state.nativeStages,
+      nativeNavigationAt:state.nativeNavigationAt||new Date().toISOString(),navigationAt:state.navigationAt||new Date().toISOString(),
+      nativeQuiz:state.nativeQuiz||null,completed:state.completed===true,
+      totalTabs:Number(state.totalTabs)||previous.totalTabs||0,
+      scrollTop:Number(state.scrollTop)||0};
+    saveCourseProgress(level,no,updates);
+    storeCourseStageResults(level,no,{stages:state.nativeStages,quizTotal:10});
+    return;
+  }
   if(data.type==="deutsch-a1-course-progress" && activeCourseFrame?.frame?.contentWindow===event.source && sameOrigin){
+    if(activeCourseFrame.initializing)return;
+    // postMessage is queued; stale stage-1 initialization messages can arrive
+    // AFTER the lesson already restored stage 3 or 4. Compare native state.
+    const claimed=Number(data.slideIndex);
+    const actualNative=readNativeCourseState(activeCourseFrame.frame.contentWindow);
+    if(actualNative && Number.isInteger(actualNative.current) && actualNative.current!==claimed)return;
+    if(!actualNative){
+      const doc=activeCourseFrame.frame.contentDocument;
+      const selected=activeCourseTabIndex(findCourseTabs(doc));
+      if(selected>=0 && selected!==claimed)return;
+    }
     const {level,no}=activeCourseFrame;
     const updates={};
     if(Number.isInteger(Number(data.slideIndex)) && Number(data.slideIndex)>=0)updates.lastTab=Number(data.slideIndex);
