@@ -315,9 +315,25 @@ h1{font-size:clamp(22px,3vw,31px);margin:0;line-height:1.4;color:#164379;directi
 .deck>.tabs{scrollbar-width:thin}
 @media(max-width:560px){.poster-panel{border-radius:9px}.viewport{padding:4px}.poster-hotspot{border-width:1.4px}}
 </style>
+<style id="deutschAllCoursesFullscreenV8">
+html,body{width:100%;min-height:100%;max-width:none!important}
+body{margin:0!important}
+.shell{width:calc(100% - 24px)!important;max-width:none!important;margin:10px auto 24px!important}
+.shell>.deck{max-width:none!important}
+.a2-course-page{width:calc(100% - 24px)!important;max-width:none!important;margin:10px auto 24px!important}
+#deutschLessonInternalExit{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+ flex:0 0 auto;min-height:39px;padding:8px 13px;border:1px solid #efc9c9;
+ border-radius:12px;background:#fff8f8;color:#a12c36;font:700 13px Tahoma,Arial,sans-serif;
+ box-shadow:0 3px 10px #9d33330a;cursor:pointer;direction:rtl}
+#deutschLessonInternalExit:hover{background:#ffebed;border-color:#e5a4a9}
+#deutschLessonInternalExit:focus-visible{outline:3px solid #efac4e;outline-offset:2px}
+@media(max-width:700px){.shell,.a2-course-page{width:calc(100% - 12px)!important;margin:6px auto 16px!important}
+ #deutschLessonInternalExit{font-size:12px;padding:7px 8px}}
+</style>
 </head>
 <body>
 <main class="shell">
+<header class="top" style="display:flex;justify-content:flex-end;margin-bottom:10px"><button type="button" id="deutschLessonInternalExit" aria-label="الخروج من الدرس مع حفظ التقدم">🚪 الخروج من الدرس</button></header>
  <section class="deck" aria-label="أقسام الدرس">
   <nav class="tabs" id="tabs" role="tablist" aria-label="أقسام الدرس"></nav>
   <div class="section-bar"><h2 class="section-heading" id="sectionHeading"><span class="section-de">Gefühle</span><span class="section-ar">— المشاعر</span></h2><span class="counter" id="slideCount">1 / 6</span></div>
@@ -522,5 +538,153 @@ if('speechSynthesis' in window){loadVoices();window.speechSynthesis.onvoiceschan
 let swipe=null;viewport.addEventListener('touchstart',e=>{if(e.touches.length===1)swipe={x:e.touches[0].clientX,y:e.touches[0].clientY}},{passive:true});
 viewport.addEventListener('touchend',e=>{if(!swipe||e.changedTouches.length!==1)return;const x=e.changedTouches[0].clientX-swipe.x,y=e.changedTouches[0].clientY-swipe.y;if(Math.abs(x)>55&&Math.abs(x)>Math.abs(y)*1.3)(x<0?forward():goTo(current-1));swipe=null},{passive:true});
 renderSlides();goTo(0);
+// Course-owned progress v8: navigation and exercises are the source of truth.
+// Does NOT assume a parent 'resume' click represents a new stage change.
+window.DeutschCourseNativeSyncV8=(function(){
+  const PATH=location.pathname;
+  const isIndex=n=>Number.isInteger(Number(n))&&Number(n)>=0&&Number(n)<SECTIONS.length;
+  let launch=null;
+  try{
+    launch=JSON.parse(sessionStorage.getItem('deutsch_course_launch_v8:'+PATH)||'null');
+    if(launch && (launch.version!==8 || Date.now()-Number(launch.issuedAt)>3600000)) launch=null;
+  }catch(error){launch=null;}
+  const student=String(launch?.student||'standalone');
+  const key='deutsch_course_native_v8:'+student+':'+PATH;
+  const priorKey='deutsch_course_native_v7:'+student+':'+PATH;
+  function read(k){try{const data=JSON.parse(localStorage.getItem(k)||'null');return data&&typeof data==='object'?data:null;}catch(error){return null;}}
+  function write(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(error){}}
+  const previous=read(key)||read(priorKey);
+  const external=launch?.saved&&typeof launch.saved==='object'?launch.saved:null;
+  function stage(record){return isIndex(record?.lastTab)?Number(record.lastTab):null;}
+  function evidence(record){
+    if(!record)return 0;
+    const visited=Array.isArray(record.visitedTabs)?record.visitedTabs.filter(isIndex).map(Number):[];
+    const done=Array.isArray(record.nativeStages)?record.nativeStages:[];
+    let firstUndone=0;while(firstUndone<done.length && done[firstUndone]?.done)firstUndone++;
+    return Math.min(SECTIONS.length-1,Math.max(0,...visited,firstUndone));
+  }
+  function choose(a,b){
+    if(!a)return b;
+    if(!b)return a;
+    const aStage=stage(a),bStage=stage(b);
+    // A cursor=0 from a stale parent or old initialization must never erase a
+    // valid later native cursor. Explicit restart is handled separately.
+    if(aStage===0 && bStage>0)return b;
+    if(bStage===0 && aStage>0)return a;
+    const aTime=Date.parse(a.navigationAt||a.updatedAt||0)||0;
+    const bTime=Date.parse(b.navigationAt||b.updatedAt||0)||0;
+    return bTime>aTime?b:a;
+  }
+  let saved=null;
+  if(launch?.mode==='restart'||launch?.mode==='new'){
+    try{localStorage.removeItem(key);localStorage.removeItem(priorKey);}catch(error){}
+  }else if(launch?.mode==='resume'){
+    saved=choose(previous,external);
+  }else if(!launch){
+    saved=previous;
+  }
+  let restored=false,hydrated=false;
+  if(saved){
+    let target=stage(saved);
+    if(target===null)target=evidence(saved);
+    if(target===0){
+      // Recover pre-v8 corrupted 1/6 cursors ONLY if their graded/visited
+      // milestones prove a later stage was reached.
+      const recovered=evidence(saved);
+      if(recovered>0 && (!saved.nativeNavigationAt || Number(saved.nativeResumeVersion)<8))target=recovered;
+    }
+    target=Math.max(0,Math.min(SECTIONS.length-1,target));
+    try{
+      const oldStages=Array.isArray(saved.nativeStages)?saved.nativeStages:[];
+      progress.forEach((entry,i)=>{
+        if(oldStages[i]){
+          entry.done=!!oldStages[i].done;
+          entry.score=Math.max(0,Number(oldStages[i].score)||0);
+        }else if(i<target) entry.done=true;
+      });
+      // A stage was truly reached, so prerequisites necessarily existed.
+      for(let i=0;i<target;i++)progress[i].done=true;
+      updateTabs();
+      goTo(target);
+      restored=current===target;
+      if(restored && saved.nativeQuiz?.active){
+        const quiz=saved.nativeQuiz;
+        startQuiz();
+        if(Array.isArray(quiz.questions) && quiz.questions.length===QUIZ_TOTAL)quizQuestions=quiz.questions.slice();
+        quizScore=Math.max(0,Number(quiz.score)||0);
+        const idx=Math.max(0,Math.min(QUIZ_TOTAL-1,Math.trunc(Number(quiz.index)||0)));
+        quizIndex=Math.min(QUIZ_TOTAL-1,idx+(quiz.answered===true&&idx<QUIZ_TOTAL-1?1:0));
+        renderQuestion();
+      }
+      if(restored && Number(saved.scrollTop)>0)setTimeout(()=>scrollTo(0,Number(saved.scrollTop)),90);
+    }catch(error){console.warn('Course V8 restore failed',error);}
+  }
+  hydrated=true;
+  let latest=null,latestSignature='';
+  const status=document.createElement('span');
+  status.id='deutschResumeStatusV8';status.setAttribute('aria-live','polite');
+  status.style.cssText='display:inline-block;margin-inline-start:10px;font:600 11px Tahoma,Arial,sans-serif;color:#52789a;vertical-align:middle;white-space:nowrap';
+  document.getElementById('slideCount')?.insertAdjacentElement('afterend',status);
+  function setStatus(n){status.textContent='✓ محفوظ: '+(n+1)+' / '+SECTIONS.length+' · V8';}
+  function payload(){return {
+    nativeResumeVersion:8,lastTab:current,totalTabs:SECTIONS.length,
+    nativeStages:progress.map(v=>({done:!!v.done,score:Number(v.score)||0})),
+    nativeQuiz:quizMode?{active:true,index:quizIndex,score:quizScore,
+      answered:quizAnswered,questions:quizQuestions}:null,
+    completed:progress.every(v=>v.done),scrollTop:Math.max(0,window.scrollY||0)
+  };}
+  function save(){
+    if(!hydrated)return null;
+    const state=payload();
+    const sig=JSON.stringify({...state,scrollTop:0});
+    if(sig===latestSignature)return latest;
+    latestSignature=sig;
+    const old=read(key)||saved||{};
+    const time=new Date().toISOString();
+    latest={...old,...state,nativeNavigationAt:time,navigationAt:time,updatedAt:time};
+    write(key,latest);
+    setStatus(current);
+    if(window.parent!==window){
+      window.parent.postMessage({type:'deutsch-course-native-state-v8',
+        level:launch?.level||'A2',lessonNumber:launch?.no||6,state:latest},'*');
+      window.parent.postMessage({type:'deutsch-a1-course-progress',
+        slideIndex:current,totalSlides:SECTIONS.length,label:SECTIONS[current]?.ar||'',
+        completed:latest.completed},'*');
+    }
+    return latest;
+  }
+  function defer(){setTimeout(save,0);}
+  // Observe the actual internal functions rather than interpreting which tab
+  // was clicked. Captures keyboard, quiz transitions and next/back buttons.
+  function wrap(fn){return function(...args){const result=fn.apply(this,args);defer();return result;};}
+  goTo=wrap(goTo);
+  startQuiz=wrap(startQuiz);
+  renderQuestion=wrap(renderQuestion);
+  finishQuiz=wrap(finishQuiz);
+  document.addEventListener('click',defer,true);
+  document.addEventListener('input',defer,true);
+  document.addEventListener('change',defer,true);
+  window.addEventListener('pagehide',save);
+  window.addEventListener('beforeunload',save);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)save();});
+  setStatus(current);
+  // First write only after every native stage/quiz variable has been hydrated.
+  defer();
+  return {save,get restored(){return restored;},get launch(){return launch;},get state(){return payload();}};
+})();
+
+
+// A fallback for directly opened course HTML. The platform's own capture
+// listener routes this same button without navigating away from the SPA.
+(function(){
+ const exit=document.getElementById('deutschLessonInternalExit');
+ if(!exit)return;
+ exit.addEventListener('click',()=>{
+   try{window.DeutschCourseNativeSyncV8?.save?.();}catch(error){}
+   try{window.parent.postMessage({type:'deutsch-course-exit-request'},'*');}catch(error){}
+   if(window.parent===window)window.location.href='../../../index.html';
+ });
+})();
+
 </script>
 </body></html>
