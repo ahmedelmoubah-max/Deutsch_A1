@@ -6498,3 +6498,36 @@ body:has(.student-results-promo) {
   .competition-code-dialog{padding:25px 16px 20px}
   .competition-code-dialog h2{font-size:18px}
 }
+
+
+/* Full viewport lessons + saved-position prompt (A1 and A2) */
+.lesson-section-fullscreen-shell{inset:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;max-width:none!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important}
+.lesson-section-fullscreen-shell iframe{position:absolute;inset:0;width:100%!important;height:100%!important;max-height:none!important;border:0!important;border-radius:0!important}
+.course-resume-overlay{position:fixed;inset:0;z-index:110000;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(16,29,58,.66);backdrop-filter:blur(5px)}
+.course-resume-card{width:min(440px,100%);max-height:calc(100dvh - 36px);overflow-y:auto;padding:29px 25px 23px;border:1px solid #dce7fa;border-radius:24px;background:#fff;box-shadow:0 25px 85px rgba(8,22,58,.3);text-align:center;color:#203b66;font-family:inherit}
+.course-resume-icon{display:grid;place-items:center;width:64px;height:64px;margin:0 auto 14px;border-radius:19px;background:#eaf1ff;font-size:32px}
+.course-resume-card h2{margin:0 0 8px;font-size:23px;font-weight:900;color:#1b3966}
+.course-resume-card p{font-size:14px;line-height:1.8;color:#60728e;margin:0 0 16px}
+.course-resume-summary{display:flex;flex-direction:column;gap:5px;padding:12px;margin-bottom:17px;border:1px solid #e3ebfa;border-radius:14px;background:#f5f8ff;text-align:right;font-size:13px}
+.course-resume-summary strong{color:#244b84}.course-resume-summary span{color:#6580a3}
+.course-resume-actions{display:grid;gap:10px}
+.course-resume-actions button{width:100%;padding:13px 12px;border:1px solid #cad9f2;border-radius:13px;font-size:14px;font-weight:850;cursor:pointer}
+.course-resume-primary{background:#255fc7;color:#fff;border-color:#255fc7!important}.course-resume-primary:hover{background:#1b51ae}
+.course-resume-secondary{background:#fff;color:#275bb0}.course-resume-secondary:hover{background:#f0f5ff}
+.course-resume-cancel{display:block;margin:11px auto 0;padding:7px 15px;border:0;background:transparent;color:#7889a5;font-size:13px;cursor:pointer}
+.course-resume-card button:focus-visible{outline:3px solid #f2a64d;outline-offset:3px}
+@media(max-width:520px){.course-resume-card{padding:22px 17px 16px;border-radius:19px}.course-resume-card h2{font-size:20px}}
+
+/* Edge-to-edge Kurs iframe on desktop, tablet and phones. */
+html.challenge-fullscreen-open,body.challenge-fullscreen-open{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important}
+.challenge-fullscreen-shell.lesson-section-fullscreen-shell{
+  position:fixed!important;inset:0!important;max-width:100vw!important;
+  width:100vw!important;height:100dvh!important;padding:0!important;
+  overflow:hidden!important;border:0!important;border-radius:0!important;
+}
+.challenge-fullscreen-shell.lesson-section-fullscreen-shell > iframe{
+  position:absolute!important;inset:0!important;display:block!important;
+  width:100%!important;height:100%!important;max-width:none!important;
+  min-width:0!important;margin:0!important;padding:0!important;
+  border:0!important;border-radius:0!important;
+}

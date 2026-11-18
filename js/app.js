@@ -463,6 +463,7 @@ async function loadDeutschA1Data(){
     console.warn("Custom lesson content metadata could not be loaded. Check Firebase rules:", contentError);
     adminContentMeta = {};
   }
+  if(currentUser?.role==="student") await loadStudentCourseProgressCloud();
   // HTML pages are static files under /pages and are never read from or written to Firebase.
   localStorage.setItem(AUTH_USERS_KEY, JSON.stringify(cloudUsers));
   localStorage.setItem(AUTH_RESULTS_KEY, JSON.stringify(cloudResults));
@@ -1377,6 +1378,325 @@ const a2CourseLessons = [
   {number:10,title:"Reisen und Urlaubserlebnisse",arabic:"السفر وتجارب العطلة",icon:"✈️",path:"pages/Kurs/A2/lektion-10-kurs.html",test:"pages/Test/A2/lektion-10-test.html"}
 ];
 
+/* ===== Fullscreen Kurs + student-scoped resume (A1 / A2) =====
+   Course files are independent HTML pages. No changes to their exercises are needed.
+   Same-origin iframe inspection is used to remember the selected section and scroll. */
+const COURSE_PROGRESS_PREFIX = "deutsch_a1_course_progress_v2";
+let pendingCourseLaunch = null;
+let courseResumeMode = "new";
+let activeCourseFrame = null;
+let activeCourseSaveTimer = null;
+let courseRemoteWarned = false;
+
+function courseProgressStorageKey(){
+  return `${COURSE_PROGRESS_PREFIX}:${currentUser?.id || "anonymous"}`;
+}
+function courseProgressId(level, no){
+  return `${String(level).toUpperCase()}_${Number(no)}`;
+}
+function courseProgressRecords(){
+  try{
+    const records = JSON.parse(localStorage.getItem(courseProgressStorageKey()) || "{}");
+    return records && typeof records === "object" && !Array.isArray(records) ? records : {};
+  }catch(error){return {};}
+}
+function getCourseProgress(level, no){
+  return courseProgressRecords()[courseProgressId(level,no)] || null;
+}
+function courseProgressPercent(progress){
+  if(!progress) return 0;
+  if(progress.completed) return 100;
+  const visited=Array.isArray(progress.visitedTabs) ? progress.visitedTabs.length : 0;
+  const total=Math.max(0,Number(progress.totalTabs)||0);
+  return total>1 ? Math.min(99,Math.round(visited/total*100)) : 0;
+}
+function saveCourseProgress(level,no,change,writeCloud=true){
+  if(!currentUser || currentUser.role!=="student") return null;
+  const id=courseProgressId(level,no);
+  const records=courseProgressRecords();
+  const previous=records[id] || {};
+  const next={...previous,...change,level:String(level),lessonNumber:Number(no),
+    startedAt:previous.startedAt||new Date().toISOString(), updatedAt:new Date().toISOString()};
+  records[id]=next;
+  try{localStorage.setItem(courseProgressStorageKey(),JSON.stringify(records));}catch(error){console.warn("Course progress could not be stored",error);}
+  if(writeCloud && firebaseReady && firebaseDb && !demoMode){
+    // A dedicated per-student node keeps course resume separate from graded test results.
+    if(activeCourseSaveTimer) clearTimeout(activeCourseSaveTimer);
+    activeCourseSaveTimer=setTimeout(()=>{
+      const record=getCourseProgress(level,no);
+      if(!record) return;
+      firebaseDb.ref(`${DEUTSCH_A1_PATH}/courseProgress/${currentUser.id}/${id}`)
+        .set(record).catch(error=>{
+          if(!courseRemoteWarned){console.warn("Cloud sync for course progress requires Firebase courseProgress rules",error);courseRemoteWarned=true;}
+        });
+    },1100);
+  }
+  return next;
+}
+async function loadStudentCourseProgressCloud(){
+  if(!currentUser || currentUser.role!=="student" || !firebaseReady || demoMode) return;
+  const uid=currentUser.id;
+  try{
+    const snapshot=await firebaseDb.ref(`${DEUTSCH_A1_PATH}/courseProgress/${uid}`).once("value");
+    if(!currentUser || currentUser.id!==uid) return;
+    const remote=snapshot.val() || {};
+    const local=courseProgressRecords();
+    let modified=false;
+    Object.entries(remote).forEach(([id,record])=>{
+      if(!/^(A1|A2)_\d+$/.test(id) || !record || typeof record!=="object") return;
+      if(!local[id] || Date.parse(record.updatedAt||0)>Date.parse(local[id].updatedAt||0)){
+        local[id]=record;modified=true;
+      }
+    });
+    if(modified) localStorage.setItem(courseProgressStorageKey(),JSON.stringify(local));
+  }catch(error){
+    if(!courseRemoteWarned){console.warn("Course progress will be saved on this browser until Firebase rules are enabled",error);courseRemoteWarned=true;}
+  }
+}
+function closeCourseResumeDialog(){
+  document.getElementById("courseResumeDialog")?.remove();
+}
+function askCourseResume(level,no,onLaunch){
+  const existing=getCourseProgress(level,no);
+  pendingCourseLaunch={level,no,onLaunch};
+  if(existing && !existing.completed && existing.startedAt){
+    const percent=courseProgressPercent(existing);
+    const label=existing.lastTabLabel ? `آخر جزء: ${escapeHtml(existing.lastTabLabel)}` : "تقدر ترجع لنفس المكان اللي وقفتي فيه.";
+    const overlay=document.createElement("div");
+    overlay.id="courseResumeDialog";
+    overlay.className="course-resume-overlay";
+    overlay.setAttribute("role","dialog");
+    overlay.setAttribute("aria-modal","true");
+    overlay.setAttribute("aria-labelledby","courseResumeTitle");
+    overlay.innerHTML=`<div class="course-resume-card" dir="rtl">
+      <span class="course-resume-icon" aria-hidden="true">📚</span>
+      <h2 id="courseResumeTitle">بغيتي تكمل الدرس؟</h2>
+      <p>بديتي الدرس ${Number(no)} من ${escapeHtml(level)} ومازال ما كملتيهش.</p>
+      <div class="course-resume-summary"><strong>${escapeHtml(label)}</strong>
+        ${percent?`<span>التقدّم: ${percent}%</span>`:""}</div>
+      <div class="course-resume-actions">
+        <button type="button" data-action="course-resume" class="course-resume-primary">▶ متابعة منين وقفت</button>
+        <button type="button" data-action="course-restart" class="course-resume-secondary">↻ إعادة الدرس من الأول</button>
+      </div>
+      <button type="button" class="course-resume-cancel" data-action="course-resume-cancel">رجوع</button>
+    </div>`;
+    closeCourseResumeDialog();
+    document.body.appendChild(overlay);
+    overlay.querySelector(".course-resume-primary")?.focus();
+    return;
+  }
+  if(existing?.completed){
+    // Reviewing a completed course must not erase its 100% completion status.
+    pendingCourseLaunch=null;
+    courseResumeMode="review";
+    onLaunch();
+    return;
+  }
+  launchPendingCourse("new");
+}
+function launchPendingCourse(mode){
+  const pending=pendingCourseLaunch;
+  closeCourseResumeDialog();
+  pendingCourseLaunch=null;
+  if(!pending) return;
+  courseResumeMode=mode;
+  if(mode==="restart" || mode==="new"){
+    saveCourseProgress(pending.level,pending.no,{completed:false,lastTab:0,
+      lastTabLabel:"",totalTabs:0,visitedTabs:[],scrollTop:0,scrollRatio:0,
+      startedAt:new Date().toISOString(),restartAt:mode==="restart"?new Date().toISOString():null},false);
+  }else{
+    saveCourseProgress(pending.level,pending.no,{},false);
+  }
+  pending.onLaunch();
+}
+function findCourseTabs(doc){
+  if(!doc) return [];
+  const groupSelectors='[role="tablist"],.tabs,.tab-nav,.tab-bar,.tab-buttons,.nav-tabs,.course-tabs,.lesson-tabs,.section-tabs,.section-nav,.topic-tabs,.topic-nav,.unit-tabs,.slides-nav,.category-tabs,.nav-pills';
+  const candidates=Array.from(doc.querySelectorAll(groupSelectors));
+  for(const group of candidates){
+    const elements=Array.from(group.querySelectorAll('button,[role="tab"],a[data-tab],a[data-slide]'));
+    if(elements.length>=2 && elements.length<=32 && elements.every(node=>node.offsetParent!==null)) return elements;
+  }
+  const direct=Array.from(doc.querySelectorAll('[role="tab"],button[data-tab],button[data-slide],button[data-section],button.tab,button.tab-btn,button.section-tab,button.topic-tab'));
+  if(direct.length>=2 && direct.length<=32) return direct;
+  // Fallback for independent HTML lessons that use an unnamed row of section buttons.
+  for(const group of doc.querySelectorAll('nav,header,section,div')){
+    const box=group.getBoundingClientRect();
+    if(box.top>330 || box.bottom>650 || box.width<300 || box.height>160) continue;
+    const buttons=Array.from(group.children).filter(el=>el.matches?.('button,[role="tab"]'));
+    if(buttons.length>=3 && buttons.length<=20 && buttons.every(el=>el.offsetParent!==null)) return buttons;
+  }
+  return [];
+}
+function activeCourseTabIndex(tabs){
+  return tabs.findIndex(tab=>tab.getAttribute("aria-selected")==="true" ||
+    tab.getAttribute("aria-current")==="page" ||
+    ["active","is-active","selected","current"].some(name=>tab.classList.contains(name)));
+}
+function fitCoursePageToViewport(doc){
+  // The overlay iframe already fills the viewport; independent lesson HTML files
+  // often have their OWN centred max-width container (or deeply nested wrappers).
+  // Remove only those layout limits: never scale images or change exercise markup.
+  if(!doc?.body) return;
+  if(!doc.getElementById("deutschCourseFullscreenStyle")){
+    const style=doc.createElement("style");
+    style.id="deutschCourseFullscreenStyle";
+    style.textContent=`
+      html,body{width:100%!important;min-width:0!important;max-width:none!important;min-height:100dvh!important;margin:0!important;box-sizing:border-box!important;}
+      body{overflow-x:hidden!important;padding-inline:clamp(8px,1.4vw,24px)!important;}
+      body *,body *::before,body *::after{box-sizing:border-box;}
+      body > main,body > #app,body > #root,body > .container,body > .wrapper,body > .wrap,body > .shell,body > .app-shell,body > .kurs-shell,body > .course-shell,body > .course-container,body > .lesson-container,body > .page-container,
+      main.course-container,main.lesson-container,main.kurs,main.course,main.main,
+      #app > main,#app > .container,#root > main,#root > .container{
+        max-width:none!important;width:100%!important;min-width:0!important;margin-inline:0!important;
+      }
+      img,svg,video,canvas{max-width:100%;}
+      @media(max-width:650px){body{padding-inline:8px!important;} }
+    `;
+    (doc.head||doc.documentElement).appendChild(style);
+  }
+  const win=doc.defaultView;
+  if(!win) return;
+  const viewport=doc.documentElement.clientWidth || win.innerWidth;
+  if(viewport<630) return; // keep each lesson's mobile/responsive card layout
+
+  // Select only sizeable, roughly centred wrappers. A width rule may be on
+  // .page / .content / a classless div, not one of the common named containers.
+  // Do not expand individual cards, columns, navigation tabs or modal windows.
+  const named='main,#app,#root,.container,.wrapper,.wrap,.shell,.app-shell,.kurs-shell,.course-shell,.course-content,.course-wrap,.course-container,.lesson-container,.page-container,.page-wrapper,.main-container,.content-wrapper,.poster-card,.lesson-page,.kurs-page';
+  const candidates=new Set(doc.querySelectorAll(named));
+  // Search the shallow DOM tree for other restricted ancestors, including
+  // anonymous .outer/.inner wrappers used by the newer lesson templates.
+  let parents=[doc.body];
+  for(let depth=0;depth<6 && parents.length;depth++){
+    const children=[];
+    for(const parent of parents){
+      for(const el of parent.children){
+        if(!el.matches('main,section,article,div')) continue;
+        candidates.add(el);
+        if(el.children.length && !el.matches('button,.card,.tile,.item')) children.push(el);
+      }
+    }
+    parents=children.slice(0,75);
+  }
+  for(const el of candidates){
+    if(!el.isConnected || el===doc.body || el===doc.documentElement) continue;
+    if(el.closest('[role="dialog"],.modal,.modal-bg,.course-resume-overlay')) continue;
+    const style=win.getComputedStyle(el);
+    if(style.position==='fixed' || style.position==='absolute' || style.display==='none') continue;
+    const rect=el.getBoundingClientRect();
+    if(rect.height<150 || rect.width<viewport*.45 || rect.width>=viewport*.96) continue;
+    if(Math.abs(rect.left-(viewport-rect.right))>Math.max(110,viewport*.10)) continue;
+    // If the layout is a grid/flex with multiple columns, don't force its
+    // individual children to full width. Only uncap its outer container.
+    const parentStyle=el.parentElement && win.getComputedStyle(el.parentElement);
+    if(parentStyle && ['grid','inline-grid','flex','inline-flex'].includes(parentStyle.display)){
+      const siblings=Array.from(el.parentElement.children).filter(item=>item.getBoundingClientRect().width>100);
+      if(siblings.length>1) continue;
+    }
+    el.style.setProperty('max-width','none','important');
+    el.style.setProperty('width','100%','important');
+    el.style.setProperty('min-width','0','important');
+    el.style.setProperty('margin-left','0','important');
+    el.style.setProperty('margin-right','0','important');
+  }
+}
+
+function trackCourseIframe(frame,level,no){
+  if(!frame) return;
+  activeCourseFrame={frame,level,no};
+  frame.addEventListener("load",()=>{
+    // File pages and site pages are same-origin. External/cross-origin pages cannot be inspected.
+    let doc,win;
+    try{doc=frame.contentDocument;win=frame.contentWindow;if(!doc?.body || !win) return;}catch(error){return;}
+    fitCoursePageToViewport(doc);
+    // Some lessons create the content slider after load. Recheck after their
+    // inline scripts render, and again when images/font metrics settle.
+    [80,350,900,1800].forEach(delay=>win.setTimeout(()=>{
+      if(frame.isConnected && frame.contentDocument===doc) fitCoursePageToViewport(doc);
+    },delay));
+    const before=getCourseProgress(level,no)||{};
+    const priorTabs=Array.isArray(before.visitedTabs)?before.visitedTabs:[];
+    let trackedIndex=Number.isInteger(Number(before.lastTab))?Number(before.lastTab):0;
+    let restoreInProgress=courseResumeMode==="resume";
+    let lastSignature="";
+    function snapshot(preferredIndex){
+      if(!frame.isConnected || frame.contentDocument!==doc || restoreInProgress) return;
+      const tabs=findCourseTabs(doc);
+      const active=activeCourseTabIndex(tabs);
+      const index=Number.isInteger(preferredIndex) && preferredIndex>=0 ? preferredIndex : active;
+      if(index>=0) trackedIndex=index;
+      const visited=Array.from(new Set([...(getCourseProgress(level,no)?.visitedTabs||priorTabs),...(tabs.length?[trackedIndex]:[])].filter(i=>Number.isInteger(i)&&i>=0&&(!tabs.length||i<tabs.length)))).sort((a,b)=>a-b);
+      const top=Math.max(0,Math.round(win.scrollY||doc.scrollingElement?.scrollTop||0));
+      const maxScroll=Math.max(0,(doc.scrollingElement?.scrollHeight||0)-win.innerHeight);
+      const ratio=maxScroll?Math.min(1,top/maxScroll):0;
+      const completed=!!getCourseProgress(level,no)?.completed || (tabs.length>1 && visited.length>=tabs.length);
+      const value={lastTab:trackedIndex,totalTabs:tabs.length,visitedTabs:visited,
+        lastTabLabel:tabs[trackedIndex]?.textContent?.replace(/\s+/g," ").trim().slice(0,85)||"",
+        scrollTop:top,scrollRatio:ratio,completed};
+      const signature=JSON.stringify(value);
+      if(signature!==lastSignature){lastSignature=signature;saveCourseProgress(level,no,value);}
+    }
+    if(courseResumeMode==="resume"){
+      // Delay allows each original course script to build its slider before selecting the saved tab.
+      win.setTimeout(()=>{
+        try{
+          const tabs=findCourseTabs(doc);
+          const idx=Math.min(tabs.length-1,Math.max(0,Number(before.lastTab)||0));
+          if(tabs.length && idx>=0 && idx<tabs.length && idx!==activeCourseTabIndex(tabs))tabs[idx].click();
+          if(doc.scrollingElement){
+            const max=Math.max(0,doc.scrollingElement.scrollHeight-win.innerHeight);
+            const top=Math.min(max,Math.max(0,Number(before.scrollTop)||Math.round(max*(Number(before.scrollRatio)||0))));
+            win.scrollTo({top,behavior:"instant"});
+          }
+        }catch(error){console.warn("Could not restore course slide",error);}
+        restoreInProgress=false;
+        snapshot();
+      },450);
+    }else{
+      restoreInProgress=false;
+      win.setTimeout(()=>{
+        const tabs=findCourseTabs(doc);
+        if(courseResumeMode==="restart" && tabs.length){
+          try{tabs[0].click();win.scrollTo(0,0);}catch(error){}
+        }
+        snapshot(0);
+      },400);
+    }
+    doc.addEventListener("click",event=>{
+      const clicked=event.target?.closest?.('button,[role="tab"],a');
+      if(!clicked)return;
+      const text=(clicked.textContent||"").trim();
+      if(/(?:إنهاء|إكمال|أكملت|أنهيت)\s*(?:هذا\s*)?الدرس|finish\s*(?:the\s*)?lesson|complete\s*(?:the\s*)?lesson|lektion\s*abschlie(?:ß|ss)en/i.test(text) ||
+        /(?:complete|finish)[-_]?(?:lesson|course)/i.test(clicked.dataset.action||"")){
+        saveCourseProgress(level,no,{completed:true});
+      }
+      const tabs=findCourseTabs(doc);
+      const idx=tabs.findIndex(tab=>tab===clicked || tab.contains(clicked));
+      win.setTimeout(()=>snapshot(idx>=0?idx:undefined),130);
+    },true);
+    doc.addEventListener("scroll",()=>snapshot(),{capture:true,passive:true});
+    win.addEventListener("pagehide",()=>snapshot());
+    const timer=win.setInterval(()=>{
+      if(!frame.isConnected || frame.contentDocument!==doc){win.clearInterval(timer);return;}
+      snapshot();
+    },1500);
+  });
+}
+function saveActiveCourseBeforeExit(){
+  // iframe click/scroll/poll and pagehide already persist the last position.
+  if(activeCourseFrame){
+    const record=getCourseProgress(activeCourseFrame.level,activeCourseFrame.no);
+    if(record && firebaseReady && firebaseDb && !demoMode){
+      const {level,no}=activeCourseFrame;
+      firebaseDb.ref(`${DEUTSCH_A1_PATH}/courseProgress/${currentUser.id}/${courseProgressId(level,no)}`)
+        .set(record).catch(()=>{});
+    }
+  }
+  activeCourseFrame=null;
+}
+/* ===== end course resume ===== */
+
 function renderA2LevelHome(){
   // Keep the A2 overview visually and behaviorally aligned with the A1 lesson grid.
   const resultRows = Object.values(readStudentResults(currentUser?.id || "") || {}).filter(item=>item && typeof item==="object");
@@ -1389,7 +1709,7 @@ function renderA2LevelHome(){
     return result.completed===true || (total>0 && completed>=total);
   });
   const statuses = a2CourseLessons.map((lesson,index)=>({
-    lesson,index,completed:completedForLesson(lesson.number),unlocked:true
+    lesson,index,completed:completedForLesson(lesson.number)||!!getCourseProgress("A2",lesson.number)?.completed,unlocked:true
   }));
   const currentIndex = statuses.find(item=>!item.completed)?.index ?? -1;
   const nextLesson = statuses.find(item=>item.index===currentIndex) || statuses[0];
@@ -1399,7 +1719,8 @@ function renderA2LevelHome(){
   const lessonCards = statuses.map(item=>{
     const {lesson,index}=item;
     const state = item.completed ? "completed" : index===currentIndex ? "current" : "available";
-    const stateLabel = state==="completed" ? "مكتمل" : state==="current" ? "قيد التعلّم" : "متاح";
+    const saved=getCourseProgress("A2",lesson.number);
+    const stateLabel = state==="completed" ? "مكتمل" : saved?.startedAt ? `متابعة ${courseProgressPercent(saved)}%` : state==="current" ? "قيد التعلّم" : "متاح";
     const stateIcon = state==="completed" ? "✓" : state==="current" ? "●" : "•";
     return `<button type="button" class="level-lesson-card is-${state}" data-action="a2-lesson" data-lesson-no="${lesson.number}" aria-label="${escapeHtml(`الدرس ${lesson.number}: ${lesson.arabic} · ${stateLabel}`)}">
       <span class="level-lesson-art" aria-hidden="true">${lesson.icon}</span>
@@ -1478,6 +1799,8 @@ function renderA2LessonHtmlPage(){
     9:"تعلّم مفردات سوق المستعمل وأنشطة نهاية الأسبوع.",
     10:"تحدّث عن السفر والعطلة والتجارب التي عشتها."
   };
+  const savedCourse=getCourseProgress("A2",lesson.number);
+  const savedCoursePercent=courseProgressPercent(savedCourse);
   const stages=[
     {id:"explanation",number:"1",title:"شرح الدرس",desc:`تعلّم أهم العبارات حول ${lesson.arabic} مع شرح وأمثلة واضحة.`,icon:"📖",tone:"blue",status:"ابدأ الآن",statusIcon:"▶"},
     {id:"vocabulary",number:"2",title:"المفردات المهمة",desc:"أهم الكلمات مع النطق والترجمة والأمثلة.",icon:"🏷️",tone:"green",status:"المفردات",statusIcon:"Aa"},
@@ -1519,18 +1842,18 @@ function renderA2LessonHtmlPage(){
           </div>
         </section>
         <section class="lesson-detail-progress-card" aria-label="تقدمك في الدرس">
-          <div class="lesson-detail-progress-ring"><strong>0%</strong></div>
+          <div class="lesson-detail-progress-ring"><strong>${savedCoursePercent}%</strong></div>
           <div class="lesson-detail-progress-copy">
             <strong>تقدمك في الدرس</strong>
-            <small>أكمل جميع الأنشطة لإنهاء الدرس</small>
-            <div class="lesson-detail-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span></span></div>
+            <small>${savedCourse?.completed?"تمّ إكمال الكورس ✓":savedCourse?.startedAt?"تقدمك محفوظ، تقدر تكمل منين وقفتي":"تقدّم الكورس كيتسجل تلقائياً"}</small>
+            <div class="lesson-detail-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${savedCoursePercent}"><span style="width:${savedCoursePercent}%"></span></div>
           </div>
         </section>
         <div class="lesson-detail-content-heading"><h2>محتوى الدرس</h2><span aria-hidden="true">▱</span></div>
         <div class="lesson-detail-stage-list">${stageMarkup}</div>
         <div class="lesson-detail-footer">
           <button type="button" class="lesson-detail-start" data-action="a2-stage-open" data-stage="explanation">
-            <span aria-hidden="true">▶</span><strong>ابدأ شرح الدرس</strong><i aria-hidden="true">←</i>
+            <span aria-hidden="true">▶</span><strong>${savedCourse?.startedAt&&!savedCourse?.completed?"متابعة الكورس":"ابدأ شرح الدرس"}</strong><i aria-hidden="true">←</i>
           </button>
         </div>
       </section>
@@ -1548,7 +1871,7 @@ function renderA2CourseContentPage(){
     <iframe id="a2LessonPageFrame" title="A2 – Lektion ${lesson.number} – ${escapeHtml(lesson.title)}" loading="eager" allow="autoplay; fullscreen"></iframe>
   </div>`;
   const frame=document.getElementById("a2LessonPageFrame");
-  if(frame) loadManagedPageIntoFrame(frame,lesson.path);
+  if(frame){trackCourseIframe(frame,"A2",lesson.number);loadManagedPageIntoFrame(frame,lesson.path);}
 }
 
 function renderA2TestHtmlPage(){
@@ -5406,7 +5729,7 @@ function renderLevelHome(){
   const statuses = lessons.map((lesson,index)=>({
     index,
     unlocked:getStudentLessonAccess(index),
-    completed:completedForLesson(index)
+    completed:completedForLesson(index)||!!getCourseProgress("A1",index+1)?.completed
   }));
   const currentIndex = statuses.find(item=>item.unlocked && !item.completed)?.index ?? -1;
   const firstUnlockedIndex = statuses.find(item=>item.unlocked)?.index ?? -1;
@@ -5416,7 +5739,8 @@ function renderLevelHome(){
   const lessonCards = statuses.map(item=>{
     const meta = lessonMeta[item.index] || {title:lessons[item.index]?.name || `الدرس ${item.index+1}`,desc:"",icon:"📘"};
     const state = !item.unlocked ? "locked" : item.completed ? "completed" : item.index===currentIndex ? "current" : "available";
-    const stateLabel = state === "locked" ? "مقفل" : state === "completed" ? "مكتمل" : state === "current" ? "قيد التعلّم" : "متاح";
+    const saved=getCourseProgress("A1",item.index+1);
+    const stateLabel = state === "locked" ? "مقفل" : state === "completed" ? "مكتمل" : saved?.startedAt ? `متابعة ${courseProgressPercent(saved)}%` : state === "current" ? "قيد التعلّم" : "متاح";
     const stateIcon = state === "locked" ? "🔒" : state === "completed" ? "✓" : state === "current" ? "●" : "•";
     const disabled = item.unlocked ? "" : "disabled";
     return `<button type="button" class="level-lesson-card is-${state}" data-action="lesson" data-lesson="${item.index}" ${disabled} aria-label="${escapeHtml(`الدرس ${item.index+1}: ${meta.title} · ${stateLabel}`)}">
@@ -5522,10 +5846,14 @@ function openLessonSectionPage(section){
     showToast("هذا القسم غير متاح حالياً.");
     return;
   }
-  lessonSectionType = section;
-  lessonSectionReturnPage = "lesson-hub";
-  page = "lesson-section-html";
-  render();
+  const launch=()=>{
+    lessonSectionType=section;
+    lessonSectionReturnPage="lesson-hub";
+    page="lesson-section-html";
+    render();
+  };
+  if(section==="course")askCourseResume("A1",lessonNumber(),launch);
+  else launch();
 }
 function renderLessonSectionHtmlPage(){
   const config = lessonSectionPageConfig[lessonSectionType] || lessonSectionPageConfig.course;
@@ -5541,7 +5869,10 @@ function renderLessonSectionHtmlPage(){
     <iframe id="lessonSectionPageFrame" title="${escapeHtml(config.label)} – Lektion ${lessonNumber()}" loading="eager" allow="autoplay; fullscreen"></iframe>
   </div>`;
   const frame = document.getElementById("lessonSectionPageFrame");
-  if(frame) loadManagedPageIntoFrame(frame, path);
+  if(frame){
+    if(lessonSectionType==="course")trackCourseIframe(frame,"A1",lessonNumber());
+    loadManagedPageIntoFrame(frame, path);
+  }
 }
 
 function renderLessonHub(){
@@ -5574,6 +5905,8 @@ function renderLessonHub(){
   const levelShort=(selectedLevel||"A1.1").split(".")[0];
   const hasDedicatedLessonTest=[5,6,7,8].includes(currentLesson);
 
+  const savedCourse=getCourseProgress("A1",lessonNumber());
+  const savedCoursePercent=courseProgressPercent(savedCourse);
   const stages=[
     {id:"explanation",number:"1",title:"شرح الدرس",desc:`تعلّم أهم العبارات حول ${arabicTitle} مع شرح وأمثلة واضحة.`,icon:"📖",tone:"blue",status:"ابدأ الآن",statusIcon:"▶"},
     {id:"vocabulary",number:"2",title:"المفردات المهمة",desc:"أهم الكلمات مع النطق والترجمة والأمثلة.",icon:"🏷️",tone:"green",status:"المفردات",statusIcon:"Aa"},
@@ -5616,11 +5949,11 @@ function renderLessonHub(){
       </section>
 
       <section class="lesson-detail-progress-card" aria-label="تقدمك في الدرس">
-        <div class="lesson-detail-progress-ring"><strong>0%</strong></div>
+        <div class="lesson-detail-progress-ring"><strong>${savedCoursePercent}%</strong></div>
         <div class="lesson-detail-progress-copy">
           <strong>تقدمك في الدرس</strong>
-          <small>أكمل جميع الأنشطة لإنهاء الدرس</small>
-          <div class="lesson-detail-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span></span></div>
+          <small>${savedCourse?.completed?"تمّ إكمال الكورس ✓":savedCourse?.startedAt?"تقدّمك محفوظ، تقدر تكمل منين وقفتي":"تقدّم الكورس كيتسجل تلقائياً"}</small>
+          <div class="lesson-detail-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${savedCoursePercent}"><span style="width:${savedCoursePercent}%"></span></div>
         </div>
       </section>
 
@@ -5629,7 +5962,7 @@ function renderLessonHub(){
 
       <div class="lesson-detail-footer">
         <button type="button" class="lesson-detail-start" data-action="lesson-stage-open" data-stage="explanation">
-          <span aria-hidden="true">▶</span><strong>ابدأ شرح الدرس</strong><i aria-hidden="true">←</i>
+          <span aria-hidden="true">▶</span><strong>${savedCourse?.startedAt&&!savedCourse?.completed?"متابعة الكورس":"ابدأ شرح الدرس"}</strong><i aria-hidden="true">←</i>
         </button>
       </div>
     </section>`;
@@ -6572,6 +6905,7 @@ function back(){
   else if(page==="level-home") page="learn-hub";
   else if(page==="a2-level-home") page="learn-hub";
   else if(page==="a2-course-content"){
+    saveActiveCourseBeforeExit();
     document.documentElement.classList.remove("challenge-fullscreen-open");
     document.body.classList.remove("challenge-fullscreen-open");
     page="a2-lesson-html";
@@ -6591,7 +6925,7 @@ function back(){
   else if(page==="podcast-player") page="podcasts";
   else if(page==="test-categories") page=testCategoriesReturnPage||"tests";
   else if(page==="standalone-lesson-test"){document.documentElement.classList.remove("challenge-fullscreen-open");document.body.classList.remove("challenge-fullscreen-open");page=testCategoriesReturnPage||"tests";}
-  else if(page==="lesson-section-html"){document.documentElement.classList.remove("challenge-fullscreen-open");document.body.classList.remove("challenge-fullscreen-open");page=lessonSectionReturnPage||"lesson-hub";}
+  else if(page==="lesson-section-html"){saveActiveCourseBeforeExit();document.documentElement.classList.remove("challenge-fullscreen-open");document.body.classList.remove("challenge-fullscreen-open");page=lessonSectionReturnPage||"lesson-hub";}
   else if(page==="lesson") page=courseReturnPage||"lessons";
   else if(page==="interactive-lesson-poster") page="lesson";
   else if(page==="dialogue") page=dialogueReturnPage;
@@ -6638,6 +6972,7 @@ if(podcastWordOverlay) podcastWordOverlay.addEventListener("click",function(even
 });
 document.addEventListener("keydown",function(event){
   if(event.key === "Escape"){
+    if(document.getElementById("courseResumeDialog")){pendingCourseLaunch=null;closeCourseResumeDialog();}
     closePodcastWordPopup();
     closeAdminStudentDetails();
     if(page==="student-results" && studentResultsActiveTool){studentResultsActiveTool="";render();}
@@ -6725,6 +7060,16 @@ window.addEventListener("message",function(event){
   if(!sameOrigin && !fromOwnedTestFrame && !fromCustomContentFrame) return;
   const data=event.data;
   if(!data || typeof data!=="object") return;
+  if(data.type==="deutsch-a1-course-progress" && activeCourseFrame?.frame?.contentWindow===event.source && sameOrigin){
+    const {level,no}=activeCourseFrame;
+    const updates={};
+    if(Number.isInteger(Number(data.slideIndex)) && Number(data.slideIndex)>=0)updates.lastTab=Number(data.slideIndex);
+    if(Number.isInteger(Number(data.totalSlides)) && Number(data.totalSlides)>1)updates.totalTabs=Number(data.totalSlides);
+    if(typeof data.completed==="boolean")updates.completed=data.completed;
+    if(typeof data.label==="string")updates.lastTabLabel=data.label.slice(0,85);
+    if(Object.keys(updates).length)saveCourseProgress(level,no,updates);
+    return;
+  }
   if(data.type==="deutsch-a1-progress-report"){
     if(fromCustomContentFrame){
       const meta=activeCustomContentMeta;
@@ -6754,6 +7099,7 @@ window.addEventListener("message",function(event){
     return;
   }
   if(data.type==="deutsch-a1-app-nav"){
+    saveActiveCourseBeforeExit();
     document.documentElement.classList.remove("challenge-fullscreen-open");
     document.body.classList.remove("challenge-fullscreen-open");
     if(setStudentPageForTab(data.tab)) render();
@@ -6807,6 +7153,9 @@ document.addEventListener("click",function(event){
   const el=event.target.closest("[data-action]");
   if(!el)return;
   const action=el.dataset.action;
+  if(action==="course-resume"){launchPendingCourse("resume");return;}
+  if(action==="course-restart"){launchPendingCourse("restart");return;}
+  if(action==="course-resume-cancel"){pendingCourseLaunch=null;closeCourseResumeDialog();return;}
   if(action==="student-nav"){
     const tab=el.dataset.tab;
     if(tab==="home") page="home";
@@ -6999,11 +7348,12 @@ document.addEventListener("click",function(event){
         showToast("اختبار هذا الدرس غير موجود حالياً داخل ملفات A2.");
       }
     }else{
-      page="a2-course-content";render();
+      askCourseResume("A2",Number(currentA2LessonNo),()=>{page="a2-course-content";render();});
     }
     return;
   }
   else if(action==="close-a2-course-content"){
+    saveActiveCourseBeforeExit();
     document.documentElement.classList.remove("challenge-fullscreen-open");
     document.body.classList.remove("challenge-fullscreen-open");
     page="a2-lesson-html";render();return;
@@ -7224,7 +7574,15 @@ document.addEventListener("click",function(event){
     if(stage==="explanation"){
       activeVerbCard=null;
       if([5,6,7,8].includes(currentLesson)){openLessonSectionPage("course");return;}
-      courseReturnPage="lesson-hub";page="lesson";render();return;
+      const coursePath=getLessonSectionPagePath("course",lessonNumber());
+      if(window.location.protocol==="file:"){
+        courseReturnPage="lesson-hub";page="lesson";render();return;
+      }
+      fetch(managedPageAssetUrl(coursePath)||coursePath,{method:"HEAD",cache:"no-store"}).then(response=>{
+        if(response.ok && (response.headers.get("content-type")||"").includes("html"))openLessonSectionPage("course");
+        else {courseReturnPage="lesson-hub";page="lesson";render();}
+      }).catch(()=>{courseReturnPage="lesson-hub";page="lesson";render();});
+      return;
     }
     if(stage==="vocabulary"){
       currentCategory="Nomen";categoryReturnPage="lesson-hub";activeVerbCard=null;page="category";render();return;
@@ -7258,7 +7616,7 @@ document.addEventListener("click",function(event){
   else if(action==="category-test"){currentCategory=el.dataset.category;testIndex=0;testScore=0;testChoice=null;testAnswered=false;testQuestionScores={};testQuestionLabels={};testReturnPage="test-categories";page="test";}
   else if(action==="open-standalone-lesson-test"){page="standalone-lesson-test";}
   else if(action==="close-standalone-lesson-test"){document.documentElement.classList.remove("challenge-fullscreen-open");document.body.classList.remove("challenge-fullscreen-open");page=testCategoriesReturnPage||"tests";render();return;}
-  else if(action==="close-lesson-section-page"){document.documentElement.classList.remove("challenge-fullscreen-open");document.body.classList.remove("challenge-fullscreen-open");page=lessonSectionReturnPage||"lesson-hub";render();return;}
+  else if(action==="close-lesson-section-page"){saveActiveCourseBeforeExit();document.documentElement.classList.remove("challenge-fullscreen-open");document.body.classList.remove("challenge-fullscreen-open");page=lessonSectionReturnPage||"lesson-hub";render();return;}
   else if(action==="category"){currentCategory=el.dataset.category;categoryReturnPage="lesson";activeVerbCard=null;page="category";}
   else if(action==="learn"){learningTab="Bilder";activeVerbCard=null;page="learning";}
   else if(action==="open-dialogue"){dialogueReturnPage="lesson";page=(currentLesson===0 ? "intro-dialogue" : "dialogue");}
