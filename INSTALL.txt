@@ -1,0 +1,11 @@
+Deutsch A1 – Bildpfade korrigieren (Patch)
+
+Fehler: Das Bild-Datenfile zeigte auf assets/lesson-vocabulary/..., während die mitgelieferten Bildordner unter assets/lesson-6 bis assets/lesson-9 liegen.
+
+Installation:
+1. Entpacke diesen Patch im Hauptordner deiner bestehenden Deutsch_A1-Version.
+2. Ersetze nur die Datei js/lesson-vocabulary-images.js.
+3. Die vorhandenen Ordner assets/lesson-6, assets/lesson-7, assets/lesson-8 und assets/lesson-9 aus dem vorherigen Vokabel-Patch müssen im Hauptordner liegen bleiben.
+4. Lade die App mit Hard-Refresh neu (Cmd+Shift+R / Strg+F5).
+
+Es werden keine anderen Dateien geändert. Alle 178 Bildpfade wurden gegen die Bilddateien des vorherigen Patches geprüft.
