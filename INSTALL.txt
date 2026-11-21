@@ -1,11 +1,32 @@
-Deutsch A1 – Bildpfade korrigieren (Patch)
+Deutsch A1/A2/B1/B2 — Group Level Access & Sections V52
 
-Fehler: Das Bild-Datenfile zeigte auf assets/lesson-vocabulary/..., während die mitgelieferten Bildordner unter assets/lesson-6 bis assets/lesson-9 liegen.
+التعديلات:
+- لكل مستوى A1 وA2 وB1 وB2 زر مستقل لفتح/إغلاق إعداداته في لوحة الإدارة.
+- إضافة مفتاح مستقل لتفعيل أو قفل كل مستوى بالكامل للطلاب.
+- عند قفل مستوى، يظهر مقفلاً في صفحة اختيار المستويات ولا يستطيع الطالب الدخول إليه.
+- في B1 وB2 تمت إضافة صلاحيات مستقلة للأقسام الأربعة المطابقة لواجهة الطالب:
+  Kurs، Teste، Training Prüfung، Prüfungen.
+- يمكن قفل قسم واحد مع إبقاء الأقسام الأخرى مفتوحة.
+- داخل Kurs تبقى صلاحيات الدروس العشرة مستقلة لكل مستوى.
+- قفل Kurs يقفل الوصول إلى دروس ذلك المستوى، وقفل Training Prüfung يمنع الدخول إلى جميع مهارات التدريب التابعة له.
+- إعدادات المجموعة تحفظ في Firebase تحت:
+  levelAccess
+  sectionAccessByLevel
+  lessonAccessByLevel
+- الحفاظ على بيانات lessonAccess القديمة الخاصة بـ A1، والتعامل مع المجموعات القديمة التي لا تحتوي على مفاتيح الصلاحيات الجديدة على أنها مفتوحة افتراضياً حتى لا تُقفل صلاحياتها دون قصد.
+- الحفظ يتم فقط عند الضغط على «حفظ التعديلات» أو «إنشاء المجموعة».
 
-Installation:
-1. Entpacke diesen Patch im Hauptordner deiner bestehenden Deutsch_A1-Version.
-2. Ersetze nur die Datei js/lesson-vocabulary-images.js.
-3. Die vorhandenen Ordner assets/lesson-6, assets/lesson-7, assets/lesson-8 und assets/lesson-9 aus dem vorherigen Vokabel-Patch müssen im Hauptordner liegen bleiben.
-4. Lade die App mit Hard-Refresh neu (Cmd+Shift+R / Strg+F5).
+الملفات داخل الحزمة:
+- index.html
+- js/app.js
+- css/style.css
 
-Es werden keine anderen Dateien geändert. Alle 178 Bildpfade wurden gegen die Bilddateien des vorherigen Patches geprüft.
+التثبيت:
+1. فك الضغط داخل مجلد الموقع الحالي مع استبدال الملفات الثلاثة الموجودة في المسارات نفسها.
+2. لا تستبدل مجلد pages أو assets أو ملفات Firebase/Supabase أو أي ملفات أخرى.
+3. ارفع الملفات إلى الاستضافة ثم حدّث الصفحة تحديثاً كاملاً:
+   - Mac: Cmd + Shift + R
+   - Windows: Ctrl + Shift + R
+
+ملاحظة:
+هذه Patch مبنية على حزمة Group Level Accordion V51، وليست نسخة كاملة من الموقع.

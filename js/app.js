@@ -259,6 +259,14 @@ const podcastLibrary = [
 ];
 
 const managedHtmlPageDefinitions = [
+  {path:"pages/B2/training/oesd-b2-bildbeschreibung.html",title:"ÖSD B2 – Bildbeschreibung",group:"B2 · Training Prüfung · Prüfungsmodelle"},
+  {path:"pages/B2/training/oesd-b2-familie-zusammenleben.html",title:"ÖSD B2 – Familie und Zusammenleben",group:"B2 · Training Prüfung · Prüfungsmodelle"},
+  {path:"pages/B2/training/oesd-b2-studium-lernen.html",title:"ÖSD B2 – Studium und Lernen",group:"B2 · Training Prüfung · Prüfungsmodelle"},
+  {path:"pages/B2/training/oesd-b2-reisen-tourismus.html",title:"ÖSD B2 – Reisen und Tourismus",group:"B2 · Training Prüfung · Prüfungsmodelle"},
+  {path:"pages/B2/training/oesd-b2-gesundheit-sport.html",title:"ÖSD B2 – Gesundheit und Sport",group:"B2 · Training Prüfung · Prüfungsmodelle"},
+  {path:"pages/B2/training/oesd-b2-umwelt-klimaschutz.html",title:"ÖSD B2 – Umwelt und Klimaschutz",group:"B2 · Training Prüfung · Prüfungsmodelle"},
+  {path:"pages/B2/training/oesd-b2-arbeit-und-beruf.html",title:"ÖSD B2 – Arbeit und Beruf",group:"B2 · Training Prüfung · Prüfungsmodelle"},
+  {path:"pages/B2/training/b2-sprechen-training.html",title:"ÖSD B2 – Sprechen · Interaktives Training",group:"B2 · Training Prüfung · Sprechen"},
   {path:"pages/adjective-challenge.html",title:"Meine Stadt – Interaktive Übungen",group:"Tests & Übungen"},
   {path:"pages/test-center.html",title:"واجهة الاختبارات – اختيار وحل الاختبار",group:"Tests & Übungen"},
   {path:"pages/admin-vocabulary.html",title:"مفرداتي – إدارة المفردات",group:"إدارة وأدوات"},
@@ -353,9 +361,16 @@ let cloudUsers = [];
 let cloudResults = {};
 let cloudGroups = {};
 let cloudActivity = {};
+let cloudCourseProgress = {};
 let adminResultsRealtimeRef = null;
 let adminResultsRealtimeHandler = null;
 let adminResultsRealtimeSignature = "";
+let adminCourseProgressRealtimeRef = null;
+let adminCourseProgressRealtimeHandler = null;
+let adminCourseProgressRealtimeSignature = "";
+let adminActivityRealtimeRef = null;
+let adminActivityRealtimeHandler = null;
+let adminActivityRealtimeSignature = "";
 let currentStudentProfile = null;
 let currentStudentGroup = null;
 let adminStudentFilter = "all";
@@ -374,10 +389,15 @@ let activeCustomContentFile = null;
 let customContentReturnPage = "lesson-hub";
 
 let adminSelectedGroupId = null;
+let adminGroupFullscreenOpen = false;
 let adminResultsGroupId = "all";
 let adminResultsStudentId = "all";
 let adminResultsLessonFilter = "all";
 let adminResultsTypeFilter = "all";
+let adminProgressLessonStatusFilter = "";
+let adminProgressMetricOpen = "";
+let adminProgressMetricStudentId = "";
+let studentLessonStatusFilter = "all";
 let studentProgressLessonFilter = "all";
 let studentResultsExpanded = false;
 let studentResultsActiveTool = "";
@@ -385,6 +405,7 @@ let studentResultsReturnPage = "student-results";
 let studentResultsActiveSkill = "vocab";
 let studentResultsSkillDetailOpen = false;
 let studentVocabularyReviewLesson = 6;
+let studentVocabularyReviewLevel = "A1";
 let studentVocabularyReviewCategory = "Verben";
 let studentVocabularySelectedWord = null;
 let studentVocabularyPracticeOpen = false;
@@ -399,9 +420,27 @@ let studentVocabularyTrainingScope = "word";
 let studentVocabularyTrainingPool = [];
 let studentVocabularyTrainingIndex = 0;
 let studentVocabularyTrainingCategory = "Verben";
+let studentSkillLearningLesson = 6;
+let studentSkillLearningMode = "browse";
+let studentSkillListeningIndex = 0;
+let studentSkillListeningChoice = -1;
+let studentSkillListeningChecked = false;
+let studentSkillListeningScore = 0;
+let studentSkillWritingIndex = 0;
+let studentSkillWritingInput = "";
+let studentSkillWritingChecked = false;
+let studentSkillWritingScore = 0;
+let studentSkillSpeakingIndex = 0;
+let studentSkillSentenceIndex = 0;
+let studentSkillSentenceOrder = [];
+let studentSkillSentenceChecked = false;
+let studentSkillSentenceScore = 0;
+
 let testAttemptId = "";
 let adminExerciseHeatmapMode = "performance";
 let editingGroupId = null;
+let adminGroupLevelDraft = null;
+let adminGroupLessonDrafts = {};
 let adminEditingStudentLessonsId = null;
 let activityTimer = null;
 let lastActivityTick = Date.now();
@@ -474,6 +513,15 @@ async function loadDeutschA1Data(){
     });
     cloudGroups = groupsSnap.val() || {};
     cloudActivity = activitySnap.val() || {};
+  }
+  if(currentUser?.role==="admin"){
+    try{
+      const courseProgressSnap=await firebaseDb.ref(`${DEUTSCH_A1_PATH}/courseProgress`).once("value");
+      cloudCourseProgress=courseProgressSnap.val()||{};
+    }catch(courseProgressError){
+      cloudCourseProgress={};
+      console.warn("Admin course progress could not be loaded. Check Firebase courseProgress read rules:",courseProgressError);
+    }
   }
   try {
     const contentMetaSnap = await firebaseDb.ref(`${DEUTSCH_A1_PATH}/contentMeta`).once("value");
@@ -652,9 +700,17 @@ function syncEmbeddedProgressFromLocalStorage(rawValue){
   }
 }
 
+function refreshAdminResultsViewFromRealtime(){
+  if(page==="admin" && adminSection==="results"){
+    const scrollTop=window.scrollY||0;
+    render();
+    if(typeof window.scrollTo==="function") window.scrollTo(0,scrollTop);
+  }
+}
 function startAdminResultsRealtimeSync(){
   if(!firebaseReady || !firebaseDb || !currentUser || currentUser.role!=="admin") return;
   stopAdminResultsRealtimeSync();
+
   adminResultsRealtimeRef=firebaseDb.ref(`${DEUTSCH_A1_PATH}/results`);
   adminResultsRealtimeHandler=snapshot=>{
     if(!currentUser || currentUser.role!=="admin") return;
@@ -669,25 +725,59 @@ function startAdminResultsRealtimeSync(){
     });
     cloudResults=next;
     localStorage.setItem(AUTH_RESULTS_KEY,JSON.stringify(cloudResults));
-    // Refresh the visible results page when a student submits or visits an exercise.
-    if(page==="admin" && adminSection==="results"){
-      const scrollTop=window.scrollY||0;
-      render();
-      if(typeof window.scrollTo==="function") window.scrollTo(0,scrollTop);
-    }
+    refreshAdminResultsViewFromRealtime();
   };
   adminResultsRealtimeRef.on("value",adminResultsRealtimeHandler,error=>{
     console.error("Admin results live sync failed:",error);
   });
-}
 
+  adminCourseProgressRealtimeRef=firebaseDb.ref(`${DEUTSCH_A1_PATH}/courseProgress`);
+  adminCourseProgressRealtimeHandler=snapshot=>{
+    if(!currentUser || currentUser.role!=="admin") return;
+    const raw=snapshot.val()||{};
+    const signature=JSON.stringify(raw);
+    if(signature===adminCourseProgressRealtimeSignature) return;
+    adminCourseProgressRealtimeSignature=signature;
+    cloudCourseProgress=raw;
+    refreshAdminResultsViewFromRealtime();
+  };
+  adminCourseProgressRealtimeRef.on("value",adminCourseProgressRealtimeHandler,error=>{
+    console.warn("Admin course progress live sync unavailable:",error);
+  });
+
+  adminActivityRealtimeRef=firebaseDb.ref(`${DEUTSCH_A1_PATH}/activity`);
+  adminActivityRealtimeHandler=snapshot=>{
+    if(!currentUser || currentUser.role!=="admin") return;
+    const raw=snapshot.val()||{};
+    const signature=JSON.stringify(raw);
+    if(signature===adminActivityRealtimeSignature) return;
+    adminActivityRealtimeSignature=signature;
+    cloudActivity=raw;
+    refreshAdminResultsViewFromRealtime();
+  };
+  adminActivityRealtimeRef.on("value",adminActivityRealtimeHandler,error=>{
+    console.warn("Admin activity live sync unavailable:",error);
+  });
+}
 function stopAdminResultsRealtimeSync(){
   if(adminResultsRealtimeRef && adminResultsRealtimeHandler){
     try{adminResultsRealtimeRef.off("value",adminResultsRealtimeHandler);}catch(error){console.warn(error);}
   }
+  if(adminCourseProgressRealtimeRef && adminCourseProgressRealtimeHandler){
+    try{adminCourseProgressRealtimeRef.off("value",adminCourseProgressRealtimeHandler);}catch(error){console.warn(error);}
+  }
+  if(adminActivityRealtimeRef && adminActivityRealtimeHandler){
+    try{adminActivityRealtimeRef.off("value",adminActivityRealtimeHandler);}catch(error){console.warn(error);}
+  }
   adminResultsRealtimeRef=null;
   adminResultsRealtimeHandler=null;
   adminResultsRealtimeSignature="";
+  adminCourseProgressRealtimeRef=null;
+  adminCourseProgressRealtimeHandler=null;
+  adminCourseProgressRealtimeSignature="";
+  adminActivityRealtimeRef=null;
+  adminActivityRealtimeHandler=null;
+  adminActivityRealtimeSignature="";
 }
 
 function slugify(value){
@@ -713,13 +803,102 @@ function studentGroupName(user){
   const group = user && user.groupId ? cloudGroups[user.groupId] : null;
   return group && group.name ? group.name : "Ohne Gruppe";
 }
-function getStudentLessonAccess(lessonIndex){
-  if(!currentUser || currentUser.role!=="student") return true;
+// Groups can now specify their lesson permissions separately for A1, A2, B1 and B2.
+// Original A1 student overrides and legacy group.lessonAccess remain supported.
+const GROUP_COURSE_LEVELS=["A1","A2","B1","B2"];
+function normalizeGroupCourseLevel(level){
+  const value=String(level||"A1").toUpperCase();
+  return GROUP_COURSE_LEVELS.includes(value)?value:"A1";
+}
+function groupLessonAccessForLevel(group,level){
+  const requestedLevel=normalizeGroupCourseLevel(level);
+  const perLevel=group?.lessonAccessByLevel?.[requestedLevel];
+  if(perLevel && typeof perLevel==="object")return perLevel;
+  if(requestedLevel==="A1" && group?.lessonAccess && typeof group.lessonAccess==="object")return group.lessonAccess;
+  return null;
+}
+const GROUP_UPPER_LEVEL_SECTIONS=[
+  {id:"kurs",label:"Kurs",arabic:"الدروس",icon:"📚"},
+  {id:"teste",label:"Teste",arabic:"اختبارات الدروس",icon:"📝"},
+  {id:"training",label:"Training Prüfung",arabic:"التدريب على الامتحان",icon:"🎯"},
+  {id:"pruefungen",label:"Prüfungen",arabic:"الامتحانات",icon:"🏆"}
+];
+function groupLevelAccessForLevel(group,level){
+  const requestedLevel=normalizeGroupCourseLevel(level);
+  const access=group?.levelAccess;
+  return access && Object.prototype.hasOwnProperty.call(access,requestedLevel)
+    ? access[requestedLevel]!==false
+    : true;
+}
+function groupSectionAccessForLevel(group,level){
+  const requestedLevel=normalizeGroupCourseLevel(level);
+  const defaults={kurs:true,teste:true,training:true,pruefungen:true};
+  const saved=group?.sectionAccessByLevel?.[requestedLevel];
+  return saved && typeof saved==="object" ? {...defaults,...saved} : defaults;
+}
+function getStudentLevelAccess(level){
+  if(!currentUser || currentUser.role!=="student")return true;
+  const requestedLevel=normalizeGroupCourseLevel(level);
+  // A group-level lock is authoritative; a student-specific setting may only add a restriction.
+  if(!groupLevelAccessForLevel(currentStudentGroup,requestedLevel))return false;
+  const own=currentStudentProfile?.levelAccess;
+  return !(own && Object.prototype.hasOwnProperty.call(own,requestedLevel) && own[requestedLevel]===false);
+}
+function getStudentSectionAccess(level,section){
+  if(!currentUser || currentUser.role!=="student")return true;
+  const requestedLevel=normalizeGroupCourseLevel(level);
+  if(!getStudentLevelAccess(requestedLevel))return false;
+  const key=String(section||"");
+  if(groupSectionAccessForLevel(currentStudentGroup,requestedLevel)[key]===false)return false;
+  const own=currentStudentProfile?.sectionAccessByLevel?.[requestedLevel];
+  return !(own && Object.prototype.hasOwnProperty.call(own,key) && own[key]===false);
+}
+function studentPageLevelRequirement(){
+  if(["a2-level-home","a2-lesson-html","a2-course-content","a2-test-html"].includes(page))return "A2";
+  if(["upper-level-home","upper-level-section","upper-level-course-lesson","upper-level-training-skill","upper-level-muendlich-subsection","upper-level-muendlich-model"].includes(page))return upperLevelInfo();
+  if(["level-home","lessons","lesson-hub","lesson-podcasts","podcasts","podcast-player","tests","test-categories","standalone-lesson-test","lesson-section-html","lesson","interactive-lesson-poster","dialogue","intro-dialogue","numbers","essen","freizeit","stadt","family-tree","category","learning","test","test-result"].includes(page))return "A1";
+  return "";
+}
+function studentPageSectionRequirement(){
+  if(page==="upper-level-section")return upperLevelSelectedSection;
+  if(page==="upper-level-course-lesson")return "kurs";
+  if(["upper-level-training-skill","upper-level-muendlich-subsection","upper-level-muendlich-model"].includes(page))return "training";
+  return "";
+}
+function groupLessonDefaultChecks(group,level){
+  const saved=groupLessonAccessForLevel(group,level);
+  return Object.fromEntries(Array.from({length:10},(_,index)=>{
+    const no=String(index+1);
+    return [no,saved && Object.prototype.hasOwnProperty.call(saved,no)?saved[no]!==false:true];
+  }));
+}
+function groupLessonChecksMarkup(level,access){
+  const courseLevel=normalizeGroupCourseLevel(level);
+  return Array.from({length:10},(_,index)=>{
+    const no=index+1;
+    return `<label class="admin-lesson-check"><input type="checkbox" name="groupLessons" data-level="${courseLevel}" value="${no}" ${access[String(no)]!==false?"checked":""}><span>${courseLevel} · Lektion ${no}</span></label>`;
+  }).join("");
+}
+function readGroupLessonChecks(level){
+  const courseLevel=normalizeGroupCourseLevel(level);
+  const container=document.getElementById(`groupLevelLessonChecks-${courseLevel}`);
+  const selected=new Set(Array.from(container?.querySelectorAll('input[type="checkbox"][name="groupLessons"]:checked')||[],item=>String(item.value)));
+  return Object.fromEntries(Array.from({length:10},(_,index)=>[String(index+1),selected.has(String(index+1))]));
+}
+function getStudentLessonAccess(lessonIndex,level="A1"){
+  if(!currentUser || currentUser.role!=="student")return true;
   const key=String(Number(lessonIndex)+1);
-  const own=currentStudentProfile && currentStudentProfile.lessonAccess;
-  if(own && Object.prototype.hasOwnProperty.call(own,key)) return own[key] !== false;
-  const group=currentStudentGroup && currentStudentGroup.lessonAccess;
-  if(group && Object.prototype.hasOwnProperty.call(group,key)) return group[key] !== false;
+  const requestedLevel=normalizeGroupCourseLevel(level);
+  if(!getStudentLevelAccess(requestedLevel))return false;
+  if(["B1","B2"].includes(requestedLevel) && !getStudentSectionAccess(requestedLevel,"kurs"))return false;
+  const ownByLevel=currentStudentProfile?.lessonAccessByLevel?.[requestedLevel];
+  if(ownByLevel && Object.prototype.hasOwnProperty.call(ownByLevel,key))return ownByLevel[key]!==false;
+  if(requestedLevel==="A1"){
+    const own=currentStudentProfile && currentStudentProfile.lessonAccess;
+    if(own && Object.prototype.hasOwnProperty.call(own,key))return own[key]!==false;
+  }
+  const groupAccess=groupLessonAccessForLevel(currentStudentGroup,requestedLevel);
+  if(groupAccess && Object.prototype.hasOwnProperty.call(groupAccess,key))return groupAccess[key]!==false;
   return true;
 }
 function recordStudentLogin(uid){
@@ -822,15 +1001,39 @@ function saveGroupFromForm(){
   if(!currentUser || currentUser.role!=="admin") return;
   const name=(document.getElementById("groupName")?.value||"").trim();
   const required=Math.max(0,Number(document.getElementById("groupRequiredMinutes")?.value)||0);
-  const lessonAccess={};
-  document.querySelectorAll('input[name="groupLessons"]:checked').forEach(input=>lessonAccess[input.value]=true);
-  for(let i=1;i<=10;i++) if(!Object.prototype.hasOwnProperty.call(lessonAccess,String(i))) lessonAccess[String(i)]=false;
   if(!name){showToast("Bitte einen Gruppennamen eingeben.");return;}
   const id=editingGroupId || (`group_${Date.now()}_${Math.random().toString(36).slice(2,7)}`);
   const old=cloudGroups[id]||{};
-  const group={...old,id,name,requiredDailyMinutes:required,lessonAccess,updatedAt:new Date().toISOString(),createdAt:old.createdAt||new Date().toISOString()};
+  // Save every level's independent open/closed switch.
+  const levelAccess=Object.fromEntries(GROUP_COURSE_LEVELS.map(courseLevel=>{
+    const input=document.querySelector(`[data-group-level-access="${courseLevel}"]`);
+    return [courseLevel,input ? input.checked : groupLevelAccessForLevel(old,courseLevel)];
+  }));
+  // B1 and B2 each have four independent sections, matching the student's level dashboard.
+  const sectionAccessByLevel={...(old.sectionAccessByLevel||{})};
+  ["B1","B2"].forEach(courseLevel=>{
+    const panel=document.getElementById(`groupLevelPanel-${courseLevel}`);
+    const access={...groupSectionAccessForLevel(old,courseLevel)};
+    panel?.querySelectorAll('input[data-group-section-access]').forEach(input=>{
+      access[String(input.dataset.section||"")]=input.checked;
+    });
+    sectionAccessByLevel[courseLevel]=access;
+  });
+  // Save the four independent Kurs lesson lists together, including the closed accordions.
+  const lessonAccessByLevel={
+    ...(old.lessonAccessByLevel||{}),
+    ...adminGroupLessonDrafts,
+    ...Object.fromEntries(GROUP_COURSE_LEVELS.map(courseLevel=>[courseLevel,readGroupLessonChecks(courseLevel)]))
+  };
+  const level=normalizeGroupCourseLevel(adminGroupLevelDraft||old.level||"A1");
+  const lessonAccess=lessonAccessByLevel.A1||groupLessonDefaultChecks(old,"A1");
+  const group={...old,id,name,level,requiredDailyMinutes:required,levelAccess,sectionAccessByLevel,lessonAccessByLevel,
+    // Keep the original A1 field for students and older clients that still read it.
+    lessonAccess,
+    updatedAt:new Date().toISOString(),createdAt:old.createdAt||new Date().toISOString()};
   firebaseDb.ref(`${DEUTSCH_A1_PATH}/groups/${id}`).set(group).then(async()=>{
-    editingGroupId=null;await loadDeutschA1Data();render();showToast("Gruppe wurde gespeichert.");
+    editingGroupId=null;adminGroupLevelDraft=null;adminGroupLessonDrafts={};
+    await loadDeutschA1Data();render();showToast("Gruppe wurde gespeichert.");
   }).catch(error=>showToast("Gruppe konnte nicht gespeichert werden: "+error.message));
 }
 function assignStudentGroup(uid, groupId){
@@ -904,6 +1107,12 @@ function deleteGroup(groupId){
 let currentUser = readSession();
 let page = currentUser ? (currentUser.role === "admin" ? "admin" : "home") : "login";
 let selectedLevel = "A1.1";
+let upperLevelSelected = "B1";
+let upperLevelSelectedSection = "kurs";
+let upperLevelSelectedTrainingSkill = "";
+let upperLevelSelectedMundlichSection = "";
+let upperLevelSelectedMuendlichModel = -1;
+let upperLevelSelectedLessonNo = 1;
 let currentLesson = 0;
 let currentA2LessonNo = 1;
 let currentA2TestNo = 1;
@@ -990,6 +1199,8 @@ let competitionQuestionIndex = 0;
 let competitionFeedback = null;
 let competitionSubmitting = false;
 let competitionBusy = false;
+let competitionCreateMessage = "";
+let competitionCreateMessageIsError = false;
 let competitionGlobalStats = [];
 
 const app = document.getElementById("app");
@@ -1109,7 +1320,18 @@ function setStudentPageForTab(tab){
 }
 function applyTabFromHash(){
   try{
-    const tab=new URLSearchParams(window.location.hash.replace(/^#/,"")).get("tab");
+    const route=new URLSearchParams(window.location.hash.replace(/^#/,""));
+    if(route.get("return")==="b2-muendlich"){
+      // V49: restore the exact B2/Mündlich menu after same-tab speaking training.
+      upperLevelSelected="B2";
+      upperLevelSelectedSection="training";
+      upperLevelSelectedTrainingSkill="muendlich";
+      upperLevelSelectedMundlichSection="";
+      page="upper-level-training-skill";
+      try{window.history.replaceState(window.history.state,"",window.location.pathname+window.location.search);}catch(e){}
+      return true;
+    }
+    const tab=route.get("tab");
     return tab ? setStudentPageForTab(tab) : false;
   }catch(error){return false;}
 }
@@ -1146,6 +1368,7 @@ function header(){
   const pageTitles = {
     home:"اليوم", "learn-hub":"تعلّم", levels:"تعلّم", "level-home":"تعلّم",
     "a2-level-home":"تعلّم", "a2-lesson-html":"تعلّم", "a2-course-content":"تعلّم",
+    "upper-level-home":"تعلّم", "upper-level-section":"تعلّم", "upper-level-course-lesson":"تعلّم",
     lessons:"تعلّم", "lesson-hub":"تعلّم", "lesson-podcasts":"تعلّم",
     podcasts:"تعلّم", "podcast-player":"تعلّم", tests:"تعلّم",
     "test-categories":"تعلّم", "standalone-lesson-test":"تعلّم",
@@ -1157,7 +1380,8 @@ function header(){
     community:"المجتمع", competition:"المنافسة", "student-results":"تقدّمي", settings:settingsStrings().settings
   };
   const title = pageTitles[page] || "Deutsch";
-  const level = ["a2-level-home","a2-lesson-html","a2-course-content","a2-test-html"].includes(page) ? "A2" : (selectedLevel || "A1.1");
+  const level = ["upper-level-home","upper-level-section","upper-level-course-lesson"].includes(page) ? upperLevelInfo()
+    : (["a2-level-home","a2-lesson-html","a2-course-content","a2-test-html"].includes(page) ? "A2" : (selectedLevel || "A1.1"));
   if(page==="student-results"){
     return `<header class="student-topbar student-topbar-progress student-results-header">
       <button class="student-results-header-trophy" type="button" data-action="student-results-jump" data-target="resultsAchievements" aria-label="الإنجازات" title="الإنجازات">🏆</button>
@@ -1183,7 +1407,7 @@ function studentNavActive(){
   if(page === "sessions") return "sessions";
   if(page === "community") return "community";
   if(page === "competition") return "competition";
-  if(["learn-hub","levels","level-home","a2-level-home","a2-lesson-html","a2-course-content","a2-test-html","lessons","lesson-hub","lesson-podcasts","podcasts","podcast-player","tests","test-categories","standalone-lesson-test","lesson","interactive-lesson-poster","dialogue","intro-dialogue","numbers","essen","freizeit","stadt","family-tree","category","learning","test","test-result","custom-content"].includes(page)) return "learn";
+  if(["learn-hub","levels","level-home","a2-level-home","upper-level-home","upper-level-section","upper-level-training-skill","upper-level-muendlich-subsection","upper-level-muendlich-model","a2-lesson-html","a2-course-content","a2-test-html","lessons","lesson-hub","lesson-podcasts","podcasts","podcast-player","tests","test-categories","standalone-lesson-test","lesson","interactive-lesson-poster","dialogue","intro-dialogue","numbers","essen","freizeit","stadt","family-tree","category","learning","test","test-result","custom-content"].includes(page)) return "learn";
   return "home";
 }
 
@@ -1219,7 +1443,7 @@ function studentLayout(content, active){
 
 function pageShell(eyebrow,title,subtitle,content){
   const pagesWithHeaderBack = new Set([
-    "learn-hub","levels","level-home","a2-level-home","lessons","lesson-hub","lesson-podcasts",
+    "learn-hub","levels","level-home","a2-level-home","upper-level-home","upper-level-section","upper-level-training-skill","upper-level-muendlich-subsection","upper-level-muendlich-model","upper-level-course-lesson","lessons","lesson-hub","lesson-podcasts",
     "tests","test-categories","lesson","category","learning","test","test-result",
     "sessions","community","settings"
   ]);
@@ -1423,21 +1647,23 @@ function renderHome(){
 }
 function renderLearnHub(){
   const levels = [
-    {id:"A1",title:"المستوى الأساسي",desc:"تعلّم الأساسيات والتواصل في الحياة اليومية",tone:"green",available:true},
-    {id:"A2",title:"المستوى الأساسي الأعلى",desc:"توسيع المفردات والتعبير في مواقف يومية أكثر · 10 دروس متاحة",tone:"blue",available:true},
-    {id:"B1",title:"المستوى المتوسط",desc:"التعبير عن الآراء والتجارب بشكل أوضح وأطول",tone:"orange",available:false},
-    {id:"B2",title:"المستوى المتقدم الأعلى",desc:"التواصل بطلاقة ومناقشة مواضيع معقدة",tone:"purple",available:false}
-  ];
+    {id:"A1",title:"المستوى الأساسي",desc:"تعلّم الأساسيات والتواصل في الحياة اليومية",tone:"green"},
+    {id:"A2",title:"المستوى الأساسي الأعلى",desc:"توسيع المفردات والتعبير في مواقف يومية أكثر · 10 دروس متاحة",tone:"blue"},
+    {id:"B1",title:"المستوى المتوسط",desc:"Kurs · Teste · Training Prüfung · Prüfungen",tone:"orange"},
+    {id:"B2",title:"المستوى المتقدم الأعلى",desc:"Kurs · Teste · Training Prüfung · Prüfungen",tone:"purple"}
+  ].map(level=>({...level,available:getStudentLevelAccess(level.id)}));
   const levelCards = levels.map(level=>`
-    <button type="button" class="learn-level-card learn-level-${level.tone} ${level.available?"is-available":"is-coming"}"
-      data-action="level-path" data-level="${level.id}" aria-label="اختيار المستوى ${level.id}">
+    <button type="button" class="learn-level-card learn-level-${level.tone} ${level.available?"is-available":"is-locked"}"
+      data-action="level-path" data-level="${level.id}" ${level.available?"":"disabled"}
+      aria-label="اختيار المستوى ${level.id}${level.available?"":"، مقفل من الإدارة"}">
       <span class="learn-level-top">
         <strong>${level.id}</strong>
         <span class="learn-level-bars" aria-hidden="true"><i></i><i></i><i></i></span>
       </span>
       <b>${level.title}</b>
       <small>${level.desc}</small>
-      <span class="learn-level-arrow" aria-hidden="true">→</span>
+      <span class="learn-level-arrow" aria-hidden="true">${level.available?"→":"🔒"}</span>
+      ${level.available?"":'<span class="learn-level-locked-label">مقفل من الإدارة</span>'}
     </button>`).join("");
 
   const content = `
@@ -1470,10 +1696,379 @@ function renderLearnHub(){
         </div>
         <button type="button" data-action="learn-placement-test">اختبار المستوى <span aria-hidden="true">←</span></button>
       </section>
-      <p class="learn-level-note">المتاح حالياً: دروس A1 و10 دروس من مستوى A2.</p>
+      <p class="learn-level-note">يمكن للإدارة فتح أو قفل كل مستوى. ويحتوي كل من B1 وB2 على Kurs وTeste وTraining Prüfung وPrüfungen.</p>
     </section>
   `;
   app.innerHTML = studentLayout(content,"learn");
+}
+
+
+/* B1 / B2 level structure; register real files here once their lessons exist.
+   Do not add placeholder questions or pretend that an exam has been published. */
+const UPPER_LEVEL_SECTIONS=[
+  {id:"kurs",label:"Kurs",arabic:"الدروس",description:"دروس اللغة الألمانية لهذا المستوى",icon:"📚",tone:"blue"},
+  {id:"teste",label:"Teste",arabic:"اختبارات الدروس",description:"اختبارات قصيرة لمراجعة الدروس",icon:"📝",tone:"green"},
+  {id:"training",label:"Training Prüfung",arabic:"التدريب على الامتحان",description:"تدريبات للاستعداد لامتحانات المستوى",icon:"🎯",tone:"orange"},
+  {id:"pruefungen",label:"Prüfungen",arabic:"الامتحانات",description:"نماذج واختبارات شاملة للمستوى",icon:"🏆",tone:"purple"}
+];
+const UPPER_LEVEL_RESOURCE_LISTS={
+  B1:{kurs:[],teste:[],training:[],pruefungen:[]},
+  B2:{kurs:[],teste:[],training:[
+    {skill:"muendlich",subsection:"models",title:"Bildbeschreibung",description:"ÖSD B2 · وصف الصورة",path:"pages/B2/training/oesd-b2-bildbeschreibung.html"},
+    {skill:"muendlich",subsection:"models",title:"Familie und Zusammenleben",description:"ÖSD B2 · الأسرة والعيش المشترك",path:"pages/B2/training/oesd-b2-familie-zusammenleben.html"},
+    {skill:"muendlich",subsection:"models",title:"Studium und Lernen",description:"ÖSD B2 · الدراسة والتعلّم",path:"pages/B2/training/oesd-b2-studium-lernen.html"},
+    {skill:"muendlich",subsection:"models",title:"Reisen und Tourismus",description:"ÖSD B2 · السفر والسياحة",path:"pages/B2/training/oesd-b2-reisen-tourismus.html"},
+    {skill:"muendlich",subsection:"models",title:"Gesundheit und Sport",description:"ÖSD B2 · الصحة والرياضة",path:"pages/B2/training/oesd-b2-gesundheit-sport.html"},
+    {skill:"muendlich",subsection:"models",title:"Umwelt und Klimaschutz",description:"ÖSD B2 · البيئة وحماية المناخ",path:"pages/B2/training/oesd-b2-umwelt-klimaschutz.html"},
+    {skill:"muendlich",subsection:"models",title:"Arbeit und Beruf",description:"ÖSD B2 · العمل والمهنة",path:"pages/B2/training/oesd-b2-arbeit-und-beruf.html"}
+  ],pruefungen:[]}
+};
+// Four skill categories of the exam-training page for both B1 and B2.
+// These are navigation shells, not fabricated official exam materials.
+const UPPER_LEVEL_TRAINING_SKILLS=[
+  {id:"lesen",label:"Lesen",arabic:"القراءة والفهم",description:"فهم النصوص والإعلانات والمراسلات واستخراج المعلومات.",icon:"📖",tone:"blue"},
+  {id:"schreiben",label:"Schreiben",arabic:"الكتابة",description:"التدرّب على الرسائل والتعبير الكتابي وتنظيم الأفكار.",icon:"✍️",tone:"green"},
+  {id:"hoeren",label:"Hören",arabic:"الاستماع",description:"تدريبات فهم المحادثات والمعلومات المسموعة.",icon:"🎧",tone:"orange"},
+  {id:"muendlich",label:"Mündlich",arabic:"الامتحان الشفهي",description:"الحديث وعرض الأفكار والمناقشة والتعبير عن الرأي.",icon:"💬",tone:"purple"}
+];
+
+// Mündlich: four separate training areas for both B1 and B2.
+// Their content is loaded only when actual lesson/exam resources are registered.
+const UPPER_LEVEL_MUENDLICH_SECTIONS=[
+  {id:"models",label:"Prüfungsmodelle",arabic:"نماذج الامتحانات",description:"نماذج الامتحانات الشفهية وأسئلة المحاكاة حسب المستوى.",icon:"📋",tone:"blue"},
+  {id:"speaking",label:"Sprechen",arabic:"التدريب على التكلم",description:"تمارين العرض الشفهي والمناقشة والتعبير عن الرأي.",icon:"🗣️",tone:"purple"},
+  {id:"writing",label:"Schreiben",arabic:"التدريب على الكتابة",description:"مهام الكتابة وتنظيم النصوص والرسائل.",icon:"✍️",tone:"green"},
+  {id:"listening",label:"Hören",arabic:"التدريب على الاستماع",description:"فهم الحوارات والتسجيلات والأسئلة المرتبطة بها.",icon:"🎧",tone:"orange"}
+];
+
+function upperLevelInfo(){
+  return upperLevelSelected==="B2"?"B2":"B1";
+}
+function renderUpperLevelHome(){
+  const level=upperLevelInfo();
+  const cards=UPPER_LEVEL_SECTIONS.map(item=>{
+    const count=(UPPER_LEVEL_RESOURCE_LISTS[level]?.[item.id]||[]).length;
+    const allowed=getStudentSectionAccess(level,item.id);
+    return `<button type="button" class="upper-level-section-card upper-level-tone-${item.tone} ${allowed?"":"is-locked"}" data-action="upper-level-open-section" data-section="${item.id}" ${allowed?"":"disabled"} aria-label="${escapeHtml(level+' '+item.label+(allowed?"":" · مقفل من الإدارة"))}">
+      <span class="upper-level-section-icon" aria-hidden="true">${item.icon}</span>
+      <span class="upper-level-section-copy"><strong dir="ltr">${escapeHtml(item.label)}</strong><b>${escapeHtml(item.arabic)}</b><small>${escapeHtml(item.description)}</small></span>
+      <span class="upper-level-section-meta">${allowed?(item.id==="training"?"4 مهارات":count ? `${count} ${count===1?"ملف":"ملفات"}` : "قابل لإضافة المحتوى"):"مقفل من الإدارة"}</span>
+      <span class="upper-level-section-arrow" aria-hidden="true">${allowed?"←":"🔒"}</span>
+    </button>`;
+  }).join("");
+  const content=`<section class="upper-level-dashboard" dir="rtl">
+    <div class="upper-level-banner upper-level-banner-${level.toLowerCase()}">
+      <div class="upper-level-banner-copy"><span>Deutsch lernen</span><h2 dir="ltr">${level}</h2><strong>${level==="B1"?"المستوى المتوسط":"المستوى المتقدم الأعلى"}</strong><p>اختر القسم الذي تريد الدخول إليه</p></div>
+      <span class="upper-level-banner-art" aria-hidden="true">🎓</span>
+    </div>
+    <div class="upper-level-section-grid">${cards}</div>
+    <p class="upper-level-availability-note">يمكنك الدخول إلى الأقسام المفتوحة من طرف الإدارة. كل قسم عنده صلاحية مستقلة.</p>
+  </section>`;
+  app.innerHTML=pageShell("مسارك التعليمي",`مستوى ${level}`,"الأقسام الأساسية للمستوى",content);
+}
+// Kurs for B1/B2 has ten lesson positions, just like A1/A2.
+// Registration format, when real course files are supplied:
+// UPPER_LEVEL_RESOURCE_LISTS.B1.kurs.push({number:1,title:"...",arabic:"...",description:"...",icon:"...",path:"pages/Kurs/B1/lektion-1-kurs.html"});
+const UPPER_LEVEL_KURS_LESSON_COUNT=10;
+const UPPER_LEVEL_KURS_PLACEHOLDER_ICONS=["📘","📚","📝","🗣️","💡","🧩","🎯","✍️","🎧","🏆"];
+function upperLevelCourseLesson(level,no){
+  const resources=UPPER_LEVEL_RESOURCE_LISTS[level]?.kurs||[];
+  const numbered=resources.some(item=>Number(item?.number||item?.lessonNumber)>0);
+  const found=resources.find(item=>Number(item.number||item.lessonNumber)===no)
+    ||(!numbered?resources[no-1]:null);
+  const entry=found&&typeof found==="object"?found:{};
+  return {
+    number:no,
+    title:String(entry.arabic||entry.title||`Lektion ${no}`),
+    description:String(entry.description||entry.subtitle||"محتوى الدرس ما زال ما تضافش"),
+    icon:String(entry.icon||UPPER_LEVEL_KURS_PLACEHOLDER_ICONS[(no-1)%UPPER_LEVEL_KURS_PLACEHOLDER_ICONS.length]),
+    path:String(entry.path||"").trim()
+  };
+}
+function upperLevelCourseLessons(level){
+  return Array.from({length:UPPER_LEVEL_KURS_LESSON_COUNT},(_,index)=>upperLevelCourseLesson(level,index+1));
+}
+function renderUpperLevelKursLessonGrid(level){
+  const lessonsForLevel=upperLevelCourseLessons(level);
+  const statuses=lessonsForLevel.map(lesson=>{
+    const record=getCourseProgress(level,lesson.number);
+    return {...lesson,progress:courseProgressPercent(record),completed:!!record?.completed,started:!!record?.startedAt,allowed:getStudentLessonAccess(lesson.number-1,level)};
+  });
+  const completedCount=statuses.filter(item=>item.completed).length;
+  const progress=Math.round(completedCount/UPPER_LEVEL_KURS_LESSON_COUNT*100);
+  const nextLesson=statuses.find(item=>item.allowed&&!item.completed)||null;
+  const cards=statuses.map(item=>{
+    const state=!item.allowed?"locked":item.completed?"completed":item.started?"current":item.path?"available":"pending";
+    const stateLabel=!item.allowed?"مقفل من الإدارة":item.completed?"مكتمل":item.started?`متابعة ${item.progress}%`:item.path?"متاح":"لم يضف بعد";
+    const stateIcon=!item.allowed?"×":item.completed?"✓":item.started?"●":item.path?"•":"·";
+    return `<button type="button" class="level-lesson-card is-${state}" data-action="upper-level-course-open-lesson" data-lesson-no="${item.number}" ${item.allowed?"":"disabled"}
+      aria-label="${escapeHtml(`${level} · الدرس ${item.number} · ${item.title} · ${stateLabel}`)}">
+      <span class="level-lesson-art" aria-hidden="true">${escapeHtml(item.icon)}</span>
+      <span class="level-lesson-copy">
+        <span class="level-lesson-number">الدرس ${item.number}</span>
+        <strong>${escapeHtml(item.title)}</strong>
+        <small>${escapeHtml(item.description)}</small>
+      </span>
+      <span class="level-lesson-side">
+        <span class="level-lesson-status is-${state}"><i aria-hidden="true">${stateIcon}</i>${stateLabel}</span>
+        <span class="level-lesson-arrow" aria-hidden="true">←</span>
+      </span>
+    </button>`;
+  }).join("");
+  const nextCta=nextLesson?`<button type="button" class="level-next-cta" data-action="upper-level-course-open-lesson" data-lesson-no="${nextLesson.number}">
+      <span class="level-next-cta-icon" aria-hidden="true">←</span>
+      <span class="level-next-cta-copy"><strong>${nextLesson.path?(nextLesson.started?"متابعة الدرس التالي":"ابدأ الدرس التالي"):"عرض الدرس التالي"}</strong>
+      <small>${escapeHtml(`الدرس ${nextLesson.number} · ${nextLesson.title}`)}</small></span>
+      <span class="level-next-cta-spark" aria-hidden="true">✦</span>
+    </button>`:(statuses.some(item=>item.allowed)?`<div class="level-complete-note"><span aria-hidden="true">🏆</span><strong>أحسنت! أكملت جميع الدروس</strong></div>`:`<div class="level-complete-note"><span aria-hidden="true">🔒</span><strong>جميع الدروس مقفلة حالياً من الإدارة</strong></div>`);
+  // This is the same full-screen progress/list/next-lesson layout as the A1 and A2 Kurs overview.
+  app.innerHTML=`<div class="student-app level-home-app upper-level-kurs-app" dir="rtl">
+    <header class="level-screen-topbar">
+      <button type="button" class="level-screen-back" data-action="back" aria-label="رجوع للأقسام الأربعة"><span aria-hidden="true">←</span></button>
+      <div class="level-screen-title"><small>مسارك التعليمي · Kurs</small><strong>مستوى ${escapeHtml(level)}</strong></div>
+    </header>
+    <main class="level-home-main">
+      <section class="level-progress-card" aria-label="تقدمك في المستوى ${escapeHtml(level)}">
+        <div class="level-progress-top"><div class="level-progress-title">
+          <span class="level-progress-icon" aria-hidden="true">▥</span>
+          <span><strong>تقدمك في المستوى</strong><small>${completedCount} من ${UPPER_LEVEL_KURS_LESSON_COUNT} دروس مكتملة</small></span>
+        </div><span class="level-progress-percent">${progress}%</span></div>
+        <div class="level-progress-track" role="progressbar" aria-label="نسبة التقدم في المستوى ${escapeHtml(level)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}"><span style="width:${progress}%"></span></div>
+      </section>
+      <section class="level-lessons-section">
+        <div class="level-lessons-heading"><div>
+          <span class="level-section-kicker">خطتك التعليمية</span>
+          <h2>دروس المستوى <b>${UPPER_LEVEL_KURS_LESSON_COUNT}</b></h2>
+        </div><small>تابع من حيث توقفت</small></div>
+        <div class="level-lessons-list">${cards}</div>
+      </section>
+    </main>
+    <div class="level-next-cta-wrap">${nextCta}</div>
+  </div>`;
+}
+function renderUpperLevelCourseLesson(){
+  const level=upperLevelInfo();
+  const no=Math.min(UPPER_LEVEL_KURS_LESSON_COUNT,Math.max(1,Number(upperLevelSelectedLessonNo)||1));
+  const lesson=upperLevelCourseLesson(level,no);
+  if(lesson.path){
+    // Future registered lesson pages can reuse the same native fullscreen iframe integration.
+    document.documentElement.classList.add("challenge-fullscreen-open");
+    document.body.classList.add("challenge-fullscreen-open");
+    app.innerHTML=`<div class="challenge-fullscreen-shell lesson-section-fullscreen-shell">
+      <iframe id="upperLevelCourseFrame" title="${escapeHtml(`${level} · Lektion ${no}`)}" loading="eager" allow="autoplay; fullscreen"></iframe>
+    </div>`;
+    const frame=document.getElementById("upperLevelCourseFrame");
+    if(frame){trackCourseIframe(frame,level,no);loadManagedPageIntoFrame(frame,lesson.path);}
+    return;
+  }
+  const content=`<section class="upper-level-course-style upper-level-coming-lesson" dir="rtl">
+    <div class="lesson-detail-hero upper-level-shared-hero">
+      <div class="lesson-detail-hero-copy">
+        <span class="lesson-detail-hero-badge">Deutsch ${escapeHtml(level)} · Lektion ${no}</span>
+        <h1>${escapeHtml(lesson.title)}</h1><h2>الدرس ${no}</h2>
+        <small>مكان مخصّص لصفحة الكورس، بنفس تصميم دروس المستويات الأخرى.</small>
+      </div>
+      <div class="lesson-detail-hero-art" aria-hidden="true"><span class="lesson-detail-art-topic">${escapeHtml(lesson.icon)}</span></div>
+    </div>
+    <div class="upper-level-course-empty"><span aria-hidden="true">📚</span>
+      <h3>محتوى هذا الدرس ما زال ما تضافش</h3>
+      <p>صفحة Lektion ${no} من ${escapeHtml(level)} واجدة للتصميم. منين تزيد ملف HTML الحقيقي ديال الكورس غادي يفتح من هنا ويتسجل التقدم.</p>
+    </div>
+    <button type="button" class="upper-level-return" data-action="upper-level-course-back">رجوع لدروس ${escapeHtml(level)} <span aria-hidden="true">←</span></button>
+  </section>`;
+  app.innerHTML=pageShell(`Kurs ${level}`,`Lektion ${no}`,"دروس المستوى",content);
+}
+function renderUpperLevelSection(){
+  const level=upperLevelInfo();
+  const section=UPPER_LEVEL_SECTIONS.find(item=>item.id===upperLevelSelectedSection)||UPPER_LEVEL_SECTIONS[0];
+  const resources=UPPER_LEVEL_RESOURCE_LISTS[level]?.[section.id]||[];
+
+  if(section.id==="training"){
+    const skillCards=UPPER_LEVEL_TRAINING_SKILLS.map((skill,index)=>`
+      <button type="button" class="upper-level-training-skill-card lesson-detail-stage lesson-detail-stage-${["blue","green","amber","pink"][index]}"
+        data-action="upper-level-training-skill" data-skill="${skill.id}" aria-label="${escapeHtml(`${level} · ${skill.label} · ${skill.arabic}`)}">
+        <span class="lesson-detail-stage-icon" aria-hidden="true">${skill.icon}</span>
+        <span class="lesson-detail-stage-copy"><strong dir="ltr">${skill.label}</strong><small>${skill.arabic}</small><span>${skill.description}</span></span>
+        <span class="lesson-detail-stage-status">دخول <i aria-hidden="true">←</i></span>
+      </button>`).join("");
+    const content=`<section class="upper-level-course-style upper-level-training-menu" dir="rtl">
+      <div class="lesson-detail-hero upper-level-shared-hero">
+        <div class="lesson-detail-hero-copy">
+          <span class="lesson-detail-hero-badge">Deutsch ${level}</span>
+          <h1 dir="ltr">Training Prüfung</h1>
+          <h2>التدريب على الامتحان</h2>
+          <small>اختار المهارة اللي بغيتي تتدرّب عليها. نفس تقسيم المهارات فـ B1 وB2.</small>
+        </div>
+        <div class="lesson-detail-hero-art" aria-hidden="true"><span class="lesson-detail-art-topic">🎯</span></div>
+      </div>
+      <div class="lesson-detail-content-heading"><h2>أقسام التدريب</h2><span aria-hidden="true">▱</span></div>
+      <nav class="upper-level-training-skill-grid" aria-label="Training Prüfung ${level}">${skillCards}</nav>
+      <button type="button" class="upper-level-return" data-action="upper-level-return">رجوع للأقسام الأربعة <span aria-hidden="true">←</span></button>
+    </section>`;
+    app.innerHTML=pageShell(`مستوى ${level}`,"Training Prüfung","Lesen · Schreiben · Hören · Mündlich",content);
+    return;
+  }
+
+  const items=resources.map((item,i)=>`<article class="upper-level-resource">
+     <span class="upper-level-resource-index">${i+1}</span><div><strong>${escapeHtml(item.title||`المحتوى ${i+1}`)}</strong><small>${escapeHtml(item.description||"")}</small></div>
+     <span class="upper-level-resource-arrow" aria-hidden="true">↗</span>
+   </article>`).join("");
+
+  if(section.id==="kurs"){
+    renderUpperLevelKursLessonGrid(level);
+    return;
+  }
+
+  const content=`<section class="upper-level-detail" dir="rtl">
+    <header class="upper-level-detail-intro upper-level-tone-${section.tone}"><span class="upper-level-section-icon" aria-hidden="true">${section.icon}</span><div><small>${level}</small><h2 dir="ltr">${escapeHtml(section.label)}</h2><p>${escapeHtml(section.arabic)} · ${escapeHtml(section.description)}</p></div></header>
+    ${items?`<div class="upper-level-resource-list">${items}</div>`:
+    `<div class="upper-level-empty"><span aria-hidden="true">📂</span><h3>هاد القسم واجد</h3><p>مازال ما تضاف حتى درس أو اختبار ديال ${escapeHtml(level)} فـ ${escapeHtml(section.label)}. المحتوى غادي يظهر هنا منين يتضاف للمشروع.</p></div>`}
+    <button type="button" class="upper-level-return" data-action="upper-level-return">رجوع للأقسام الأربعة <span aria-hidden="true">←</span></button>
+  </section>`;
+  app.innerHTML=pageShell(`مستوى ${level}`,section.label,section.arabic,content);
+}
+
+function renderUpperLevelTrainingSkill(){
+  const level=upperLevelInfo();
+  const skill=UPPER_LEVEL_TRAINING_SKILLS.find(item=>item.id===upperLevelSelectedTrainingSkill)||UPPER_LEVEL_TRAINING_SKILLS[0];
+  // Future training HTML can be added to the level-specific resource list.
+  // Do not display invented scores, audio or exam papers before they exist.
+  if(skill.id==="muendlich")return renderUpperLevelMuendlichMenu(level,skill);
+  const resources=(UPPER_LEVEL_RESOURCE_LISTS[level]?.training||[]).filter(item=>item.skill===skill.id);
+  const items=resources.map((item,index)=>`<article class="upper-level-resource">
+    <span class="upper-level-resource-index">${index+1}</span>
+    <div><strong>${escapeHtml(item.title||skill.label)}</strong><small>${escapeHtml(item.description||"")}</small></div>
+    <span class="upper-level-resource-arrow" aria-hidden="true">↗</span>
+  </article>`).join("");
+  const content=`<section class="upper-level-course-style upper-level-training-detail" dir="rtl">
+    <div class="lesson-detail-hero upper-level-shared-hero">
+      <div class="lesson-detail-hero-copy">
+        <span class="lesson-detail-hero-badge">Training Prüfung · ${level}</span>
+        <h1 dir="ltr">${escapeHtml(skill.label)}</h1>
+        <h2>${escapeHtml(skill.arabic)}</h2>
+        <small>${escapeHtml(skill.description)}</small>
+      </div>
+      <div class="lesson-detail-hero-art" aria-hidden="true"><span class="lesson-detail-art-topic">${skill.icon}</span></div>
+    </div>
+    <div class="lesson-detail-content-heading"><h2>تمارين ${escapeHtml(skill.label)}</h2><span aria-hidden="true">▱</span></div>
+    ${items?`<div class="upper-level-resource-list">${items}</div>`:
+      `<div class="upper-level-course-empty">
+        <span aria-hidden="true">${skill.icon}</span>
+        <h3>قسم ${escapeHtml(skill.label)} واجد</h3>
+        <p>تمارين ${escapeHtml(level)} ديال ${escapeHtml(skill.label)} مازال ما تضافتش. ملي تضاف ملفات التدريب الحقيقية غادي تبان هنا.</p>
+      </div>`}
+    <button type="button" class="upper-level-return" data-action="upper-level-training-return">رجوع لأقسام Training Prüfung <span aria-hidden="true">←</span></button>
+  </section>`;
+  app.innerHTML=pageShell(`Training Prüfung · ${level}`,skill.label,skill.arabic,content);
+}
+
+function renderUpperLevelMuendlichMenu(level,skill){
+  const cards=UPPER_LEVEL_MUENDLICH_SECTIONS.map((section,index)=>`
+    <button type="button" class="upper-muendlich-card upper-muendlich-card-${section.tone} lesson-detail-stage lesson-detail-stage-${["blue","pink","green","amber"][index]}"
+      data-action="upper-level-muendlich-open" data-section="${section.id}" aria-label="${escapeHtml(level+' · '+section.label+' · '+section.arabic)}">
+      <span class="lesson-detail-stage-icon upper-muendlich-card-icon" aria-hidden="true">${section.icon}</span>
+      <span class="lesson-detail-stage-copy upper-muendlich-card-copy">
+        <strong dir="ltr">${escapeHtml(section.label)}</strong>
+        <small>${escapeHtml(section.arabic)}</small>
+        <span>${escapeHtml(section.description)}</span>
+      </span>
+      <span class="lesson-detail-stage-status">دخول <i aria-hidden="true">←</i></span>
+    </button>`).join("");
+  const content=`<section class="upper-level-course-style upper-muendlich-page" dir="rtl">
+    <div class="lesson-detail-hero upper-level-shared-hero">
+      <div class="lesson-detail-hero-copy">
+        <span class="lesson-detail-hero-badge">Training Prüfung · ${escapeHtml(level)}</span>
+        <h1 dir="ltr">Mündlich</h1><h2>${escapeHtml(skill.arabic)}</h2>
+        <small>${escapeHtml(skill.description)}</small>
+      </div>
+      <div class="lesson-detail-hero-art" aria-hidden="true"><span class="lesson-detail-art-topic">💬</span></div>
+    </div>
+    <div class="lesson-detail-content-heading"><h2>أقسام Mündlich الأربعة</h2><span aria-hidden="true">▱</span></div>
+    <nav class="upper-muendlich-grid" aria-label="أقسام Mündlich ${escapeHtml(level)}">${cards}</nav>
+    <button type="button" class="upper-level-return" data-action="upper-level-training-return">رجوع إلى Training Prüfung <span aria-hidden="true">←</span></button>
+  </section>`;
+  app.innerHTML=pageShell(`Training Prüfung · ${level}`,"Mündlich","نماذج الامتحانات · التكلم · الكتابة · الاستماع",content);
+}
+
+// B2 Sprechen uses the browser's top-level document (same tab, not a popup
+// or an iframe). This avoids permissions-policy denial of iframe microphone.
+function b2SpeakingDirectUrl(){
+  const url=new URL(managedPageAssetUrl("pages/B2/training/b2-sprechen-training.html"),window.location.href);
+  url.searchParams.set("b2-microphone","v49");
+  return url.href;
+}
+function openB2SpeakingInSameTab(){
+  const url=b2SpeakingDirectUrl();
+  try{
+    // If the entire learning platform was embedded by a third-party LMS,
+    // navigate the existing top-level tab with the user's click, not a popup.
+    if(window.top && window.top!==window.self){window.top.location.assign(url);return;}
+  }catch(error){console.warn("Top-level speaking navigation unavailable; using current tab",error);}
+  window.location.assign(url);
+}
+function renderUpperLevelMuendlichSubsection(){
+  const level=upperLevelInfo();
+  const section=UPPER_LEVEL_MUENDLICH_SECTIONS.find(item=>item.id===upperLevelSelectedMundlichSection) || UPPER_LEVEL_MUENDLICH_SECTIONS[0];
+  if(level==="B2" && section.id==="speaking"){
+    // Fallback for restored/legacy navigation: never embed Sprechen in an iframe.
+    const url=escapeHtml(b2SpeakingDirectUrl());
+    app.innerHTML=pageShell("B2 · Training Prüfung","Sprechen","التدريب الصوتي داخل نفس التبويب",`
+      <section class="upper-level-course-style" dir="rtl">
+        <div class="lesson-detail-hero upper-level-shared-hero"><div class="lesson-detail-hero-copy">
+          <span class="lesson-detail-hero-badge">B2 · Mündlich</span><h1>Sprechen</h1>
+          <h2>تدريب الكلام</h2><small>باش يخدم إذن الميكروفون مباشرة، التدريب كيتفتح بملء الشاشة فهاد التبويب.</small>
+        </div><div class="lesson-detail-hero-art" aria-hidden="true"><span class="lesson-detail-art-topic">🎙️</span></div></div>
+        <a class="upper-level-return" href="${url}" target="_top">ابدأ التدريب الصوتي داخل نفس التبويب ←</a>
+        <button type="button" class="upper-level-return" data-action="upper-level-muendlich-speaking-close">رجوع إلى Mündlich</button>
+      </section>`);
+    return;
+  }
+  const resources=(UPPER_LEVEL_RESOURCE_LISTS[level]?.training||[]).filter(item=>
+    item && item.skill==="muendlich" && (item.subsection===section.id || item.category===section.id));
+  const items=resources.map((item,index)=>item.path
+    ? `<button type="button" class="upper-level-resource upper-level-model-button" data-action="upper-level-muendlich-model-open" data-model-index="${index}" aria-label="${escapeHtml('فتح نموذج '+(item.title||section.label))}">
+        <span class="upper-level-resource-index">${index+1}</span>
+        <span class="upper-level-model-copy"><strong dir="ltr">${escapeHtml(item.title||section.label)}</strong><small>${escapeHtml(item.description||"")}</small></span>
+        <span class="upper-level-resource-arrow" aria-hidden="true">📄 ←</span>
+      </button>`
+    : `<article class="upper-level-resource"><span class="upper-level-resource-index">${index+1}</span><div><strong>${escapeHtml(item.title||section.label)}</strong><small>${escapeHtml(item.description||"")}</small></div></article>`
+  ).join("");
+  const content=`<section class="upper-level-course-style upper-muendlich-page upper-muendlich-subsection" dir="rtl">
+    <div class="lesson-detail-hero upper-level-shared-hero">
+      <div class="lesson-detail-hero-copy">
+        <span class="lesson-detail-hero-badge">${escapeHtml(level)} · Mündlich</span>
+        <h1 dir="ltr">${escapeHtml(section.label)}</h1>
+        <h2>${escapeHtml(section.arabic)}</h2>
+        <small>${escapeHtml(section.description)}</small>
+      </div>
+      <div class="lesson-detail-hero-art" aria-hidden="true"><span class="lesson-detail-art-topic">${section.icon}</span></div>
+    </div>
+    <div class="lesson-detail-content-heading"><h2>محتوى ${escapeHtml(section.label)}</h2><span aria-hidden="true">▱</span></div>
+    ${items?`<div class="upper-level-resource-list">${items}</div>`:`<div class="upper-level-course-empty">
+      <span aria-hidden="true">${section.icon}</span>
+      <h3>قسم ${escapeHtml(section.label)} واجد</h3>
+      <p>مازال ما تضَافش المحتوى الخاص بـ ${escapeHtml(section.arabic)} فالمستوى ${escapeHtml(level)}. منين يتضاف غادي يبان هنا.</p>
+    </div>`}
+    <button type="button" class="upper-level-return" data-action="upper-level-muendlich-return">رجوع إلى أقسام Mündlich <span aria-hidden="true">←</span></button>
+  </section>`;
+  app.innerHTML=pageShell(`Mündlich · ${level}`,section.label,section.arabic,content);
+}
+
+function renderUpperLevelMuendlichModel(){
+  const level=upperLevelInfo();
+  const resources=(UPPER_LEVEL_RESOURCE_LISTS[level]?.training||[]).filter(item=>
+    item && item.skill==="muendlich" && item.subsection==="models" && item.path);
+  const idx=Number(upperLevelSelectedMuendlichModel);
+  const selected=Number.isInteger(idx) && idx>=0 && idx<resources.length ? resources[idx] : null;
+  if(!selected){page="upper-level-muendlich-subsection";return renderUpperLevelMuendlichSubsection();}
+  document.documentElement.classList.add("challenge-fullscreen-open");
+  document.body.classList.add("challenge-fullscreen-open");
+  app.innerHTML=`<div class="challenge-fullscreen-shell lesson-section-fullscreen-shell upper-level-model-fullscreen" role="region" aria-label="${escapeHtml(selected.title)}">
+    <iframe id="upperMuendlichModelFrame" title="${escapeHtml('ÖSD B2 · '+selected.title)}" loading="eager" allow="autoplay; fullscreen"></iframe>
+    <button type="button" class="challenge-fullscreen-exit upper-level-model-exit" data-action="upper-level-muendlich-model-close" aria-label="الرجوع إلى نماذج الامتحانات">← رجوع إلى Prüfungsmodelle</button>
+  </div>`;
+  const frame=document.getElementById("upperMuendlichModelFrame");
+  if(frame)loadManagedPageIntoFrame(frame,selected.path);
 }
 
 const a2CourseLessons = [
@@ -1622,7 +2217,7 @@ async function loadStudentCourseProgressCloud(){
     const local=courseProgressRecords();
     let modified=false;
     Object.entries(remote).forEach(([id,record])=>{
-      if(!/^(A1|A2)_\d+$/.test(id) || !record || typeof record!=="object") return;
+      if(!/^(A1|A2|B1|B2)_\d+$/.test(id) || !record || typeof record!=="object") return;
       if(!local[id] || Date.parse(record.updatedAt||0)>Date.parse(local[id].updatedAt||0)){
         local[id]=record;modified=true;
       }
@@ -1698,7 +2293,7 @@ function addLessonInternalBackButton(doc,level,no){
     saveActiveCourseBeforeExit();
     document.documentElement.classList.remove("challenge-fullscreen-open");
     document.body.classList.remove("challenge-fullscreen-open");
-    page=level==="A2"?"a2-lesson-html":(lessonSectionReturnPage||"lesson-hub");
+    page=["B1","B2"].includes(level)?"upper-level-section":(level==="A2"?"a2-lesson-html":(lessonSectionReturnPage||"lesson-hub"));
     render();
   });
   if(header){
@@ -1729,7 +2324,7 @@ function addLessonInternalBackButton(doc,level,no){
     saveActiveCourseBeforeExit();
     document.documentElement.classList.remove("challenge-fullscreen-open");
     document.body.classList.remove("challenge-fullscreen-open");
-    page=level==="A2"?"a2-level-home":"level-home";
+    page=["B1","B2"].includes(level)?"upper-level-section":(level==="A2"?"a2-level-home":"level-home");
     render();
   },true);
   if(!header)exitButton.classList.add("deutsch-lesson-back-no-header");
@@ -2254,11 +2849,11 @@ window.addEventListener("message",event=>{
   if(event.data?.type!=="deutsch-course-exit-request") return;
   const active=activeCourseFrame;
   if(!active?.frame || event.source!==active.frame.contentWindow) return;
-  if(!["lesson-section-html","a2-course-content"].includes(page)) return;
+  if(!["lesson-section-html","a2-course-content","upper-level-course-lesson"].includes(page)) return;
   saveActiveCourseBeforeExit();
   document.documentElement.classList.remove("challenge-fullscreen-open");
   document.body.classList.remove("challenge-fullscreen-open");
-  page=active.level==="A2"?"a2-level-home":"level-home";
+  page=["B1","B2"].includes(active.level)?"upper-level-section":(active.level==="A2"?"a2-level-home":"level-home");
   render();
 });
 /* ===== end course resume ===== */
@@ -2275,20 +2870,21 @@ function renderA2LevelHome(){
     return result.completed===true || (total>0 && completed>=total);
   });
   const statuses = a2CourseLessons.map((lesson,index)=>({
-    lesson,index,completed:completedForLesson(lesson.number)||!!getCourseProgress("A2",lesson.number)?.completed,unlocked:true
+    lesson,index,completed:completedForLesson(lesson.number)||!!getCourseProgress("A2",lesson.number)?.completed,
+    unlocked:getStudentLessonAccess(index,"A2")
   }));
-  const currentIndex = statuses.find(item=>!item.completed)?.index ?? -1;
-  const nextLesson = statuses.find(item=>item.index===currentIndex) || statuses[0];
+  const currentIndex = statuses.find(item=>item.unlocked&&!item.completed)?.index ?? -1;
+  const nextLesson = statuses.find(item=>item.index===currentIndex) || statuses.find(item=>item.unlocked) || null;
   const completedCount = statuses.filter(item=>item.completed).length;
   const progress = a2CourseLessons.length ? Math.round(completedCount/a2CourseLessons.length*100) : 0;
 
   const lessonCards = statuses.map(item=>{
     const {lesson,index}=item;
-    const state = item.completed ? "completed" : index===currentIndex ? "current" : "available";
+    const state = !item.unlocked ? "locked" : item.completed ? "completed" : index===currentIndex ? "current" : "available";
     const saved=getCourseProgress("A2",lesson.number);
-    const stateLabel = state==="completed" ? "مكتمل" : saved?.startedAt ? `متابعة ${courseProgressPercent(saved)}%` : state==="current" ? "قيد التعلّم" : "متاح";
-    const stateIcon = state==="completed" ? "✓" : state==="current" ? "●" : "•";
-    return `<button type="button" class="level-lesson-card is-${state}" data-action="a2-lesson" data-lesson-no="${lesson.number}" aria-label="${escapeHtml(`الدرس ${lesson.number}: ${lesson.arabic} · ${stateLabel}`)}">
+    const stateLabel = state==="locked" ? "مقفل من الإدارة" : state==="completed" ? "مكتمل" : saved?.startedAt ? `متابعة ${courseProgressPercent(saved)}%` : state==="current" ? "قيد التعلّم" : "متاح";
+    const stateIcon = state==="locked" ? "×" : state==="completed" ? "✓" : state==="current" ? "●" : "•";
+    return `<button type="button" class="level-lesson-card is-${state}" data-action="a2-lesson" data-lesson-no="${lesson.number}" ${item.unlocked?"":"disabled"} aria-label="${escapeHtml(`الدرس ${lesson.number}: ${lesson.arabic} · ${stateLabel}`)}">
       <span class="level-lesson-art" aria-hidden="true">${lesson.icon}</span>
       <span class="level-lesson-copy">
         <span class="level-lesson-number">الدرس ${lesson.number}</span>
@@ -2308,7 +2904,7 @@ function renderA2LevelHome(){
         <span class="level-next-cta-copy"><strong>${currentIndex>=0 ? "ابدأ الدرس التالي" : "راجع الدروس"}</strong><small>Lektion ${nextLesson.lesson.number} · ${escapeHtml(nextLesson.lesson.title)}</small></span>
         <span class="level-next-cta-spark" aria-hidden="true">✦</span>
       </button>`
-    : `<div class="level-complete-note"><span aria-hidden="true">🏆</span><strong>أحسنت! أكملت جميع الدروس</strong></div>`;
+    : statuses.some(item=>item.unlocked)?`<div class="level-complete-note"><span aria-hidden="true">🏆</span><strong>أحسنت! أكملت جميع الدروس</strong></div>`:`<div class="level-complete-note"><span aria-hidden="true">🔒</span><strong>جميع الدروس مقفلة حالياً من الإدارة</strong></div>`;
 
   app.innerHTML = `<div class="student-app level-home-app" dir="rtl">
     <header class="level-screen-topbar">
@@ -3169,9 +3765,12 @@ async function competitionCallable(name,payload){
   let result={};
   try{result=JSON.parse(responseText||"{}");}catch(_error){}
   if(!response.ok||result.error){
-    const detail=result.error||result.message||`Supabase HTTP ${response.status}`;
-    const error=new Error(detail);
-    error.code=result.code||`http_${response.status}`;
+    const source=result.error||result.message;
+    const detail=typeof source==="string" ? source
+      : source && typeof source==="object" ? (source.message||source.error_description||JSON.stringify(source))
+      : `Supabase HTTP ${response.status}`;
+    const error=new Error(String(detail));
+    error.code=result.code||source?.code||`http_${response.status}`;
     error.status=response.status;
     throw error;
   }
@@ -3179,6 +3778,36 @@ async function competitionCallable(name,payload){
 }
 // Use the UID of the user actually authenticated with Firebase. The cached
 // currentUser profile may be out of sync when the auth session changes.
+function competitionCreationMessageText(error){
+  const msg=String(error?.message||"تعذر إنشاء الغرفة.");
+  const status=Number(error?.status||0);
+  if(status===401)return "خدمة المنافسة رفضت التحقق من الحساب (401). خاص مراجعة إعدادات Edge Function والتحقق من Firebase token. " + msg;
+  if(status===403)return "ليس عند الحساب صلاحية إنشاء الغرفة (403). " + msg;
+  if(status===404)return "خدمة competition غير موجودة على Supabase (404). خاص نشر Edge Function قبل إنشاء الغرف.";
+  if(status>=500)return "خطأ في سيرفر المنافسة ("+status+"). " + msg;
+  if(/failed to fetch|network|supabase|اتصال|internet|edge function/i.test(msg))return msg + " تأكد أن الموقع مفتوح عبر HTTPS، وأن خدمة competition منشورة على Supabase.";
+  return msg;
+}
+function competitionCreateFeedback(message,isError=false){
+  competitionCreateMessage=String(message||"");
+  competitionCreateMessageIsError=!!isError;
+  const box=document.getElementById("competitionCreationStatus");
+  if(box){
+    box.hidden=!competitionCreateMessage;
+    box.textContent=competitionCreateMessage;
+    box.style.color=isError?"#972c49":"#2052aa";
+    box.style.background=isError?"#fff1f4":"#eaf2ff";
+    box.style.borderColor=isError?"#f7b8c8":"#bccfff";
+  }
+}
+function competitionCreateBusyUI(busy){
+  const button=document.querySelector('[data-action="competition-create"]');
+  if(!button)return;
+  button.disabled=busy;
+  button.setAttribute("aria-busy",busy?"true":"false");
+  button.textContent=busy?"جاري الاتصال وإنشاء غرفة المنافسة…":"🏆 إنشاء غرفة المنافسة";
+}
+
 function competitionAuthenticatedUid(){
   return firebaseAuth?.currentUser?.uid || currentUser?.id || "";
 }
@@ -3290,7 +3919,8 @@ function renderCompetition(){
         ${competitionWholeExercises?"":`<div class="competition-count-picker">
           ${[5,10,15].map(count=>`<button type="button" class="${competitionQuestionCount===count?"active":""}" data-action="competition-count" data-count="${count}" ${count>availableQuestions?"disabled":""}>${count} أسئلة</button>`).join("")}
         </div>`}
-        <button type="button" class="competition-primary-btn" data-action="competition-create" ${competitionBusy||!competitionSelectedLessons.length||!availableQuestions||selectedTypesTotal<competitionSelectedLessons.length?"disabled":""}>${competitionBusy?"كنوجدّو المنافسة…":"🏆 إنشاء غرفة المنافسة"}</button>
+        <button type="button" class="competition-primary-btn" data-action="competition-create" aria-describedby="competitionCreationStatus" ${competitionBusy?"disabled":""}>${competitionBusy?"كنوجدّو المنافسة…":"🏆 إنشاء غرفة المنافسة"}</button>
+        <p id="competitionCreationStatus" role="status" aria-live="polite" ${competitionCreateMessage?"":"hidden"} style="margin:9px 0;padding:11px 12px;border:1px solid ${competitionCreateMessageIsError?"#f7b8c8":"#bccfff"};border-radius:12px;line-height:1.7;font-size:12px;font-weight:800;color:${competitionCreateMessageIsError?"#972c49":"#2052aa"};background:${competitionCreateMessageIsError?"#fff1f4":"#eaf2ff"};">${escapeHtml(competitionCreateMessage)}</p>
         <p class="competition-hint">غادي يتولد رمز خاص بالغرفة. صيفطو للتلميذ أو للمجموعة باش ينضمو.</p>
       </section>
 
@@ -3674,69 +4304,76 @@ function showCompetitionCreationError(error){
 
 async function createCompetition(){
   if(competitionBusy)return;
-  if(!firebaseReady||!firebaseAuth?.currentUser){showToast("خاصك تدخل بحساب التلميذ باش تنشئ منافسة حقيقية.");return;}
+  // A local file is a demo preview: it cannot create shared rooms.
+  if(location.protocol==="file:" || demoMode){
+    competitionCreateFeedback("هاد نسخة المعاينة المحلية. الغرف الحقيقية خاصها حساب تلميذ مسجّل وموقع عبر HTTPS، ماشي فتح index.html مباشرة من الملفات.",true);
+    return;
+  }
+  if(!firebaseReady||!firebaseAuth?.currentUser){
+    competitionCreateFeedback("سجّل الدخول بحساب تلميذ حقيقي باش تقدر تنشئ غرفة المنافسة.",true);
+    return;
+  }
   const selected=competitionSelectedLessons.filter(index=>(index===10?getStudentLessonAccess(6):getStudentLessonAccess(index)));
-  if(!selected.length){showToast("اختار درساً واحداً على الأقل.");return;}
+  if(!selected.length){competitionCreateFeedback("اختار درساً واحداً على الأقل باش تنشئ الغرفة.",true);return;}
   const countField=document.getElementById("competitionCustomCount");
   const available=competitionAvailableQuestionCount();
   const requestedCount=competitionWholeExercises ? available : Number(countField?.value??competitionQuestionCount);
   if(!Number.isInteger(requestedCount)||requestedCount<1||requestedCount>available){
-    showToast(`اختار عدد الأسئلة بين 1 و ${available}.`);return;
+    competitionCreateFeedback(`اختار عدد الأسئلة بين 1 و ${available}.`,true);return;
   }
   const testTypes=competitionSelectedTypePayload();
   if(selected.some(index=>!testTypes[String(index)]?.length)){
-    showToast("اختار نوع تمرين واحد على الأقل لكل درس.");return;
+    competitionCreateFeedback("اختار نوع تمرين واحد على الأقل لكل درس.",true);return;
   }
   competitionQuestionCount=requestedCount;
-  competitionBusy=true;renderCompetition();
+  competitionBusy=true;
+  // Do not re-render the whole page here. Re-rendering loses the user's scroll
+  // position and makes the creation button appear to do nothing.
+  competitionCreateBusyUI(true);
+  competitionCreateFeedback("جاري الاتصال بخدمة المنافسة وإنشاء الغرفة… خليك فهاد الصفحة حتى يظهر الرمز أو رسالة الخطأ.");
   try{
     const result=await competitionCallable("createCompetitionRoom",{
       mode:competitionMode,lessonIndices:selected,questionCount:competitionQuestionCount,testTypes,
       wholeExercises:competitionWholeExercises
     });
     const payload=result?.data||{};
-    const generatedCode=String(payload.code||"").trim().toUpperCase();
-    const generatedRoomId=String(payload.roomId||"").trim();
+    const serverRoom=payload.room&&typeof payload.room==="object"?payload.room:{};
+    const generatedCode=String(payload.code||serverRoom.code||"").trim().toUpperCase();
+    const generatedRoomId=String(payload.roomId||serverRoom.id||serverRoom.roomId||"").trim();
     if(!/^[A-Z0-9]{6}$/.test(generatedCode)||!generatedRoomId){
-      throw new Error("Supabase ما رجّعش رمز الغرفة. تأكد من نشر Edge Function competition.");
+      throw new Error("الخدمة ما رجعاتش رمز صالح للغرفة. تأكد من استجابة Edge Function competition.");
     }
-
-    // Display the server-generated code immediately. Do not wait for
-    // the Realtime Database listener before showing the room to its creator.
     competitionRoomCode=generatedCode;
     competitionRoomId=generatedRoomId;
+    competitionCreateMessage="";
+    competitionCreateMessageIsError=false;
     competitionExerciseSelections={};competitionExerciseDrafts={};competitionExerciseTileDrafts={};
     const creatorUid=firebaseAuth.currentUser.uid;
     const creatorName=currentUser?.name||currentStudentProfile?.name||firebaseAuth.currentUser.displayName||"متعلّم";
     competitionRoomData={
-      id:generatedRoomId,
-      code:generatedCode,
-      createdBy:creatorUid,
-      isCreator:true,
-      creatorName,
-      mode:competitionMode,
-      status:"waiting",
-      lessonIndices:selected.slice(),
+      id:generatedRoomId,code:generatedCode,createdBy:creatorUid,isCreator:true,creatorName,
+      mode:competitionMode,status:"waiting",lessonIndices:selected.slice(),
       lessonNames:selected.map(index=>competitionTestCatalog[index]?.name||lessons[index]?.name||`L${index+1}`),
-      questionCount:competitionQuestionCount,
-      questions:[],
-      members:{
-        [creatorUid]:{
-          uid:creatorUid,name:creatorName,score:0,answeredCount:0,
-          correctCount:0,finished:false,joinedAt:Date.now()
-        }
-      }
+      questionCount:competitionQuestionCount,questions:[],
+      members:{[creatorUid]:{uid:creatorUid,name:creatorName,score:0,answeredCount:0,
+        correctCount:0,finished:false,joinedAt:Date.now()}}
     };
     renderCompetitionRoom();
     listenCompetitionRoom(generatedRoomId);
-    // Room already has a large styled code card with Copy/Share actions.
-    // Avoid a second unstyled/blocking pop-up over the room.
     closeCompetitionCodeDialog();
     showToast("تخلقات الغرفة! نسخ الرمز وصيفطو للتلميذ الثاني.");
   }catch(error){
     console.error("Create competition failed:",error);
+    const details=competitionCreationMessageText(error);
+    competitionCreateFeedback("⚠️ "+details,true);
+    // Keep existing modal to allow copying the full technical error for support.
     showCompetitionCreationError(error);
-  }finally{competitionBusy=false;if(page==="competition")renderCompetition();}
+  }finally{
+    competitionBusy=false;
+    // Preserve selected lessons, types, entered count, and scroll position after
+    // a failed request; only the button state changes.
+    if(page==="competition"&&!competitionRoomId)competitionCreateBusyUI(false);
+  }
 }
 async function joinCompetition(event){
   if(event)event.preventDefault();
@@ -4020,6 +4657,42 @@ function broadcastSettingsTranslationLanguage(prefs=readSettingsLanguages()){
 }
 function settingsStrings(){return SETTINGS_DICTIONARY[readSettingsLanguages().ui];}
 function settingsLanguageOptions(selected){return Object.entries(SETTINGS_LANGUAGES).map(([code,label])=>`<option value="${code}" ${code===selected?"selected":""}>${label}</option>`).join("");}
+// V30: local per-student preferences for the reference-style settings dashboard.
+// Notifications and reminders here are *preferences*, not browser push subscriptions.
+const SETTINGS_DASHBOARD_COPY={
+ ar:{back:"رجوع",header:"الإعدادات",student:"حساب المتعلم",tagline:"خصص تجربتك وتحكم في التطبيق",account:"الحساب",accountDesc:"إدارة حسابك وبياناتك",language:"اللغة",languageDesc:"لغة صفحات الإعدادات",translation:"الترجمة",translationDesc:"ترجمة الكلمات والعبارات",notifications:"الإشعارات",notificationsDesc:"تفضيل التنبيهات والتحديثات",sound:"الصوت",soundDesc:"تشغيل نطق الكلمات والأمثلة",dark:"الوضع الليلي",darkDesc:"ألوان هادئة للقراءة ليلاً",reminders:"التذكيرات اليومية",remindersDesc:"تفضيل تذكيرات المذاكرة",privacy:"الخصوصية",privacyDesc:"معلومات البيانات والصلاحيات",help:"المساعدة",helpDesc:"إرشادات استعمال التطبيق",logout:"تسجيل الخروج",logoutDesc:"الخروج من حسابك الحالي",helpTitle:"كيف تستعمل الإعدادات؟",privacyTitle:"خصوصية معلوماتك",saved:"تُحفظ تفضيلات هذه الصفحة على جهازك",notes:"التنبيهات والتذكيرات التلقائية تحتاج تفعيل خدمة إشعارات منفصلة."},
+ fr:{back:"Retour",header:"Paramètres",student:"Compte élève",tagline:"Personnalisez votre expérience d'apprentissage",account:"Compte",accountDesc:"Gérer votre profil",language:"Langue",languageDesc:"Langue des paramètres",translation:"Traduction",translationDesc:"Langue des traductions",notifications:"Notifications",notificationsDesc:"Préférence de notifications",sound:"Audio",soundDesc:"Prononciation des mots et exemples",dark:"Mode sombre",darkDesc:"Affichage sombre pour le soir",reminders:"Rappels quotidiens",remindersDesc:"Préférence de rappels",privacy:"Confidentialité",privacyDesc:"Informations sur vos données",help:"Aide",helpDesc:"Guide d'utilisation",logout:"Déconnexion",logoutDesc:"Quitter votre compte",helpTitle:"Comment utiliser les paramètres ?",privacyTitle:"Confidentialité",saved:"Préférences enregistrées sur cet appareil",notes:"L'envoi automatique de notifications requiert un service de notifications."},
+ en:{back:"Back",header:"Settings",student:"Student account",tagline:"Personalize your learning experience",account:"Account",accountDesc:"Manage your profile",language:"Language",languageDesc:"Settings interface language",translation:"Translation",translationDesc:"Translation language",notifications:"Notifications",notificationsDesc:"Notification preference",sound:"Sound",soundDesc:"German word and example pronunciation",dark:"Dark mode",darkDesc:"Comfortable evening colors",reminders:"Daily reminders",remindersDesc:"Reminder preference",privacy:"Privacy",privacyDesc:"Your data and permissions",help:"Help",helpDesc:"How to use the app",logout:"Log out",logoutDesc:"Sign out of your account",helpTitle:"How to use Settings",privacyTitle:"Privacy information",saved:"Preferences are saved on this device",notes:"Automatic notifications and reminders require a separate notification service."}
+};
+function settingsDashboardStorageKey(){return `deutsch_a1_dashboard_preferences_v30_${currentUser?.id||"guest"}`;}
+function readSettingsDashboardPrefs(){
+ const defaults={notifications:false,sound:true,dark:false,reminders:false};
+ try{
+   const raw=JSON.parse(localStorage.getItem(settingsDashboardStorageKey())||"{}");
+   if(raw&&typeof raw==="object")for(const k of Object.keys(defaults))if(typeof raw[k]==="boolean")defaults[k]=raw[k];
+ }catch(e){}
+ return defaults;
+}
+function saveSettingsDashboardPrefs(prefs){
+ try{localStorage.setItem(settingsDashboardStorageKey(),JSON.stringify(prefs));}catch(e){}
+}
+function applySettingsDashboardTheme(){
+ document.documentElement.classList.toggle("deutsch-night-mode",!!currentUser&&readSettingsDashboardPrefs().dark);
+}
+function settingsDashboardSwitch(key,label,description,icon,tone,active){
+ return `<div class="settings-v30-setting">
+   <span class="settings-v30-setting-icon settings-v30-tone-${tone}" aria-hidden="true">${icon}</span>
+   <div class="settings-v30-setting-copy"><strong>${escapeHtml(label)}</strong><small>${escapeHtml(description)}</small></div>
+   <button type="button" role="switch" aria-checked="${active?"true":"false"}" aria-label="${escapeHtml(label)}" class="settings-v30-toggle ${active?"is-on":""}" data-action="settings-v30-toggle" data-pref="${key}"><span></span></button>
+ </div>`;
+}
+function settingsDashboardRow(label,description,icon,tone,panel,focus=""){
+ return `<button type="button" class="settings-v30-link" data-action="settings-open-panel" data-panel="${panel}" ${focus?`data-focus="${focus}"`:""}>
+  <span class="settings-v30-link-icon settings-v30-tone-${tone}" aria-hidden="true">${icon}</span>
+  <span class="settings-v30-link-copy"><strong>${escapeHtml(label)}</strong><small>${escapeHtml(description)}</small></span>
+  <span class="settings-v30-chevron" aria-hidden="true">‹</span>
+ </button>`;
+}
 function settingsSectionCards(t){
  const sections=[
   {id:"account",icon:"👤",tone:"blue",eyebrow:t.account,title:t.accountTitle,desc:t.accountDesc},
@@ -4029,25 +4702,44 @@ function settingsSectionCards(t){
  return sections.map(item=>`<button type="button" class="settings-ref-panel settings-section-open" data-action="settings-open-panel" data-panel="${item.id}" aria-label="${escapeHtml(item.open+': '+item.title)}"><span class="settings-ref-panel-icon settings-ref-panel-icon-${item.tone}" aria-hidden="true">${item.icon}</span><span class="settings-section-open-copy"><small class="settings-ref-panel-eyebrow">${escapeHtml(item.eyebrow)}</small><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.desc)}</small></span><span class="settings-section-chevron" aria-hidden="true">‹</span></button>`).join("");
 }
 function renderSettings(){
- const t=settingsStrings(),prefs=readSettingsLanguages();
- const lang=prefs.ui,dir=lang==="ar"?"rtl":"ltr";
- const studentName=escapeHtml(currentUser?.name||t.student);
- const accountEmail=escapeHtml(currentStudentProfile?.email||currentUser?.email||"—");
- const content=`<div class="settings-reference-v1 settings-reference-v10" lang="${lang}" dir="${dir}">
-  <section class="settings-ref-hero" aria-label="${escapeHtml(t.studentProfile)}">
-   <div class="settings-ref-hero-shine" aria-hidden="true"></div>
-   <div class="settings-ref-hero-top"><span class="settings-ref-kicker"><span class="settings-ref-kicker-dot"></span> ${escapeHtml(t.studentProfile)}</span><span class="settings-ref-hero-sparkle" aria-hidden="true">✦</span></div>
-   <div class="settings-ref-hero-main"><span class="settings-ref-avatar" aria-hidden="true">${escapeHtml((currentUser?.name||"S").slice(0,1).toUpperCase())}</span><div class="settings-ref-hero-copy"><span class="settings-ref-welcome">${escapeHtml(t.welcome)} 👋</span><h2>${studentName}</h2><p dir="auto">${accountEmail}</p></div></div>
-   <div class="settings-ref-hero-bottom"><span class="settings-ref-level-chip">✦ ${escapeHtml(t.currentLevel)} · A1</span><span class="settings-ref-hero-caption">${escapeHtml(t.learnComfort)}</span></div>
-  </section>
-  <div class="settings-ref-small-cards"><article class="settings-ref-small-card settings-ref-small-card-blue"><span class="settings-ref-small-icon">🎓</span><div><small>${escapeHtml(t.level)}</small><strong>A1</strong></div></article>
-  <article class="settings-ref-small-card settings-ref-small-card-mint"><span class="settings-ref-small-icon">🌐</span><div><small>${escapeHtml(t.uiLanguage)}</small><strong>${escapeHtml(SETTINGS_LANGUAGES[lang])}</strong></div></article>
-  <article class="settings-ref-small-card settings-ref-small-card-rose"><span class="settings-ref-small-icon">👤</span><div><small>${escapeHtml(t.accountType)}</small><strong>${escapeHtml(t.student)}</strong></div></article></div>
-  <p class="settings-section-intro">${escapeHtml(t.settingsDesc)}</p>
-  <nav class="settings-section-list" aria-label="${escapeHtml(t.settings)}">${settingsSectionCards(t)}</nav>
-  <div class="settings-ref-signout"><button type="button" class="settings-logout-btn" data-action="logout"><span aria-hidden="true">↪</span>${escapeHtml(t.logout)}</button></div>
- </div>`;
- app.innerHTML=pageShell(t.settings,t.subtitle,t.settingsDesc,content);
+ const prefs=readSettingsLanguages(),lang=prefs.ui,dir=lang==="ar"?"rtl":"ltr";
+ const t=SETTINGS_DASHBOARD_COPY[lang]||SETTINGS_DASHBOARD_COPY.ar;
+ const toggles=readSettingsDashboardPrefs();
+ const userName=escapeHtml(currentStudentProfile?.name||currentUser?.name||"Sara");
+ const initials=escapeHtml(String(currentUser?.name||"S").trim().charAt(0).toUpperCase()||"S");
+ const content=`<main class="settings-v30-screen" lang="${lang}" dir="${dir}" role="main">
+   <div class="settings-v30-layout">
+     <header class="settings-v30-top">
+       <div class="settings-v30-person"><span class="settings-v30-person-avatar">${initials}</span><div><strong>${userName}</strong><small>${escapeHtml(t.student)} <i aria-hidden="true"></i></small></div></div>
+       <div class="settings-v30-top-actions"><button type="button" class="settings-v30-icon-button" data-action="student-notifications" aria-label="${escapeHtml(t.notifications)}">♧</button><button type="button" class="settings-v30-back" data-action="back" aria-label="${escapeHtml(t.back)}">${lang==="ar"?"→":"←"} ${escapeHtml(t.back)}</button></div>
+     </header>
+     <section class="settings-v30-hero" aria-label="${escapeHtml(t.header)}">
+       <span class="settings-v30-hero-mark" aria-hidden="true">⚙</span>
+       <div class="settings-v30-hero-copy"><h1>${escapeHtml(t.header)}</h1><p>${escapeHtml(t.tagline)}</p></div>
+       <span class="settings-v30-hero-books" aria-hidden="true">📚</span>
+     </section>
+     <nav class="settings-v30-links" aria-label="${escapeHtml(t.header)}">
+       ${settingsDashboardRow(t.account,t.accountDesc,"👤","violet","account")}
+       <div class="settings-v30-split">
+         ${settingsDashboardRow(t.language,t.languageDesc,"🌐","blue","learning","settingsUiLanguage")}
+         ${settingsDashboardRow(t.translation,t.translationDesc,"🈯","mint","learning","settingsTranslationLanguage")}
+       </div>
+     </nav>
+     <section class="settings-v30-toggles" aria-label="${escapeHtml(t.header)}">
+       ${settingsDashboardSwitch("notifications",t.notifications,t.notificationsDesc,"🔔","pink",toggles.notifications)}
+       ${settingsDashboardSwitch("sound",t.sound,t.soundDesc,"🔊","orange",toggles.sound)}
+       ${settingsDashboardSwitch("dark",t.dark,t.darkDesc,"☾","indigo",toggles.dark)}
+       ${settingsDashboardSwitch("reminders",t.reminders,t.remindersDesc,"▦","amber",toggles.reminders)}
+     </section>
+     <nav class="settings-v30-links" aria-label="${escapeHtml(t.header)}">
+       ${settingsDashboardRow(t.privacy,t.privacyDesc,"🛡️","mint","privacy")}
+       ${settingsDashboardRow(t.help,t.helpDesc,"?","violet","help")}
+     </nav>
+     <button type="button" class="settings-v30-signout" data-action="logout"><span class="settings-v30-link-icon settings-v30-tone-pink" aria-hidden="true">↪</span><span><strong>${escapeHtml(t.logout)}</strong><small>${escapeHtml(t.logoutDesc)}</small></span></button>
+     <p class="settings-v30-footnote">${escapeHtml(t.saved)}. ${escapeHtml(t.notes)}</p>
+   </div>
+ </main>`;
+ app.innerHTML=content;
 }
 function renderSettingsDetail(){
  const prefs=readSettingsLanguages(),t=SETTINGS_DICTIONARY[prefs.ui];
@@ -4056,12 +4748,14 @@ function renderSettingsDetail(){
  const displayPrefs=readUiDisplayPreferences();
  const textPercent=Math.round(displayPrefs.textScale*100),iconPercent=Math.round(displayPrefs.iconScale*100);
  const section=settingsActivePanel;
- const meta={account:{name:t.accountTitle,eyebrow:t.account,icon:"👤",tone:"blue"},learning:{name:t.learnTitle,eyebrow:t.preferences,icon:"📖",tone:"purple"},display:{name:t.displayTitle,eyebrow:t.display,icon:"⚙",tone:"orange"}}[section]||{name:t.accountTitle,eyebrow:t.account,icon:"👤",tone:"blue"};
+ const meta={account:{name:t.accountTitle,eyebrow:t.account,icon:"👤",tone:"blue"},learning:{name:t.learnTitle,eyebrow:t.preferences,icon:"🌐",tone:"purple"},display:{name:t.displayTitle,eyebrow:t.display,icon:"⚙",tone:"orange"},privacy:{name:SETTINGS_DASHBOARD_COPY[prefs.ui].privacyTitle,eyebrow:SETTINGS_DASHBOARD_COPY[prefs.ui].privacy,icon:"🛡️",tone:"blue"},help:{name:SETTINGS_DASHBOARD_COPY[prefs.ui].helpTitle,eyebrow:SETTINGS_DASHBOARD_COPY[prefs.ui].help,icon:"❔",tone:"purple"}}[section]||{name:t.accountTitle,eyebrow:t.account,icon:"👤",tone:"blue"};
  let body="";
  if(section==="account")body=`<section class="settings-detail-card"><div class="settings-detail-user"><span class="settings-ref-avatar">${escapeHtml((currentUser?.name||"S").slice(0,1).toUpperCase())}</span><div><strong>${escapeHtml(currentUser?.name||t.student)}</strong><small dir="auto">${escapeHtml(profile.email||currentUser?.email||"—")}</small></div></div>
   <div class="settings-ref-list settings-list"><div class="settings-ref-list-row"><span>${escapeHtml(t.name)}</span><strong>${escapeHtml(profile.name||currentUser?.name||"—")}</strong></div><div class="settings-ref-list-row"><span>${escapeHtml(t.email)}</span><strong dir="auto">${escapeHtml(profile.email||currentUser?.email||"—")}</strong></div><div class="settings-ref-list-row"><span>${escapeHtml(t.role)}</span><strong>${escapeHtml(t.student)}</strong></div><div class="settings-ref-list-row"><span>${escapeHtml(t.availableLevel)}</span><strong>A1 · ${escapeHtml(t.lessons)}</strong></div></div></section>`;
  if(section==="learning")body=`<section class="settings-detail-card"><div class="settings-detail-field"><span class="settings-detail-field-icon">🌐</span><label for="settingsUiLanguage">${escapeHtml(t.uiLabel)}</label><select id="settingsUiLanguage" class="settings-language-select" aria-label="${escapeHtml(t.uiLabel)}">${settingsLanguageOptions(prefs.ui)}</select><p>${escapeHtml(t.uiHelp)}</p></div><div class="settings-detail-field"><span class="settings-detail-field-icon">🗣️</span><label for="settingsTranslationLanguage">${escapeHtml(t.translationLabel)}</label><select id="settingsTranslationLanguage" class="settings-language-select" aria-label="${escapeHtml(t.translationLabel)}">${settingsLanguageOptions(prefs.translation)}</select><p>${escapeHtml(t.translationHelp)}</p><div class="settings-translation-preview"><span lang="de">Guten Morgen!</span><span aria-hidden="true">→</span><strong lang="${prefs.translation}">${escapeHtml({ar:"صباح الخير!",fr:"Bonjour !",en:"Good morning!"}[prefs.translation])}</strong></div></div></section>`;
  if(section==="display")body=`<section class="settings-detail-card ui-display-settings"><p class="ui-display-intro">${escapeHtml(t.displayHelp)}</p><div class="ui-scale-control"><div class="ui-scale-heading"><label for="uiTextScale">${escapeHtml(t.textSize)}</label><output id="uiTextScaleValue" for="uiTextScale">${textPercent}%</output></div><input class="ui-scale-slider" id="uiTextScale" type="range" min="90" max="130" step="1" value="${textPercent}"><div class="ui-scale-hints"><span>${escapeHtml(t.smaller)}</span><span>${escapeHtml(t.larger)}</span></div></div><div class="ui-scale-control"><div class="ui-scale-heading"><label for="uiIconScale">${escapeHtml(t.iconSize)}</label><output id="uiIconScaleValue" for="uiIconScale">${iconPercent}%</output></div><input class="ui-scale-slider" id="uiIconScale" type="range" min="90" max="140" step="1" value="${iconPercent}"><div class="ui-scale-hints"><span>${escapeHtml(t.smaller)}</span><span>${escapeHtml(t.larger)}</span></div></div><button type="button" class="ui-display-reset-btn" data-action="ui-reset-display">↺ ${escapeHtml(t.reset)}</button></section>`;
+ if(section==="privacy")body=`<section class="settings-detail-card settings-v30-information"><h2>${escapeHtml(meta.name)}</h2><p>${prefs.ui==="ar"?"تُحفظ تفضيلات العرض والصوت في هذا المتصفح لحسابك الحالي. قد تُحفظ نتائج الدروس والتقدم على خادم المنصة عند اتصال التطبيق بحسابك. لا تُعرض هذه البيانات في صفحة الإعدادات لأشخاص آخرين.":prefs.ui==="fr"?"Les préférences d'affichage et de son sont enregistrées sur cet appareil. Les résultats de progression peuvent être stockés par votre compte en ligne.":"Display and audio preferences are saved in this browser. Your lesson progress may be stored with your online account."}</p><p>${prefs.ui==="ar"?"للتفاصيل حول تخزين بيانات التعلّم أو طلب حذفها، تواصل مع إدارة المنصة. تسجيل الخروج لا يحذف بياناتك تلقائياً.":prefs.ui==="fr"?"Pour les détails ou la suppression des données, contactez l'administration. Se déconnecter ne supprime pas vos résultats.":"For data details or deletion, contact the platform administrator. Signing out does not delete your results."}</p></section>`;
+ if(section==="help")body=`<section class="settings-detail-card settings-v30-information"><h2>${escapeHtml(meta.name)}</h2><p>${prefs.ui==="ar"?"لتغيير اللغة والترجمة، ارجع للإعدادات واختر القسم المناسب. لتغيير حجم الخط والأيقونات يمكنك استعمال خيارات سهولة القراءة. زر الصوت يتحكم في النطق الآلي المدعوم داخل التطبيق.":prefs.ui==="fr"?"Modifiez les langues depuis Paramètres. Les tailles de texte et d'icônes restent réglables. Le bouton audio contrôle la prononciation intégrée.":"Change languages from Settings. Text and icon scaling remain available. The sound switch controls supported spoken pronunciation."}</p><button type="button" class="settings-v30-help-action" data-action="settings-open-panel" data-panel="display">${escapeHtml(t.displayTitle)}</button><p>${escapeHtml(SETTINGS_DASHBOARD_COPY[prefs.ui].notes)}</p></section>`;
  app.innerHTML=`<main class="settings-detail-screen" lang="${prefs.ui}" dir="${dir}" role="main"><div class="settings-detail-layout"><header class="settings-detail-topbar"><button type="button" class="settings-detail-back" data-action="settings-back" aria-label="${escapeHtml(t.back)}"><span aria-hidden="true">${rtl?'→':'←'}</span>${escapeHtml(t.back)}</button><span class="settings-detail-topbar-label">${escapeHtml(t.settings)}</span></header><div class="settings-detail-hero"><div class="settings-ref-panel-icon settings-ref-panel-icon-${meta.tone}" aria-hidden="true">${meta.icon}</div><span>${escapeHtml(meta.eyebrow)}</span><h1>${escapeHtml(meta.name)}</h1><p>${escapeHtml(t.fullscreenHint)}</p></div>${body}<p class="settings-detail-saved">✓ ${escapeHtml(t.saved)}</p></div></main>`;
 }
 
@@ -4871,6 +5565,510 @@ function adminGroupAnalyticsCard(groupId,groupName,groupUsers,filters=null){
   </article>`;
 }
 
+function adminProgressDashboardCourseRecords(userId){
+  const records=cloudCourseProgress && cloudCourseProgress[userId];
+  return records && typeof records==="object" && !Array.isArray(records) ? records : {};
+}
+function adminProgressDashboardResultLevel(result){
+  const direct=String(result && (result.level||result.courseLevel||result.learningLevel)||"").toUpperCase();
+  if(direct.includes("A2"))return "A2";
+  if(direct.includes("A1"))return "A1";
+  const raw=`${String(result && result.moduleId||"")} ${String(result && result.title||"")}`.toLowerCase();
+  if(/(^|[^a-z0-9])a2([^a-z0-9]|$)|a2[-_]/.test(raw))return "A2";
+  if(/(^|[^a-z0-9])a1([^a-z0-9]|$)|a1[-_]/.test(raw))return "A1";
+  return "";
+}
+
+function progressLessonCatalog(level){
+  const normalized=String(level||"A1").toUpperCase();
+  if(normalized==="A2"){
+    return (a2CourseLessons||[]).map(item=>({
+      number:Number(item.number),title:item.title||`Lektion ${item.number}`,
+      arabic:item.arabic||"",icon:item.icon||"📘"
+    }));
+  }
+  return (lessons||[]).map((item,index)=>({
+    number:index+1,title:item.name||`Lektion ${index+1}`,
+    arabic:item.arabic||"",icon:"📘"
+  }));
+}
+function progressLessonStatusKey(level,no){return `${String(level||"A1").toUpperCase()}_${Number(no)}`;}
+function buildProgressLessonStatusRecords(courseRecords={},results=[],fallbackLevels=[]){
+  const records=courseRecords&&typeof courseRecords==="object"?courseRecords:{};
+  const resultList=Array.isArray(results)?results:[];
+  const levels=new Set((fallbackLevels||[]).map(value=>String(value||"").toUpperCase()).filter(value=>["A1","A2"].includes(value)));
+  Object.keys(records).forEach(key=>{
+    const match=/^(A1|A2)_(\d+)$/i.exec(key);
+    if(match)levels.add(match[1].toUpperCase());
+  });
+  resultList.forEach(result=>{
+    const level=adminProgressDashboardResultLevel(result);
+    if(level)levels.add(level);
+  });
+  if(!levels.size)levels.add("A1");
+  const states=[];
+  [...levels].sort().forEach(level=>{
+    progressLessonCatalog(level).forEach(lesson=>{
+      const no=lesson.number;
+      const record=records[progressLessonStatusKey(level,no)]||{};
+      const progress=Math.max(0,Math.min(100,Number(courseProgressPercent(record))||0));
+      const lessonResults=resultList.filter(result=>
+        (adminProgressDashboardResultLevel(result)||"A1")===level &&
+        adminResultLessonIndex(result)===no-1
+      );
+      const doneFromResults=lessonResults.some(result=>
+        Number(result.totalExercises)>0 &&
+        Number(result.completedExercises)>=Number(result.totalExercises)
+      );
+      const hasResultActivity=lessonResults.some(result=>
+        Number(result.totalExercises)>0 ||
+        adminResultPercent(result)!==null ||
+        (result.learnedWords&&Object.keys(result.learnedWords).length>0)
+      );
+      const completed=record.completed===true||progress>=100||doneFromResults;
+      const inProgress=!completed&&(!!record.startedAt||progress>0||hasResultActivity);
+      const doneExercises=lessonResults.reduce((sum,result)=>sum+(Number(result.completedExercises)||0),0);
+      const totalExercises=lessonResults.reduce((sum,result)=>sum+(Number(result.totalExercises)||0),0);
+      const resultProgress=totalExercises>0?Math.round(doneExercises/totalExercises*100):0;
+      const effectiveProgress=completed?100:(progress>0?progress:resultProgress);
+      states.push({
+        key:progressLessonStatusKey(level,no),level,no,title:lesson.title,arabic:lesson.arabic,icon:lesson.icon,
+        completed,inProgress,notStarted:!completed&&!inProgress,
+        progress:Math.max(0,Math.min(100,effectiveProgress)),
+        startedAt:record.startedAt||"",
+        lastTabLabel:record.lastTabLabel||"",
+        completedExercises:doneExercises,totalExercises
+      });
+    });
+  });
+  return states;
+}
+function progressLessonStatusKeyForState(state){
+  return state.completed?"completed":state.inProgress?"inProgress":"notStarted";
+}
+function progressLessonStatusLabel(state){
+  return state.completed?"درس متقن":state.inProgress?"قيد التعلّم":"لم يبدأ بعد";
+}
+function progressLessonStatusCounts(states){
+  const list=states||[];
+  return {
+    all:list.length,
+    completed:list.filter(item=>item.completed).length,
+    inProgress:list.filter(item=>item.inProgress).length,
+    notStarted:list.filter(item=>item.notStarted).length
+  };
+}
+function lessonStatusFilterTabsMarkup(active,actionName){
+  const tabs=[
+    ["all","جميع الدروس","all"],
+    ["completed","دروس متقنة","mastered"],
+    ["inProgress","قيد التعلّم","in-progress"],
+    ["notStarted","لم تبدأ","not-started"]
+  ];
+  return `<nav class="lesson-status-filter-tabs" aria-label="تصفية حالة الدروس">${tabs.map(([value,label,tone])=>
+    `<button type="button" class="lesson-status-filter-tab ${tone} ${active===value?"active":""}" data-action="${actionName}" data-status="${value}" aria-pressed="${active===value?"true":"false"}">${label}</button>`
+  ).join("")}</nav>`;
+}
+function lessonStatusDetailContentMarkup(states,statusFilter="all",groupMode=false){
+  const allStates=Array.isArray(states)?states:[];
+  const counts=groupMode
+    ? allStates.reduce((sum,item)=>{
+        sum.completed+=Number(item.completedCount)||0;
+        sum.inProgress+=Number(item.inProgressCount)||0;
+        sum.notStarted+=Number(item.notStartedCount)||0;
+        sum.all+=Number(item.studentCount)||0;
+        return sum;
+      },{all:0,completed:0,inProgress:0,notStarted:0})
+    : progressLessonStatusCounts(allStates);
+  const filtered=allStates.filter(item=>statusFilter==="all"||(
+    groupMode
+      ? (Number(item[statusFilter==="completed"?"completedCount":statusFilter==="inProgress"?"inProgressCount":"notStartedCount"])||0)>0
+      : !!item[statusFilter]
+  ));
+  const summary=`
+    <div class="lesson-status-summary-grid">
+      <article class="lesson-status-summary-card mastered"><span>✓</span><strong>${counts.completed}</strong><small>${groupMode?"حالات إتقان":"دروس متقنة"}</small></article>
+      <article class="lesson-status-summary-card in-progress"><span>◷</span><strong>${counts.inProgress}</strong><small>${groupMode?"حالات تعلّم":"دروس قيد التعلّم"}</small></article>
+      <article class="lesson-status-summary-card not-started"><span>○</span><strong>${counts.notStarted}</strong><small>${groupMode?"حالات لم تبدأ":"دروس لم تبدأ"}</small></article>
+    </div>`;
+  const cards=filtered.map(item=>{
+    const lessonLabel=`${item.level} · L${item.no}`;
+    if(groupMode){
+      const students=(item.students||[]).filter(student=>statusFilter==="all"||student.status===statusFilter);
+      const progress=item.studentCount?Math.round((item.completedCount/item.studentCount)*100):0;
+      const studentRows=students.length?students.map(student=>`
+        <div class="lesson-status-student-row">
+          <div class="lesson-status-student-avatar">${escapeHtml(String(student.name||"ط").trim().slice(0,1)||"ط")}</div>
+          <div class="lesson-status-student-copy"><strong>${escapeHtml(student.name||"التلميذ")}</strong><small>${student.status==="completed"?"درس متقن":student.status==="inProgress"?"قيد التعلّم":"لم يبدأ بعد"} · ${Number(student.progress)||0}%</small></div>
+          <button type="button" class="lesson-status-student-open" data-action="admin-results-select-student" data-id="${escapeHtml(student.userId||"")}">عرض <span>←</span></button>
+        </div>`).join(""):`<p class="lesson-status-empty">ما كاين حتى تلميذ فهاد الحالة لهذا الدرس.</p>`;
+      return `<article class="lesson-status-lesson-card group">
+        <header class="lesson-status-lesson-head"><span class="lesson-status-lesson-icon">${escapeHtml(item.icon||"📘")}</span><div><small>${lessonLabel}</small><h3>${escapeHtml(item.title||`الدرس ${item.no}`)}</h3><p>${escapeHtml(item.arabic||"")}</p></div><strong class="lesson-status-group-total">${item.studentCount} تلميذ</strong></header>
+        <div class="lesson-status-group-counts">
+          <span class="mastered"><i></i>${item.completedCount} متقن</span>
+          <span class="in-progress"><i></i>${item.inProgressCount} قيد التعلّم</span>
+          <span class="not-started"><i></i>${item.notStartedCount} لم يبدأ</span>
+        </div>
+        <div class="lesson-status-progress-track"><i style="width:${progress}%"></i></div>
+        <div class="lesson-status-student-list">${studentRows}</div>
+      </article>`;
+    }
+    const status=progressLessonStatusKeyForState(item);
+    const tone=status==="completed"?"mastered":status==="inProgress"?"in-progress":"not-started";
+    const detail=item.totalExercises>0?`${item.completedExercises||0} من ${item.totalExercises} تمريناً مكتملًا`:item.lastTabLabel?`آخر مرحلة: ${item.lastTabLabel}`:"لا توجد أنشطة مسجلة بعد";
+    return `<article class="lesson-status-lesson-card">
+      <header class="lesson-status-lesson-head"><span class="lesson-status-lesson-icon">${escapeHtml(item.icon||"📘")}</span><div><small>${lessonLabel}</small><h3>${escapeHtml(item.title||`الدرس ${item.no}`)}</h3><p>${escapeHtml(item.arabic||"")}</p></div><span class="lesson-status-pill ${tone}">${progressLessonStatusLabel(item)}</span></header>
+      <div class="lesson-status-progress-track"><i class="${tone}" style="width:${Number(item.progress)||0}%"></i></div>
+      <footer class="lesson-status-lesson-foot"><span>${escapeHtml(detail)}</span><strong>${Number(item.progress)||0}%</strong></footer>
+    </article>`;
+  }).join("");
+  return `<div class="lesson-status-detail-content">
+    ${summary}
+    ${lessonStatusFilterTabsMarkup(statusFilter,groupMode?"admin-progress-lesson-status-filter":"student-results-lesson-status-filter")}
+    <div class="lesson-status-lesson-grid">${cards||`<div class="lesson-status-empty-state"><span>📚</span><strong>لا توجد دروس في هذه الحالة</strong><small>جرّب اختيار حالة أخرى.</small></div>`}</div>
+  </div>`;
+}
+function adminProgressLessonStatusGroupStates(metricsList){
+  const map=new Map();
+  (metricsList||[]).forEach(metrics=>{
+    const user=metrics.user||{};
+    (metrics.lessonStates||[]).forEach(state=>{
+      if(!map.has(state.key)){
+        map.set(state.key,{
+          key:state.key,level:state.level,no:state.no,title:state.title,arabic:state.arabic,icon:state.icon,
+          students:[],completedCount:0,inProgressCount:0,notStartedCount:0,studentCount:0
+        });
+      }
+      const item=map.get(state.key);
+      const status=progressLessonStatusKeyForState(state);
+      item.students.push({
+        userId:user.id||"",name:user.name||user.email||"التلميذ",
+        status,progress:Number(state.progress)||0
+      });
+      item[status==="completed"?"completedCount":status==="inProgress"?"inProgressCount":"notStartedCount"]++;
+      item.studentCount++;
+    });
+  });
+  return [...map.values()].sort((a,b)=>a.level.localeCompare(b.level)||a.no-b.no);
+}
+function adminProgressLessonStatusOverlayMarkup(states,statusFilter,title,groupMode=false){
+  return `<section class="student-results-tool-overlay lesson-status-fullscreen-overlay" role="dialog" aria-modal="true" aria-label="حالة الدروس">
+    <header class="student-results-tool-header">
+      <button type="button" class="student-results-tool-back" data-action="admin-progress-lesson-status-back"><span aria-hidden="true">←</span> رجوع للإحصائيات</button>
+      <div class="student-results-tool-heading"><small>${groupMode?"تقدم المجموعة":"تقدم الطالب"}</small><h1>حالة الدروس</h1><p>${escapeHtml(title||"")}</p></div>
+    </header>
+    <main class="student-results-tool-body lesson-status-fullscreen-body">
+      <div class="student-results-tool-content">${lessonStatusDetailContentMarkup(states,statusFilter,groupMode)}</div>
+    </main>
+  </section>`;
+}
+
+function adminProgressDashboardMetrics(user){
+  const analytics=adminStudentAnalytics(user,{lesson:"all",type:"all"});
+  const results=analytics.results||[];
+  const courseRecords=adminProgressDashboardCourseRecords(user.id);
+  const levels=new Set();
+  Object.keys(courseRecords).forEach(key=>{
+    const match=/^(A1|A2)_\d+$/i.exec(key);
+    if(match)levels.add(match[1].toUpperCase());
+  });
+  results.forEach(result=>{
+    const level=adminProgressDashboardResultLevel(result);
+    if(level)levels.add(level);
+  });
+  if(!levels.size)levels.add("A1");
+  const levelList=[...levels].sort((a,b)=>a.localeCompare(b));
+  const lessonStates=buildProgressLessonStatusRecords(courseRecords,results,levelList);
+  const completedLessons=lessonStates.filter(item=>item.completed).length;
+  const inProgressLessons=lessonStates.filter(item=>item.inProgress).length;
+  const notStartedLessons=lessonStates.filter(item=>item.notStarted).length;
+  const startedLessons=completedLessons+inProgressLessons;
+  const totalLessons=lessonStates.length;
+  const lessonProgressPercent=totalLessons?Math.round(startedLessons/totalLessons*100):0;
+  const hasCourseProgress=Object.keys(courseRecords).some(key=>/^(A1|A2)_\d+$/i.test(key));
+  const courseAverageProgress=totalLessons?Math.round(lessonStates.reduce((sum,item)=>sum+item.progress,0)/totalLessons):0;
+  const completedExercises=(analytics.byLesson||[]).reduce((sum,item)=>sum+(Number(item.completedExercises)||0),0);
+  const totalExercises=(analytics.byLesson||[]).reduce((sum,item)=>sum+(Number(item.totalExercises)||0),0);
+  const exerciseProgressPercent=totalExercises?Math.round(completedExercises/totalExercises*100):0;
+  const overallProgressPercent=Math.max(0,Math.min(100,hasCourseProgress?courseAverageProgress:exerciseProgressPercent));
+  const skillReport=studentBuildSkillReport(results,courseRecords);
+  const vocabularySkill=skillReport.find(skill=>skill.id==="vocab")||{learnedItems:[],items:[]};
+  const savedWordsCount=(vocabularySkill.learnedItems||[]).length;
+  const reviewWordsCount=(vocabularySkill.items||[]).filter(item=>item.status==="medium"||item.status==="weak").length;
+  const completedTasksCount=completedExercises;
+  const totalTests=results.filter(result=>adminResultType(result)==="test").length;
+  const activityByDay=cloudActivity?.[user.id]||{};
+  const todayDate=new Date();
+  todayDate.setHours(12,0,0,0);
+  const todayKey=localDateKey(todayDate);
+  const todayActivity=activityByDay[todayKey]||{};
+  const dailyGoalMinutes=Math.max(0,Number(studentRequiredMinutes(user))||0);
+  const todayMinutes=Math.floor((Number(todayActivity.totalSeconds)||0)/60);
+  const dailyGoalPercent=dailyGoalMinutes>0?Math.min(100,Math.round(todayMinutes/dailyGoalMinutes*100)):0;
+  const weekActivity=Array.from({length:7},(_,offset)=>{
+    const date=new Date(todayDate);
+    date.setDate(todayDate.getDate()-(6-offset));
+    const key=localDateKey(date);
+    const activity=activityByDay[key]||{};
+    return {key,label:date.toLocaleDateString("ar-MA",{weekday:"short"}),minutes:Math.round((Number(activity.totalSeconds)||0)/60)};
+  });
+  const weekMinutes=weekActivity.reduce((sum,item)=>sum+item.minutes,0);
+  const averageDailyMinutes=Math.round(weekMinutes/7);
+  const maxWeekMinutes=Math.max(1,...weekActivity.map(item=>item.minutes));
+  const weeklyBars=weekActivity.map(item=>{
+    const height=item.minutes>0?Math.max(7,Math.round(item.minutes/maxWeekMinutes*100)):3;
+    return `<div class="results-weekly-day" aria-label="${escapeHtml(item.label)}: ${item.minutes} دقيقة">
+      <strong class="results-weekly-value">${item.minutes} د</strong>
+      <div class="results-weekly-bar-track"><i style="height:${height}%"></i></div>
+      <small>${escapeHtml(item.label)}</small>
+    </div>`;
+  }).join("");
+  const hasActivityOn=date=>{
+    const day=activityByDay[localDateKey(date)]||{};
+    return (Number(day.totalSeconds)||0)>0 || (Number(day.loginCount)||0)>0;
+  };
+  let streakDate=new Date(todayDate);
+  if(!hasActivityOn(streakDate))streakDate.setDate(streakDate.getDate()-1);
+  let streakDays=0;
+  for(let i=0;i<366 && hasActivityOn(streakDate);i++){
+    streakDays++;
+    streakDate.setDate(streakDate.getDate()-1);
+  }
+  return {
+    user,levelLabel:levelList.join(" + "),overallProgressPercent,
+    completedLessons,inProgressLessons,notStartedLessons,startedLessons,totalLessons,lessonProgressPercent,
+    completedExercises,totalExercises,exerciseProgressPercent,completedTasksCount,
+    savedWordsCount,reviewWordsCount,totalTests,averageScore:analytics.average,
+    dailyGoalMinutes,todayMinutes,dailyGoalPercent,weekActivity,weekMinutes,averageDailyMinutes,weeklyBars,streakDays,
+    skillReport,analytics,lessonStates
+  };
+}
+function adminProgressDashboardAggregate(metricsList){
+  const list=metricsList||[];
+  const sum=key=>list.reduce((total,item)=>total+(Number(item[key])||0),0);
+  const average=key=>list.length?Math.round(sum(key)/list.length):0;
+  const scored=list.filter(item=>item.averageScore!==null && item.averageScore!==undefined);
+  const levels=[...new Set(list.flatMap(item=>String(item.levelLabel||"").split(" + ").filter(Boolean)))];
+  const weekActivity=Array.from({length:7},(_,index)=>({
+    key:list[0]?.weekActivity?.[index]?.key||"",
+    label:list[0]?.weekActivity?.[index]?.label||"",
+    minutes:list.reduce((total,item)=>total+(Number(item.weekActivity?.[index]?.minutes)||0),0)
+  }));
+  const weekMinutes=weekActivity.reduce((total,item)=>total+item.minutes,0);
+  const maxWeekMinutes=Math.max(1,...weekActivity.map(item=>item.minutes));
+  const weeklyBars=weekActivity.map(item=>{
+    const height=item.minutes>0?Math.max(7,Math.round(item.minutes/maxWeekMinutes*100)):3;
+    return `<div class="results-weekly-day" aria-label="${escapeHtml(item.label)}: ${item.minutes} دقيقة">
+      <strong class="results-weekly-value">${item.minutes} د</strong>
+      <div class="results-weekly-bar-track"><i style="height:${height}%"></i></div>
+      <small>${escapeHtml(item.label)}</small>
+    </div>`;
+  }).join("");
+  const totalLessons=sum("totalLessons"),startedLessons=sum("startedLessons");
+  return {
+    levelLabel:levels.length===1?levels[0]:(levels.length?"متعدد المستويات":"—"),
+    overallProgressPercent:average("overallProgressPercent"),
+    completedLessons:sum("completedLessons"),inProgressLessons:sum("inProgressLessons"),
+    notStartedLessons:sum("notStartedLessons"),startedLessons,totalLessons,
+    lessonProgressPercent:totalLessons?Math.round(startedLessons/totalLessons*100):0,
+    completedExercises:sum("completedExercises"),totalExercises:sum("totalExercises"),
+    completedTasksCount:sum("completedTasksCount"),savedWordsCount:sum("savedWordsCount"),
+    reviewWordsCount:sum("reviewWordsCount"),totalTests:sum("totalTests"),
+    averageScore:scored.length?Math.round(scored.reduce((total,item)=>total+Number(item.averageScore),0)/scored.length):null,
+    dailyGoalMinutes:sum("dailyGoalMinutes"),todayMinutes:sum("todayMinutes"),
+    dailyGoalPercent:sum("dailyGoalMinutes")?Math.min(100,Math.round(sum("todayMinutes")/sum("dailyGoalMinutes")*100)):0,
+    weekActivity,weekMinutes,averageDailyMinutes:Math.round(weekMinutes/7),weeklyBars,
+    streakDays:average("streakDays"),studentCount:list.length
+  };
+}
+function adminProgressDashboardMarkup(metrics,title,subtitle,groupMode=false,embeddedFilters=""){
+  const savedWordsLabel=groupMode?"مفردة محفوظة لدى المجموعة":"مفردة محفوظة";
+  const lessonLabel=groupMode?"دروس متقنة لدى المجموعة":"دروس متقنة";
+  const streakLabel=groupMode?"متوسط أيام الاستمرارية":"يوماً متتالياً";
+  const tasksLabel=groupMode?"مهمة مكتملة لدى المجموعة":"مهمة مكتملة";
+  const goalTitle=groupMode?`هدف اليوم للمجموعة ${metrics.dailyGoalMinutes} دقيقة`:`${metrics.dailyGoalMinutes>0?`هدف الطالب اليومي ${metrics.dailyGoalMinutes} دقيقة`:"لم يتم تحديد هدف يومي"}`;
+  const groupCount=groupMode?` · ${Number(metrics.studentCount)||0} متعلم` : "";
+  const averageScoreMarkup=metrics.averageScore===null || metrics.averageScore===undefined
+    ? ""
+    : `<div class="admin-progress-average-score"><span>متوسط نتائج الاختبارات</span><strong>${metrics.averageScore}%</strong></div>`;
+  return `<section class="admin-panel admin-progress-dashboard-panel">
+    <div class="admin-section-head admin-progress-dashboard-heading">
+      <div><p class="admin-eyebrow">لوحة التقدم والإحصائيات</p><h2>نتائج وإحصائيات التعلّم</h2><p>${escapeHtml(title)}${groupCount} · ${escapeHtml(subtitle||"نظرة شاملة على التقدم")}</p></div>
+      <span class="admin-progress-dashboard-mark">🏆</span>
+    </div>
+    <div class="admin-progress-dashboard-canvas">${embeddedFilters}<div class="student-results-dashboard admin-student-results-dashboard">
+      <section class="results-summary-card" aria-label="إجمالي التقدم والمستوى الحالي">
+        <div class="results-summary-overall"><small>${groupMode?"متوسط التقدم داخل المجموعة":"إجمالي التقدم"}</small><strong>${metrics.overallProgressPercent}%</strong><div class="results-summary-track"><i style="width:${metrics.overallProgressPercent}%"></i></div></div>
+        <div class="results-summary-level"><span class="results-summary-trophy" aria-hidden="true">🏆</span><div><small>${groupMode?"المستويات داخل المجموعة":"المستوى الحالي"}</small><strong>${escapeHtml(metrics.levelLabel||"—")}</strong></div></div>
+      </section>
+      <section class="results-dashboard-card results-learning-stats">
+        <div class="results-section-heading"><h2>إحصائيات التعلم</h2><span aria-hidden="true">▥</span></div>
+        <div class="results-stat-grid">
+          <button type="button" class="results-stat-card words admin-results-metric-button" data-action="admin-progress-open-metric" data-metric="words" aria-label="عرض الكلمات المحفوظة"><span class="results-stat-icon">▰</span><strong>${metrics.savedWordsCount}</strong><small>${savedWordsLabel}</small></button>
+          <button type="button" class="results-stat-card lessons admin-results-metric-button" data-action="admin-progress-open-metric" data-metric="lessons" aria-label="عرض الدروس المتقنة"><span class="results-stat-icon">📖</span><strong>${metrics.completedLessons}</strong><small>${lessonLabel}</small></button>
+          <button type="button" class="results-stat-card streak admin-results-metric-button" data-action="admin-progress-open-metric" data-metric="streak" aria-label="عرض الأيام المتتالية"><span class="results-stat-icon">🔥</span><strong>${metrics.streakDays}</strong><small>${streakLabel}</small></button>
+          <button type="button" class="results-stat-card tasks admin-results-metric-button" data-action="admin-progress-open-metric" data-metric="tasks" aria-label="عرض التمارين المكتملة"><span class="results-stat-icon">✓</span><strong>${metrics.completedTasksCount}</strong><small>${tasksLabel}</small></button>
+        </div>
+      </section>
+      <div class="results-dashboard-two-col">
+        <section class="results-dashboard-card results-daily-goal">
+          <div class="results-section-heading"><h2>${groupMode?"هدف المجموعة اليوم":"هدف اليوم"}</h2><span aria-hidden="true">🎯</span></div>
+          <strong class="results-goal-title">${escapeHtml(goalTitle)}</strong>
+          <div class="results-goal-track"><i style="width:${metrics.dailyGoalPercent}%"></i></div>
+          <div class="results-goal-meta"><strong>${metrics.dailyGoalMinutes>0?`${metrics.todayMinutes} / ${metrics.dailyGoalMinutes} دقيقة`:`${metrics.todayMinutes} دقيقة تعلم اليوم`}</strong><span>${metrics.dailyGoalMinutes>0?metrics.dailyGoalPercent+"%":""}</span></div>
+        </section>
+        <section class="results-dashboard-card results-lesson-status">
+          <div class="results-section-heading"><h2>حالة الدروس</h2><span aria-hidden="true">📚</span></div>
+          <div class="results-lesson-status-body">
+            <button type="button" class="results-lesson-ring results-lesson-ring-button" data-action="admin-progress-open-lesson-status" data-status="all" aria-label="عرض جميع الدروس" style="--lesson-progress:${metrics.lessonProgressPercent}%"><span><strong>${metrics.startedLessons}/${metrics.totalLessons}</strong><small>${groupMode?"حالات الدروس":"دروس"}</small></span></button>
+            <div class="results-lesson-legend">
+              <button type="button" data-action="admin-progress-open-lesson-status" data-status="completed"><i class="mastered"></i><span>${metrics.completedLessons} دروس متقنة</span></button>
+              <button type="button" data-action="admin-progress-open-lesson-status" data-status="inProgress"><i class="in-progress"></i><span>${metrics.inProgressLessons} دروس قيد التعلم</span></button>
+              <button type="button" data-action="admin-progress-open-lesson-status" data-status="notStarted"><i class="not-started"></i><span>${metrics.notStartedLessons} دروس لم تبدأ بعد</span></button>
+            </div>
+          </div>
+        </section>
+      </div>
+      <section class="results-dashboard-card results-vocabulary-card">
+        <div class="results-section-heading"><h2>المفردات</h2><span aria-hidden="true">📖</span></div>
+        <div class="results-vocabulary-content">
+          <div class="results-vocabulary-illustration" aria-hidden="true"><span>🇩🇪</span><b>Wort</b></div>
+          <button type="button" class="results-vocabulary-stat saved admin-results-vocab-button" data-action="admin-progress-open-metric" data-metric="words" aria-label="تفاصيل الكلمات المحفوظة"><strong>${metrics.savedWordsCount}<i>✓</i></strong><small>${savedWordsLabel}</small></button>
+          <button type="button" class="results-vocabulary-stat review admin-results-vocab-button" data-action="admin-progress-open-metric" data-metric="review" aria-label="تفاصيل الكلمات التي تحتاج مراجعة"><strong>${metrics.reviewWordsCount}<i>↻</i></strong><small>${groupMode?"مفردة تحتاج إلى مراجعة":"مفردة تحتاج إلى مراجعة"}</small></button>
+        </div>
+      </section>
+      <section class="results-dashboard-card results-weekly-card">
+        <div class="results-weekly-heading"><div class="results-section-heading"><h2>متوسط مدة التعلّم اليومية</h2><span aria-hidden="true">◷</span></div><span class="results-weekly-average">◷ ${metrics.averageDailyMinutes} دقيقة</span></div>
+        <div class="results-weekly-chart">${metrics.weeklyBars}</div>
+      </section>
+      ${averageScoreMarkup?`<div class="admin-progress-dashboard-average-wrap">${averageScoreMarkup}</div>`:""}
+    </div></div>
+  </section>`;
+}
+// V34: Admin drill-down pages are read-only and sourced from existing student records.
+function adminProgressMetricInfo(metric){
+  const map={
+    words:{label:"الكلمات المحفوظة",icon:"📚",key:"savedWordsCount",description:"الكلمات اللي تفاعل معها المتعلم داخل الدروس وتخزّنات في التقدم"},
+    review:{label:"كلمات تحتاج مراجعة",icon:"🔄",key:"reviewWordsCount",description:"الكلمات اللي تقيمات بنتيجة متوسطة أو ضعيفة"},
+    lessons:{label:"الدروس المتقنة",icon:"📖",key:"completedLessons",description:"الدروس اللي تسجلات كمكتملة حسب التقدم والاختبارات"},
+    streak:{label:"الأيام المتتالية",icon:"🔥",key:"streakDays",description:"النشاط اليومي المحفوظ فقاعدة البيانات"},
+    tasks:{label:"التمارين المكتملة",icon:"✅",key:"completedTasksCount",description:"التمارين المكتملة كما هي مسجلة في نتائج الطالب"}
+  };
+  return map[metric]||map.words;
+}
+function adminProgressMetricFormatDate(value){
+  if(!value)return "";
+  const date=new Date(value);
+  return Number.isFinite(date.getTime())?date.toLocaleDateString("ar-MA",{year:"numeric",month:"short",day:"numeric"}):"";
+}
+function adminProgressMetricEmpty(message){
+  return `<div class="admin-metric-empty"><span aria-hidden="true">📭</span><strong>${escapeHtml(message)}</strong><p>التفاصيل كتظهر ملي كتكون البيانات مسجلة فحساب التلميذ ومزامنة مع Firebase.</p></div>`;
+}
+function adminProgressMetricStudentDetail(metrics,metric){
+  const info=adminProgressMetricInfo(metric);
+  const count=Number(metrics[info.key])||0;
+  let entries="";
+  if(metric==="words"){
+    const words=(metrics.skillReport||[]).find(item=>item.id==="vocab")?.learnedItems||[];
+    entries=words.map(item=>`<article class="admin-metric-record word">
+      <div class="admin-metric-record-icon">🇩🇪</div>
+      <div class="admin-metric-record-copy"><strong dir="ltr">${escapeHtml(item.label||"")}</strong><span>${escapeHtml(item.meaning||"لا توجد ترجمة مسجلة")}</span></div>
+      <div class="admin-metric-record-meta"><b>${escapeHtml(String(item.level||"A1"))} · L${Number(item.lessonIndex)>=0?Number(item.lessonIndex)+1:"—"}</b>${item.learnedAt?`<small>${escapeHtml(adminProgressMetricFormatDate(item.learnedAt))}</small>`:""}</div>
+    </article>`).join("");
+  }else if(metric==="review"){
+    const vocab=(metrics.skillReport||[]).find(item=>item.id==="vocab");
+    entries=(vocab?.items||[]).filter(item=>item.status==="medium"||item.status==="weak").map(item=>`<article class="admin-metric-record">
+      <div class="admin-metric-record-icon">${item.status==="weak"?"🔴":"🟠"}</div>
+      <div class="admin-metric-record-copy"><strong dir="ltr">${escapeHtml(item.label||"")}</strong><span>${escapeHtml(item.meaning||item.sourceTitle||"")}</span></div>
+      <div class="admin-metric-record-meta"><b>${Number(item.percent)||0}%</b><small>L${Number(item.lessonIndex)>=0?Number(item.lessonIndex)+1:"—"} · ${Number(item.attempts)||0} محاولات</small></div>
+    </article>`).join("");
+  }else if(metric==="lessons"){
+    entries=(metrics.lessonStates||[]).filter(item=>item.completed).map(item=>`<article class="admin-metric-record">
+      <div class="admin-metric-record-icon">${escapeHtml(item.icon||"📘")}</div>
+      <div class="admin-metric-record-copy"><strong>${escapeHtml(item.title||`الدرس ${item.no}`)}</strong><span>${escapeHtml(item.arabic||"")}</span></div>
+      <div class="admin-metric-record-meta"><b>${escapeHtml(item.level||"A1")} · L${Number(item.no)||"—"}</b><small>${Number(item.progress)||0}% · متقن</small></div>
+    </article>`).join("");
+  }else if(metric==="streak"){
+    const activity=cloudActivity?.[metrics.user?.id]||{};
+    const today=new Date();today.setHours(12,0,0,0);
+    const dates=Array.from({length:30},(_,offset)=>{
+      const date=new Date(today);date.setDate(today.getDate()-offset);
+      const day=activity[localDateKey(date)]||{};
+      const seconds=Math.max(0,Number(day.totalSeconds)||0);
+      const visits=Math.max(0,Number(day.loginCount)||0);
+      return {date,seconds,visits,active:seconds>0||visits>0};
+    });
+    entries=dates.map(item=>`<article class="admin-metric-record day ${item.active?"active":"inactive"}">
+      <div class="admin-metric-record-icon">${item.active?"🟢":"⚪"}</div>
+      <div class="admin-metric-record-copy"><strong>${escapeHtml(item.date.toLocaleDateString("ar-MA",{weekday:"long",day:"numeric",month:"long"}))}</strong><span>${item.active?"تم تسجيل نشاط":"ما تسجّل حتى نشاط"}</span></div>
+      <div class="admin-metric-record-meta"><b>${Math.floor(item.seconds/60)} دقيقة</b><small>${item.visits} مرات دخول</small></div>
+    </article>`).join("");
+  }else if(metric==="tasks"){
+    entries=(metrics.analytics?.results||[]).filter(item=>(Number(item.completedExercises)||0)>0).map(item=>{
+      const done=Math.max(0,Number(item.completedExercises)||0);
+      const total=Math.max(0,Number(item.totalExercises)||0);
+      const level=adminProgressDashboardResultLevel(item)||"A1";
+      const lesson=adminResultLessonIndex(item)+1;
+      const when=adminProgressMetricFormatDate(item.updatedAt||item.completedAt||item.timestamp||item.createdAt);
+      return `<article class="admin-metric-record">
+        <div class="admin-metric-record-icon">✅</div>
+        <div class="admin-metric-record-copy"><strong>${escapeHtml(item.title||item.moduleId||"تمارين الدرس")}</strong><span>${escapeHtml(level)} · L${lesson>0?lesson:"—"}${when?` · ${escapeHtml(when)}`:""}</span></div>
+        <div class="admin-metric-record-meta"><b>${done} مكتمل</b><small>${total?`من ${total} تمرين`:"حسب النتائج المسجلة"}</small></div>
+      </article>`;
+    }).join("");
+  }
+  const extra=metric==="streak"?`<p class="admin-metric-footnote">هذه آخر 30 يوم من النشاط، أما الرقم أعلاه فهو عدد الأيام المتتالية الحالي.</p>`
+    :metric==="words"?`<p class="admin-metric-footnote">حفظ الكلمة يعني التفاعل معاها داخل الدرس، وماشي بالضرورة الإتقان فالاختبار.</p>`
+    :"";
+  return `<div class="admin-metric-student-view">
+    <section class="admin-metric-summary"><div><small>${escapeHtml(info.description)}</small><h2>${escapeHtml(metrics.user?.name||metrics.user?.email||"التلميذ")}</h2><p>${escapeHtml(metrics.user?.email||"")}</p></div><div class="admin-metric-summary-number"><strong>${count}</strong><span>${escapeHtml(info.label)}</span></div></section>
+    <div class="admin-metric-section-caption"><h3>${escapeHtml(info.label)}</h3><span>${count} مسجل</span></div>
+    <div class="admin-metric-record-list">${entries||adminProgressMetricEmpty("مازال ما تسجلات حتى تفاصيل لهذا الاختيار")}</div>
+    ${extra}
+  </div>`;
+}
+function adminProgressMetricOverlayMarkup(metric,groupUsers,groupTitle,selectedUser=null,drillUser=null){
+  const info=adminProgressMetricInfo(metric);
+  const actualUser=selectedUser||drillUser;
+  const groupMode=!actualUser;
+  const studentList=(Array.isArray(groupUsers)?groupUsers:[]).map(user=>({user,metrics:adminProgressDashboardMetrics(user)}));
+  const count=actualUser?Number(adminProgressDashboardMetrics(actualUser)[info.key])||0:studentList.reduce((sum,item)=>sum+(Number(item.metrics[info.key])||0),0);
+  const body=actualUser
+    ?adminProgressMetricStudentDetail(adminProgressDashboardMetrics(actualUser),metric)
+    :`<section class="admin-metric-summary"><div><small>إحصائيات التلاميذ حسب المجموعة</small><h2>${escapeHtml(groupTitle)}</h2><p>اختار تلميذ باش تشوف التفاصيل ديالو</p></div><div class="admin-metric-summary-number"><strong>${count}</strong><span>${metric==="streak"?"مجموع أيام الاستمرارية":"إجمالي "+info.label}</span></div></section>
+       <div class="admin-metric-section-caption"><h3>تلاميذ المجموعة</h3><span>${studentList.length} تلميذ</span></div>
+       <div class="admin-metric-member-list">${studentList.length?studentList.map(({user,metrics})=>`
+         <button type="button" class="admin-metric-member" data-action="admin-progress-metric-select-student" data-id="${escapeHtml(user.id||"")}">
+           <span class="admin-metric-member-avatar">${escapeHtml(String(user.name||user.email||"ط").trim().slice(0,1)||"ط")}</span>
+           <span class="admin-metric-member-copy"><strong>${escapeHtml(user.name||user.email||"التلميذ")}</strong><small>${escapeHtml(user.email||"")}</small></span>
+           <span class="admin-metric-member-count"><strong>${Number(metrics[info.key])||0}</strong><small>${escapeHtml(info.label)}</small></span><span class="admin-metric-member-arrow">←</span>
+         </button>`).join(""):adminProgressMetricEmpty("ما كاين حتى تلميذ فهاد المجموعة")}</div>`;
+  const goBack=drillUser&&!selectedUser?"admin-progress-metric-group-back":"admin-progress-metric-close";
+  return `<section class="student-results-tool-overlay admin-metric-overlay" role="dialog" aria-modal="true" aria-label="تفاصيل ${escapeHtml(info.label)}">
+    <header class="student-results-tool-header"><button type="button" class="student-results-tool-back" data-action="${goBack}"><span aria-hidden="true">←</span>${goBack==="admin-progress-metric-group-back"?"رجوع للمجموعة":"رجوع للنتائج"}</button>
+      <div class="student-results-tool-heading"><small>لوحة النتائج · تفاصيل التلاميذ</small><h1>${info.icon} ${escapeHtml(info.label)}</h1></div>
+    </header>
+    <main class="student-results-tool-body admin-metric-body"><div class="student-results-tool-content admin-metric-content">${body}</div></main>
+  </section>`;
+}
+
+function adminProgressDashboardForStudent(user,embeddedFilters=""){
+  const metrics=adminProgressDashboardMetrics(user);
+  const groupName=studentGroupName(user);
+  return adminProgressDashboardMarkup(metrics,user.name||user.email||"الطالب",`${groupName} · ${user.email||""}`,false,embeddedFilters);
+}
+function adminProgressDashboardForGroup(groupName,groupUsers,embeddedFilters=""){
+  const metricsList=(groupUsers||[]).map(user=>adminProgressDashboardMetrics(user));
+  if(!metricsList.length){
+    return `<section class="admin-panel admin-progress-dashboard-panel">
+      <div class="admin-section-head admin-progress-dashboard-heading"><div><p class="admin-eyebrow">لوحة التقدم والإحصائيات</p><h2>نتائج وإحصائيات التعلّم</h2><p>${escapeHtml(groupName)}</p></div><span class="admin-progress-dashboard-mark" aria-hidden="true">🏆</span></div>
+      <div class="admin-progress-dashboard-canvas">${embeddedFilters}<p class="admin-empty-note admin-results-no-members">ما كاين حتى طالب فهاد المجموعة باش نعرضو الإحصائيات.</p></div>
+    </section>`;
+  }
+  const aggregate=adminProgressDashboardAggregate(metricsList);
+  return adminProgressDashboardMarkup(aggregate,groupName,"متوسطات وإجماليات أعضاء المجموعة",true,embeddedFilters);
+}
+
 function renderAdmin(){
   if(!currentUser || currentUser.role!=="admin"){page="home";return renderHome();}
   const users=readUsers();
@@ -4938,17 +6136,68 @@ function renderAdmin(){
   const difficultRows=resultRows.filter(({result})=>Number(result.percent)<60);
   const difficultMarkup=difficultRows.length?difficultRows.map(({user,result})=>`<div class="admin-difficulty-row"><div><strong>${escapeHtml(user.name)}</strong><small>${escapeHtml(result.title||result.moduleId||"Lektion")}</small></div><span class="status-pill warning">${Number(result.percent)||0}% · ${Number(result.attempts)||1} Versuche</span></div>`).join(""):`<p class="admin-empty-note">Aktuell wurden keine schwierigen Tests erkannt. Tests unter 60% erscheinen hier.</p>`;
   const groupsMarkup=realGroups.length?realGroups.map(([id,g])=>{
-    const allowed=Object.values(g.lessonAccess||{}).filter(Boolean).length;
+    const groupLevel=normalizeGroupCourseLevel(g.level);
+    const allowed=Object.values(groupLessonAccessForLevel(g,groupLevel)||{}).filter(Boolean).length;
+    const enabledLevels=GROUP_COURSE_LEVELS.filter(level=>groupLevelAccessForLevel(g,level));
+    const enabledLabel=enabledLevels.length?`المستويات المفتوحة: ${enabledLevels.join(" · ")}`:"جميع المستويات مقفولة";
     const groupUsers=users.filter(u=>u.groupId===id);
     const count=groupUsers.length;
     const groupSeconds=groupUsers.reduce((sum,u)=>sum+Number((((cloudActivity[u.id]||{})[today]||{}).totalSeconds)||0),0);
     const groupLogins=groupUsers.reduce((sum,u)=>sum+Number((((cloudActivity[u.id]||{})[today]||{}).loginCount)||0),0);
-    return `<div class="admin-group-row"><div><strong>${escapeHtml(g.name||id)}</strong><small>${count} طالب · ${allowed}/10 دروس متاحة · ${Number(g.requiredDailyMinutes)||0} دقيقة/اليوم · اليوم: ${formatDuration(groupSeconds)}، ${groupLogins} دخول</small></div><div class="admin-group-row-actions"><button class="tiny-btn primary" data-action="admin-open-group" data-id="${escapeHtml(id)}">فتح المجموعة</button><button class="tiny-btn" data-action="admin-edit-group" data-id="${escapeHtml(id)}">تعديل</button><button class="tiny-btn danger" data-action="admin-delete-group" data-id="${escapeHtml(id)}">حذف</button></div></div>`;
+    return `<div class="admin-group-row"><div><strong>${escapeHtml(g.name||id)}</strong><small>${escapeHtml(enabledLabel)} · ${count} طالب · ${allowed}/10 دروس في ${groupLevel} · ${Number(g.requiredDailyMinutes)||0} دقيقة/اليوم · اليوم: ${formatDuration(groupSeconds)}، ${groupLogins} دخول</small></div><div class="admin-group-row-actions"><button class="tiny-btn primary" data-action="admin-open-group" data-id="${escapeHtml(id)}">فتح المجموعة</button><button class="tiny-btn" data-action="admin-edit-group" data-id="${escapeHtml(id)}">تعديل</button><button class="tiny-btn danger" data-action="admin-delete-group" data-id="${escapeHtml(id)}">حذف</button></div></div>`;
   }).join(""):`<p class="admin-empty-note">مازال ما كاينة حتى مجموعة. زِد أول مجموعة من النموذج أعلاه.</p>`;
   const editing=editingGroupId && cloudGroups[editingGroupId] ? cloudGroups[editingGroupId] : {};
-  const groupLessonChecks=Array.from({length:10},(_,i)=>{
-    const no=i+1, checked=editingGroupId ? !!(editing.lessonAccess && editing.lessonAccess[String(no)]) : true;
-    return `<label class="admin-lesson-check"><input type="checkbox" name="groupLessons" value="${no}" ${checked?"checked":""}><span>Lektion ${no}</span></label>`;
+  const currentGroupLevel=normalizeGroupCourseLevel(adminGroupLevelDraft||editing.level||"A1");
+  const groupLessonPanels=GROUP_COURSE_LEVELS.map(level=>{
+    const isOpen=level===currentGroupLevel;
+    const enabled=groupLevelAccessForLevel(editing,level);
+    const checks=groupLessonChecksMarkup(level,adminGroupLessonDrafts[level]||groupLessonDefaultChecks(editing,level));
+    const panelId=`groupLevelPanel-${level}`;
+    const checksId=`groupLevelLessonChecks-${level}`;
+    const isUpperLevel=["B1","B2"].includes(level);
+    const sectionAccess=groupSectionAccessForLevel(editing,level);
+    const sectionControls=isUpperLevel?`
+      <div class="admin-group-section-access">
+        <div class="admin-group-section-access-heading">
+          <strong>الأقسام المتاحة في ${level}</strong>
+          <small>فعّل أو اقفل كل قسم بشكل مستقل، مثلما يظهر للطالب</small>
+        </div>
+        <div class="admin-group-section-access-grid">
+          ${GROUP_UPPER_LEVEL_SECTIONS.map(section=>`
+            <label class="admin-group-section-option">
+              <input type="checkbox" data-group-section-access data-level="${level}" data-section="${section.id}" ${sectionAccess[section.id]!==false?"checked":""}>
+              <span class="admin-group-section-option-icon" aria-hidden="true">${section.icon}</span>
+              <span class="admin-group-section-option-copy"><strong dir="ltr">${section.label}</strong><small>${section.arabic}</small></span>
+              <span class="admin-group-section-option-state" aria-hidden="true">✓</span>
+            </label>`).join("")}
+        </div>
+      </div>`:"";
+    return `<section class="admin-group-level-item ${isOpen?"is-open":""} ${enabled?"level-enabled":"level-disabled"}">
+      <div class="admin-group-level-header">
+        <button type="button" class="admin-group-level-toggle" data-action="admin-toggle-group-level" data-level="${level}" aria-expanded="${isOpen?"true":"false"}" aria-controls="${panelId}">
+          <span class="admin-group-level-toggle-label">${level}</span>
+          <span class="admin-group-level-toggle-meta">إعدادات المستوى والدروس</span>
+          <span class="admin-group-level-toggle-icon" aria-hidden="true">⌄</span>
+        </button>
+        <label class="admin-level-access-toggle" title="تفعيل أو قفل المستوى ${level}">
+          <input type="checkbox" data-group-level-access="${level}" ${enabled?"checked":""} aria-label="تفعيل المستوى ${level} للطلاب">
+          <span class="admin-level-access-switch" aria-hidden="true"></span>
+          <span class="admin-level-access-state"><b class="is-on">مفتوح</b><b class="is-off">مقفول</b></span>
+        </label>
+      </div>
+      <div class="admin-group-level-panel" id="${panelId}" ${isOpen?"":"hidden"}>
+        ${sectionControls}
+        <div class="admin-group-lessons-toolbar">
+          <p class="admin-note">${isUpperLevel?`دروس Kurs المتاحة في ${level}:`:`الدروس المتاحة في ${level}:`}</p>
+          <div class="admin-group-lessons-tools" role="group" aria-label="تحديد دروس المستوى ${level}">
+            <button type="button" class="admin-group-lessons-select-all" data-action="admin-group-lessons-toggle-all" data-level="${level}" data-select="all" aria-controls="${checksId}">✓ تحديد الكل</button>
+            <button type="button" class="admin-group-lessons-clear-all" data-action="admin-group-lessons-toggle-all" data-level="${level}" data-select="none" aria-controls="${checksId}">× إلغاء تحديد الكل</button>
+          </div>
+        </div>
+        <div class="admin-lesson-checks" id="${checksId}">${checks}</div>
+        ${isUpperLevel?`<p class="admin-note">إعدادات الأقسام الأربعة مستقلة عن صلاحيات دروس Kurs. يمكنك مثلاً إغلاق Teste وترك Kurs وTraining Prüfung مفتوحين.</p>`:""}
+      </div>
+    </section>`;
   }).join("");
   const totalAttempts=resultRows.reduce((sum,row)=>sum+(Number(row.result.attempts)||1),0);
   const avg=resultRows.length?Math.round(resultRows.reduce((sum,row)=>sum+(Number(row.result.percent)||0),0)/resultRows.length):0;
@@ -4997,22 +6246,7 @@ function renderAdmin(){
     ["all","جميع الأنواع"],["kurs","Kurs"],["podcast","Podcast"],["test","Test"]
   ].map(([value,label])=>`<option value="${value}" ${adminResultsTypeFilter===value?"selected":""}>${label}</option>`).join("");
   const resultsVisibleUsers = adminResultsStudentId==="all" ? resultsGroupFilteredUsers : resultsGroupFilteredUsers.filter(user=>user.id===adminResultsStudentId);
-  const resultsVisibleUserIds = new Set(resultsVisibleUsers.map(user=>user.id));
   const resultsAnalyticsFilters={lesson:adminResultsLessonFilter,type:adminResultsTypeFilter};
-  const resultsVisibleRows = resultRows.filter(row=>
-    resultsVisibleUserIds.has(row.user.id) &&
-    (adminResultsLessonFilter==="all" || adminResultLessonIndex(row.result)===Number(adminResultsLessonFilter)-1) &&
-    (adminResultsTypeFilter==="all" || adminResultType(row.result)===adminResultsTypeFilter)
-  );
-  const resultsVisibleRowsMarkup = resultsVisibleRows.length ? resultsVisibleRows.map(({user,result})=>{
-    const pct=adminResultPercent(result);
-    const max=Number(result.maxPoints)||0;
-    const visitedCount=Object.keys(result.visited||{}).filter(key=>result.visited[key]).length;
-    const pointsLabel=max>0?`${Number(result.points)||0} / ${max}`:visitedCount?`${visitedCount} تمارين مفتوحة`:"—";
-    const statusLabel=pct===null?(visitedCount?"قيد المحاولة":"لم يُقيّم"):pct<60?"يحتاج مراجعة":"جيد";
-    const statusClass=pct===null?"neutral":pct<60?"warning":"active";
-    return `<tr><td><strong>${escapeHtml(user.name||"—")}</strong><small>${escapeHtml(studentGroupName(user))}</small></td><td>${escapeHtml(result.title||result.moduleId||"اختبار")}</td><td><strong>${pointsLabel}</strong></td><td><span class="result-percent">${pct===null?"—":pct+"%"}</span></td><td>${Number(result.attempts)||1}×</td><td><span class="status-pill ${statusClass}">${statusLabel}</span></td><td>${result.updatedAt?new Date(result.updatedAt).toLocaleString("fr-FR"):"—"}</td></tr>`;
-  }).join("") : `<tr><td colspan="7" class="empty-cell">ما كايناش نتائج فهاد الاختيار.</td></tr>`;
   const resultsActivityRowsMarkup = resultsVisibleUsers.length ? resultsVisibleUsers.map(user=>{
     const report=adminStudentAnalytics(user,resultsAnalyticsFilters);
     const typeLabel=adminResultsTypeFilter==="kurs"?"Kurs":adminResultsTypeFilter==="podcast"?"Podcast":"كل المحتوى";
@@ -5022,13 +6256,6 @@ function renderAdmin(){
     <section class="admin-panel"><div class="admin-section-head"><div><p class="admin-eyebrow">وقت التعلم</p><h2>نشاط الطلبة فـ ${adminResultsTypeFilter==="kurs"?"Kurs":"Podcast"}</h2><p>المدة المسجلة حسب المجموعة والطالب والدرس المختار.</p></div></div>
       <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>الطالب</th><th>المجموعة</th><th>المحتوى</th><th>المدة</th><th>الدخولات</th></tr></thead><tbody>${resultsActivityRowsMarkup}</tbody></table></div>
     </section>`;
-  const resultsWeakRows = resultsVisibleRows.filter(({result})=>{
-    const pct=adminResultPercent(result); return pct!==null && pct<60;
-  });
-  const resultsWeakMarkup = resultsWeakRows.length ? resultsWeakRows.map(({user,result})=>{
-    const pct=adminResultPercent(result);
-    return `<div class="admin-difficulty-row"><div><strong>${escapeHtml(user.name||"—")}</strong><small>${escapeHtml(result.title||result.moduleId||"اختبار")}</small></div><span class="status-pill warning">${pct}% · ${Number(result.attempts)||1} محاولات</span></div>`;
-  }).join("") : `<p class="admin-empty-note">ما كايناش نتائج ضعيفة أقل من 60% فهاد الاختيار.</p>`;
   const resultsGroupPairs = adminResultsStudentId!=="all" || adminResultsGroupId==="all"
     ? []
     : adminResultsGroupId==="__ungrouped__"
@@ -5039,17 +6266,139 @@ function renderAdmin(){
     return adminGroupAnalyticsCard(id,g.name||id,members,resultsAnalyticsFilters);
   }).join("") || `<p class="admin-empty-note">اختار مجموعة باش تشوف التقرير ديالها.</p>`;
   const resultsStudentAnalyticsMarkup = resultsVisibleUsers.length ? resultsVisibleUsers.map(user=>adminStudentAnalyticsCard(adminStudentAnalytics(user,resultsAnalyticsFilters),adminResultsStudentId!=="all")).join("") : `<p class="admin-empty-note">ما كاين حتى طالب فهاد الاختيار.</p>`;
+  const resultsEmbeddedFilterMarkup=`
+    <section class="admin-results-embedded-filters" aria-label="فلاتر نتائج المجموعات والطلبة">
+      <div class="admin-results-embedded-title">
+        <div><span class="admin-results-embedded-eyebrow">تصفية الإحصائيات</span><h3>اختار المجموعة والطالب والدرس</h3></div>
+        <span class="admin-results-embedded-icon" aria-hidden="true">⚙️</span>
+      </div>
+      <div class="admin-results-filter-grid">
+        <label>1. اختار المجموعة<select id="adminResultsGroupFilter">${resultsGroupOptions}</select></label>
+        <label>2. اختار الطالب<select id="adminResultsStudentFilter">${resultsStudentOptions}</select></label>
+        <label>3. اختار الدرس (Lektion)<select id="adminResultsLessonFilter">${resultsLessonOptions}</select></label>
+        <label>4. نوع المحتوى<select id="adminResultsTypeFilter">${resultsTypeOptions}</select></label>
+      </div>
+      <p class="admin-results-embedded-note">اختار مجموعة أو طالب، ومن بعد حدّد الدرس ونوع المحتوى (Kurs أو Podcast أو Test). المبيانات والتقارير كتتصفّى حسب الاختيار؛ وقت التعلّم فـ Kurs وPodcast، والنقط والتمارين فـ Test.</p>
+    </section>`;
+  const selectedProgressStudent=adminResultsStudentId!=="all" ? resultsGroupFilteredUsers.find(user=>String(user.id)===String(adminResultsStudentId)) : null;
+  const selectedProgressGroupName=adminResultsGroupId==="all" ? "جميع المجموعات" : adminResultsGroupId==="__ungrouped__" ? "بدون مجموعة" : (cloudGroups[adminResultsGroupId]?.name||adminResultsGroupId);
+  const adminProgressDashboardMarkup=adminSection!=="results" ? "" : (selectedProgressStudent
+    ? adminProgressDashboardForStudent(selectedProgressStudent,resultsEmbeddedFilterMarkup)
+    : adminProgressDashboardForGroup(selectedProgressGroupName,resultsGroupFilteredUsers,resultsEmbeddedFilterMarkup));
+  const adminStatusMetricsList=adminSection==="results" && adminProgressLessonStatusFilter && !selectedProgressStudent
+    ? resultsGroupFilteredUsers.map(user=>adminProgressDashboardMetrics(user))
+    : [];
+  const adminStatusStates=selectedProgressStudent
+    ? (adminProgressLessonStatusFilter?adminProgressDashboardMetrics(selectedProgressStudent).lessonStates:[])
+    : adminProgressLessonStatusGroupStates(adminStatusMetricsList);
+  const metricSelectedUser=adminProgressMetricStudentId
+    ?resultsGroupFilteredUsers.find(user=>String(user.id)===String(adminProgressMetricStudentId))||null
+    :null;
+  const adminProgressMetricOverlay=adminSection==="results" && adminProgressMetricOpen
+    ?adminProgressMetricOverlayMarkup(
+        adminProgressMetricOpen,resultsGroupFilteredUsers,selectedProgressGroupName,
+        selectedProgressStudent,metricSelectedUser
+      )
+    :"";
+  const adminProgressLessonStatusOverlay=adminSection==="results" && adminProgressLessonStatusFilter
+    ? adminProgressLessonStatusOverlayMarkup(
+        adminStatusStates,adminProgressLessonStatusFilter,
+        selectedProgressStudent
+          ? `${selectedProgressStudent.name||selectedProgressStudent.email||"الطالب"} · ${studentGroupName(selectedProgressStudent)}`
+          : `${selectedProgressGroupName} · ${resultsGroupFilteredUsers.length} تلميذ`,
+        !selectedProgressStudent
+      )
+    : "";
 
-  const homeMarkup = `
-    <section class="admin-welcome"><div><p class="admin-eyebrow">الرئيسية</p><h1>مرحبا بك فلوحة الإدارة</h1><p>نظرة سريعة على الطلبة والمجموعات ديالك.</p></div></section>
-    <section class="admin-stats admin-home-stats">
-      <article><span>👨‍🎓</span><div><small>مجموع الطلبة</small><strong>${users.length}</strong></div></article>
-      <article><span>👥</span><div><small>المجموعات</small><strong>${realGroups.length}</strong></div></article>
-      <article><span>📂</span><div><small>طلبة بدون مجموعة</small><strong>${unassignedCount}</strong></div></article>
+  const adminV31ActiveStudents=users.filter(user=>!statusFor(user).inactive);
+  const adminV31StudentActivityPct=users.length?Math.round(adminV31ActiveStudents.length/users.length*100):0;
+  const adminV31ActiveGroupCount=realGroups.filter(([id])=>adminV31ActiveStudents.some(user=>user.groupId===id)).length;
+  const adminV31GroupActivityPct=realGroups.length?Math.round(adminV31ActiveGroupCount/realGroups.length*100):0;
+  const adminV31LatestTimes=users.map(user=>statusFor(user).latest).filter(Boolean);
+  const adminV31AnyActivity=adminV31LatestTimes.length>0;
+  const adminV31FormatTime=value=>{
+    const time=typeof value==="number"?value:Date.parse(String(value||""));
+    if(!Number.isFinite(time))return "تاريخ غير محدد";
+    return new Date(time).toLocaleString("ar-MA",{dateStyle:"medium",timeStyle:"short"});
+  };
+  const adminV31RecentEvents=[
+    ...users.filter(user=>Number.isFinite(Date.parse(String(user.createdAt||"")))).map(user=>({
+      at:Date.parse(String(user.createdAt)),type:"student",icon:"👤",title:`تمت إضافة التلميذ ${user.name||user.email||"الجديد"}`,
+      sub:studentGroupName(user),id:user.id,label:"عرض التلميذ"
+    })),
+    ...realGroups.filter(([,g])=>Number.isFinite(Date.parse(String(g.createdAt||"")))).map(([id,g])=>({
+      at:Date.parse(String(g.createdAt)),type:"group",icon:"👥",title:`تم إنشاء المجموعة ${g.name||id}`,
+      sub:"المجموعات",id,label:"فتح المجموعة"
+    })),
+    ...resultRows.filter(({result})=>Number.isFinite(Date.parse(String(result.updatedAt||"")))).map(({user,result})=>({
+      at:Date.parse(String(result.updatedAt)),type:"result",icon:"📈",title:`نتيجة جديدة للتلميذ ${user.name||user.email||""}`,
+      sub:result.title||result.moduleId||"اختبار",id:user.id,label:"عرض التقارير"
+    }))
+  ].sort((a,b)=>b.at-a.at).slice(0,4);
+  const adminV31EventsMarkup=adminV31RecentEvents.length?adminV31RecentEvents.map(event=>{
+    const action=event.type==="student"?"admin-view-student":event.type==="group"?"admin-open-group":"admin-nav";
+    const attr=event.type==="result"?'data-section="results"':`data-id="${escapeHtml(event.id||"")}"`;
+    return `<article class="admin-v31-event">
+      <span class="admin-v31-event-icon" aria-hidden="true">${event.icon}</span>
+      <div class="admin-v31-event-copy"><strong>${escapeHtml(event.title)}</strong><small>${escapeHtml(event.sub)} · ${adminV31FormatTime(event.at)}</small></div>
+      <button type="button" class="admin-v31-event-button" data-action="${action}" ${attr}>${event.label} <span aria-hidden="true">◀</span></button>
+    </article>`;
+  }).join(""):`<div class="admin-v31-empty"><span aria-hidden="true">📭</span><p>ما كاين حتى نشاط مسجل حالياً. الأحداث غادي تبان هنا ملي يتزاد طالب أو مجموعة أو نتيجة اختبار.</p></div>`;
+  const adminV31OverviewStatus=adminV31AnyActivity
+    ? `${adminV31ActiveStudents.length} من أصل ${users.length} تلميذ عندهم دخول مسجل خلال آخر 7 أيام`
+    : "ما زال ما تسجل حتى دخول خلال آخر 7 أيام";
+  const adminV31Gauge=adminV31StudentActivityPct;
+  const adminV31TestResults=resultRows.filter(({result})=>adminResultType(result)==="test");
+  const adminV31TestAverage=adminV31TestResults.length?Math.round(adminV31TestResults.reduce((total,entry)=>total+adminResultPercent(entry.result),0)/adminV31TestResults.length):null;
+  const adminV31Performance=[
+    {name:"متوسط نتائج الاختبارات",value:adminV31TestAverage,color:"green"},
+    {name:"نشاط التلاميذ (7 أيام)",value:users.length?adminV31StudentActivityPct:null,color:"purple"},
+    {name:"نشاط المجموعات (7 أيام)",value:realGroups.length?adminV31GroupActivityPct:null,color:"blue"}
+  ];
+  const adminV31PerformanceMarkup=adminV31Performance.map(metric=>`<div class="admin-v31-performance-item">
+    <span>${escapeHtml(metric.name)}</span>
+    <div class="admin-v31-performance-track"><i class="${metric.color}" style="width:${metric.value===null?0:metric.value}%"></i></div>
+    <strong>${metric.value===null?"—":metric.value+"%"}</strong>
+  </div>`).join("");
+  const adminV31Shortcuts=[
+    {section:"students",title:"إدارة التلاميذ",icon:"👩🏻‍🎓"},
+    {section:"content",title:"إدارة الدروس",icon:"📖"},
+    {section:"groups",title:"إدارة المجموعات",icon:"👥"},
+    {section:"results",title:"التقارير",icon:"📊"},
+    {section:"pages",title:"صفحات HTML",icon:"🧩"},
+    {section:"settings",title:"الإعدادات",icon:"⚙️"}
+  ].map(item=>`<button type="button" class="admin-v31-shortcut" data-action="admin-nav" data-section="${item.section}"><span>${item.icon}</span><strong>${item.title}</strong></button>`).join("");
+  const homeMarkup = `<div class="admin-v31-home">
+    <section class="admin-v31-stats" aria-label="إحصائيات المنصة">
+      <article class="admin-v31-stat"><span class="admin-v31-stat-icon">👩🏻‍🎓</span><strong>${users.length.toLocaleString("en-US")}</strong><small>إجمالي التلاميذ</small></article>
+      <article class="admin-v31-stat"><span class="admin-v31-stat-icon">👩🏻‍🏫</span><strong>—</strong><small>المعلمون · غير مفعّل</small></article>
+      <article class="admin-v31-stat"><span class="admin-v31-stat-icon">👥</span><strong>${realGroups.length.toLocaleString("en-US")}</strong><small>المجموعات</small></article>
+      <article class="admin-v31-stat"><span class="admin-v31-stat-icon">📖</span><strong>${lessons.length.toLocaleString("en-US")}</strong><small>دروس A1 الأساسية</small></article>
     </section>
-    <section class="admin-panel"><div class="admin-section-head"><div><p class="admin-eyebrow">المجموعات</p><h2>المجموعات ديالك</h2><p>اختار مجموعة باش تدخل للتفاصيل وتدبر الطلبة ديالها.</p></div><button class="outline-btn" data-action="admin-nav" data-section="groups">كل المجموعات ←</button></div><div class="admin-home-mini-grid">${homeGroupCards}</div></section>
-    <section class="admin-panel"><div class="admin-section-head"><div><p class="admin-eyebrow">الطلبة</p><h2>آخر الطلبة المضافين</h2></div><span class="admin-count">${users.length} طالب</span></div><div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>الطالب</th><th>المجموعة</th><th>الحساب</th><th>التفاصيل</th></tr></thead><tbody>${homeStudentCards}</tbody></table></div></section>
-  `;
+    <section class="admin-v31-overview admin-v31-glass">
+      <div class="admin-v31-gauge" style="--activity-value:${adminV31Gauge}%"><div><strong>${adminV31Gauge}%</strong><small>نشاط التلاميذ</small></div></div>
+      <div class="admin-v31-overview-content"><h2>✨ نظرة عامة على المنصة</h2><p class="admin-v31-status"><span>✓</span> ${escapeHtml(adminV31OverviewStatus)}</p><small>آخر عرض: ${adminV31FormatTime(Date.now())} · المعطيات من الحسابات المسجلة</small></div>
+      <div class="admin-v31-overview-art" aria-hidden="true">🏆<span>📚</span></div>
+    </section>
+    <div class="admin-v31-home-panels">
+      <section class="admin-v31-section admin-v31-glass admin-v31-actions-panel">
+        <h2>✨ إجراءات سريعة للإدارة</h2>
+        <div class="admin-v31-shortcuts">${adminV31Shortcuts}</div>
+      </section>
+      <section class="admin-v31-section admin-v31-glass admin-v31-events-panel">
+        <h2>✨ أحدث نشاط على المنصة</h2>
+        <div class="admin-v31-events">${adminV31EventsMarkup}</div>
+      </section>
+    </div>
+    <section class="admin-v31-section admin-v31-glass admin-v31-performance">
+      <div class="admin-v31-performance-heading"><h2>✨ إحصائيات الأداء</h2><p>مؤشرات مستخرجة من النتائج والنشاط المسجل فعلياً</p></div>
+      <div class="admin-v31-performance-content"><div class="admin-v31-performance-rows">${adminV31PerformanceMarkup}</div><div class="admin-v31-performance-art" aria-hidden="true">📊<span>↗</span></div></div>
+    </section>
+    <section class="admin-v31-section admin-v31-glass admin-v31-groups-summary">
+      <div class="admin-section-head"><div><h2>مجموعاتك</h2><p>اختار مجموعة للاطلاع على تفاصيلها وتدبير التلاميذ</p></div><button type="button" class="outline-btn" data-action="admin-nav" data-section="groups">عرض جميع المجموعات</button></div>
+      <div class="admin-home-mini-grid">${homeGroupCards}</div>
+    </section>
+  </div>`;
 
   const accessEditingUser = adminEditingStudentLessonsId ? users.find(user=>user.id===adminEditingStudentLessonsId) : null;
   const accessEditingGroup = accessEditingUser && accessEditingUser.groupId ? cloudGroups[accessEditingUser.groupId] : null;
@@ -5091,7 +6440,9 @@ function renderAdmin(){
 
   const groupDetailMarkup = selectedGroup ? `
     <section class="admin-panel admin-group-detail-panel">
-      <div class="admin-section-head"><div><p class="admin-eyebrow">تفاصيل المجموعة</p><h2>${escapeHtml(selectedGroup.name||"المجموعة")}</h2><p>إضافة الطلبة ومتابعة الحسابات داخل هاد المجموعة.</p></div><span class="admin-count">${selectedGroupUsers.length} طالب</span></div>
+      <div class="admin-section-head"><div><p class="admin-eyebrow">تفاصيل المجموعة</p><h2>${escapeHtml(selectedGroup.name||"المجموعة")} <span class="admin-group-level-chip">${normalizeGroupCourseLevel(selectedGroup.level)}</span></h2><p>إضافة الطلبة ومتابعة الحسابات داخل هاد المجموعة.</p></div><span class="admin-count">${selectedGroupUsers.length} طالب</span></div>
+      <div class="admin-section-head admin-group-students-heading"><div><p class="admin-eyebrow">طلبة المجموعة</p><h3>لائحة الطلبة</h3></div></div>
+      <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>الطالب</th><th>المجموعة</th><th>الحالة</th><th>آخر دخول</th><th>الإجراءات</th></tr></thead><tbody>${groupStudentRows}</tbody></table></div>
       <div class="admin-group-add-student">
         <div class="admin-group-add-student-heading"><div><h3>إضافة طالب للمجموعة</h3><p>كتب الاسم، ولد Gmail وكلمة السر، ومن بعد أنشئ الحساب مباشرة.</p></div><span>✨</span></div>
         <div class="admin-form-grid admin-generator-grid">
@@ -5107,8 +6458,6 @@ function renderAdmin(){
         </div>
         <p class="admin-note">Generator كيقترح عنوان Gmail وكلمة سر. الحساب كيتسجل فعلياً فـ Firebase، ولكن عنوان Gmail المقترح ما كيعنيش إنشاء بريد Gmail حقيقي.</p>
       </div>
-      <div class="admin-section-head admin-group-students-heading"><div><p class="admin-eyebrow">طلبة المجموعة</p><h3>لائحة الطلبة</h3></div></div>
-      <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>الطالب</th><th>المجموعة</th><th>الحالة</th><th>آخر دخول</th><th>الإجراءات</th></tr></thead><tbody>${groupStudentRows}</tbody></table></div>
     </section>
   ` : `<section class="admin-panel admin-group-empty-detail"><p>اختار مجموعة من اللائحة باش تشوف الطلبة ديالها وتزيد طلبة جداد.</p></section>`;
 
@@ -5116,26 +6465,30 @@ function renderAdmin(){
     <section class="admin-welcome"><div><p class="admin-eyebrow">تدبير المجموعات</p><h1>المجموعات والطلبة</h1><p>أنشئ المجموعات، ومن داخل كل مجموعة زيد الطلبة باستعمال Generator.</p></div></section>
     <section class="admin-panel"><div class="admin-section-head"><div><p class="admin-eyebrow">مجموعة جديدة</p><h2>${editingGroupId?"تعديل المجموعة":"إضافة مجموعة"}</h2></div><span class="admin-section-icon">＋</span></div>
       <div class="admin-group-form">
-        <div class="admin-form-grid"><label>اسم المجموعة<input id="groupName" type="text" value="${escapeHtml(editing.name||"")}" placeholder="مثلاً: A1 صباحي"></label><label>الوقت المطلوب يومياً (بالدقائق)<input id="groupRequiredMinutes" type="number" min="0" max="600" value="${editing.requiredDailyMinutes==null?30:Number(editing.requiredDailyMinutes)}"></label></div>
-        <p class="admin-note">الدروس المتاحة لهذه المجموعة:</p><div class="admin-lesson-checks">${groupLessonChecks}</div>
+        <div class="admin-form-grid admin-group-basic-fields">
+          <label>اسم المجموعة<input id="groupName" type="text" value="${escapeHtml(editing.name||"")}" placeholder="مثلاً: A1 صباحي"></label>
+          <label>الوقت المطلوب يومياً (بالدقائق)<input id="groupRequiredMinutes" type="number" min="0" max="600" value="${editing.requiredDailyMinutes==null?30:Number(editing.requiredDailyMinutes)}"></label>
+        </div>
+        <div class="admin-group-level-accordion">
+          <div class="admin-group-level-accordion-heading">
+            <strong>المستويات الدراسية والدروس المتاحة</strong>
+            <span>اضغط على المستوى لفتح إعداداته أو إغلاقها</span>
+          </div>
+          ${groupLessonPanels}
+        </div>
+        <p class="admin-note">تقدر تفعّل أو تقفل كل مستوى للطلاب بشكل مستقل. وفي B1 وB2 تقدر أيضاً تتحكم في Kurs وTeste وTraining Prüfung وPrüfungen، ثم تحدد دروس Kurs لكل مستوى. جميع الاختيارات كتتحفظ معاً.</p>
         <div class="admin-form-actions"><button class="primary-btn" data-action="admin-save-group">${editingGroupId?"حفظ التعديلات":"إنشاء المجموعة"}</button>${editingGroupId?'<button class="outline-btn" data-action="admin-cancel-group-edit">إلغاء</button>':""}</div>
       </div>
     </section>
     <section class="admin-panel"><div class="admin-section-head"><div><p class="admin-eyebrow">كل المجموعات</p><h2>قائمة المجموعات</h2></div><span class="admin-count">${realGroups.length} مجموعات</span></div><div class="admin-group-list">${groupsMarkup}</div></section>
-    ${groupDetailMarkup}
   `;
 
   const resultsMarkupPage = `
     <section class="admin-welcome"><div><p class="admin-eyebrow">النتائج والتقارير</p><h1>نتائج المجموعات والطلبة</h1><p>اختار المجموعة أولاً، ومن بعد تقدر تختار طالب من نفس المجموعة.</p></div></section>
-    <section class="admin-panel admin-results-filter-panel">
-      <div class="admin-results-filter-grid">
-        <label>1. اختار المجموعة<select id="adminResultsGroupFilter">${resultsGroupOptions}</select></label>
-        <label>2. اختار الطالب<select id="adminResultsStudentFilter">${resultsStudentOptions}</select></label>
-        <label>3. اختار الدرس (Lektion)<select id="adminResultsLessonFilter">${resultsLessonOptions}</select></label>
-        <label>4. نوع المحتوى<select id="adminResultsTypeFilter">${resultsTypeOptions}</select></label>
-      </div>
-      <p class="admin-note">اختار مجموعة واحدة أو طالب واحد لعرض تقريره فقط، ثم حدّد Lektion ونوع المحتوى: Kurs أو Podcast أو Test. المبيانات والنتائج ونقاط الضعف كلها كتتصفّى حسب الاختيارات. Kurs وPodcast كيتسجل ليهم وقت التعلم؛ النقط والتمارين كتظهر فـ Test.</p>
-    </section>
+
+    ${adminProgressDashboardMarkup}
+    ${adminProgressLessonStatusOverlay}
+    ${adminProgressMetricOverlay}
     ${adminResultsStudentId!=="all" ? `
       <section class="admin-panel admin-analytics-panel">
         <div class="admin-section-head"><div><p class="admin-eyebrow">التقرير الفردي</p><h2>نتائج الطالب المختار</h2></div><span class="admin-count">طالب واحد</span></div>
@@ -5151,37 +6504,75 @@ function renderAdmin(){
     ` : `
       <section class="admin-panel admin-results-prompt">
         <div class="admin-results-prompt-icon">📊</div>
-        <div><h2>اختار المجموعة أو الطالب لعرض التقرير</h2><p>التقارير التفصيلية ما غاديش تبان كاملة دفعة وحدة. اختار مجموعة باش تشوف تقريرها بوحدها، أو اختار طالب باش تشوف التقرير الفردي ديالو.</p></div>
+        <div><h2>نظرة عامة على جميع المجموعات</h2><p>اللوحة أعلاه كتجمع تقدم جميع الطلبة. اختار مجموعة أو طالب من الفلاتر باش تشوف لوحة التقدم والتقرير بالتفصيل.</p></div>
       </section>
     `}
-    ${adminResultsTypeFilter==="kurs" || adminResultsTypeFilter==="podcast" ? resultsActivityMarkup : `
-      <section class="admin-panel"><div class="admin-section-head"><div><p class="admin-eyebrow">نقاط الضعف</p><h2>الدروس والاختبارات التي تحتاج مراجعة</h2></div><span class="admin-count">${resultsWeakRows.length} نتائج ضعيفة</span></div><div class="admin-difficulty-list">${resultsWeakMarkup}</div></section>
-      <section class="admin-panel"><div class="admin-section-head"><div><p class="admin-eyebrow">كل النتائج</p><h2>تفاصيل الاختبارات</h2></div><span class="admin-count">${resultsVisibleRows.length} اختبار</span></div><div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>الطالب / المجموعة</th><th>الاختبار / الدرس</th><th>النقط</th><th>النسبة</th><th>المحاولات</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody>${resultsVisibleRowsMarkup}</tbody></table></div></section>
-    `}
+    ${adminResultsTypeFilter==="kurs" || adminResultsTypeFilter==="podcast" ? resultsActivityMarkup : ""}
     <p class="admin-local-warning">☁️ Firebase: المجموعات، حسابات الطلبة، الأنشطة والنتائج محفوظة تحت deutschA1.</p>
   `;
 
   const contentLibraryMarkup = renderAdminContentSection();
   const pagesManagerMarkup = renderAdminPagesSection();
-  const adminMainContent = adminSection==="groups" ? groupsMarkupPage : adminSection==="results" ? resultsMarkupPage : adminSection==="content" ? contentLibraryMarkup : adminSection==="pages" ? pagesManagerMarkup : homeMarkup;
-  const adminTitle = adminSection==="groups" ? "المجموعات" : adminSection==="results" ? "النتائج" : adminSection==="content" ? "المحتوى" : adminSection==="pages" ? "صفحات HTML" : "الرئيسية";
+  const adminV31StudentSection=`<section class="admin-welcome"><div><p class="admin-eyebrow">إدارة المتعلمين</p><h1>التلاميذ</h1><p>متابعة الحسابات، النشاط، المجموعات وصلاحيات الوصول إلى الدروس.</p></div><button type="button" class="primary-btn" data-action="admin-nav" data-section="groups">＋ إضافة تلميذ داخل مجموعة</button></section>
+    <section class="admin-stats admin-v31-student-stats"><article><span>👨‍🎓</span><div><small>عدد التلاميذ</small><strong>${users.length}</strong></div></article><article><span>🟢</span><div><small>نشطوا خلال 7 أيام</small><strong>${adminV31ActiveStudents.length}</strong></div></article><article><span>👥</span><div><small>بدون مجموعة</small><strong>${unassignedCount}</strong></div></article></section>
+    <section class="admin-panel"><div class="admin-section-head"><div><p class="admin-eyebrow">الحسابات المسجلة</p><h2>قائمة التلاميذ</h2><p>اضغط على اسم التلميذ لعرض التفاصيل أو استخدم أزرار الإدارة.</p></div><span class="admin-count">${filteredUsers.length} / ${users.length}</span></div>
+      <div class="admin-v31-student-filters"><label>المجموعة<select id="adminGroupFilter">${studentGroupFilterOptions}</select></label><label>حالة النشاط<select id="adminStudentFilter"><option value="all" ${adminStudentFilter==="all"?"selected":""}>جميع التلاميذ</option><option value="compliant" ${adminStudentFilter==="compliant"?"selected":""}>حققوا الهدف</option><option value="insufficient" ${adminStudentFilter==="insufficient"?"selected":""}>وقت غير كافٍ</option><option value="inactive" ${adminStudentFilter==="inactive"?"selected":""}>غير نشطين</option><option value="never" ${adminStudentFilter==="never"?"selected":""}>لم يدخلوا بعد</option></select></label></div>
+      <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>التلميذ</th><th>المجموعة</th><th>الحساب والنشاط</th><th>الدخول اليوم</th><th>الهدف اليومي</th><th>آخر دخول</th><th>الإجراءات</th></tr></thead><tbody>${studentsMarkup}</tbody></table></div>
+    </section>`;
+  const adminV31TeacherSection=`<section class="admin-welcome"><div><p class="admin-eyebrow">هيكلة المنصة</p><h1>المعلمون</h1><p>مكان مخصص لتدبير المعلمين مستقبلاً.</p></div></section><section class="admin-panel admin-v31-empty-section"><span aria-hidden="true">👩🏻‍🏫</span><h2>حسابات المعلمين غير مفعّلة في هذه النسخة</h2><p>المنصة الحالية كتدعم حسابات الأدمن والتلاميذ، ولكن ما فيهاش بعد قاعدة بيانات أو صلاحيات مستقلة للمعلمين. ما غاديش نعرض أرقاماً غير موجودة أو زرّ إنشاء حساب غير مربوط.</p><button type="button" class="outline-btn" data-action="admin-nav" data-section="groups">الانتقال إلى المجموعات</button></section>`;
+  const adminV31SettingsSection=`<section class="admin-welcome"><div><p class="admin-eyebrow">لوحة التحكم</p><h1>إعدادات الإدارة</h1><p>المداخل الأساسية لضبط الوصول والدرس والمحتوى.</p></div></section><div class="admin-v31-settings-grid">
+    <section class="admin-panel"><span>👥</span><h2>المجموعات وصلاحيات الدروس</h2><p>حدّد الدروس المفتوحة ومدة التعلّم المطلوبة لكل مجموعة.</p><button type="button" class="outline-btn" data-action="admin-nav" data-section="groups">فتح إعدادات المجموعات</button></section>
+    <section class="admin-panel"><span>👩🏻‍🎓</span><h2>حسابات التلاميذ</h2><p>تغيير صلاحيات الوصول ومراجعة حسابات الطلبة.</p><button type="button" class="outline-btn" data-action="admin-nav" data-section="students">فتح إدارة التلاميذ</button></section>
+    <section class="admin-panel"><span>📚</span><h2>الدروس والملفات</h2><p>إضافة الملفات والأنشطة والاختبارات التعليمية.</p><button type="button" class="outline-btn" data-action="admin-nav" data-section="content">فتح إدارة المحتوى</button></section>
+    <section class="admin-panel"><span>🧩</span><h2>صفحات HTML</h2><p>فتح محرر الصفحات ومسارات الاختبارات.</p><button type="button" class="outline-btn" data-action="admin-nav" data-section="pages">فتح محرر الصفحات</button></section>
+  </div><section class="admin-panel admin-v31-logout-panel"><div><h2>تسجيل الخروج</h2><p>إنهاء جلسة الأدمن الحالية.</p></div><button type="button" class="logout-btn" data-action="logout">تسجيل الخروج</button></section>`;
+  const adminGroupFullscreenMarkup = adminGroupFullscreenOpen && selectedGroup ? `
+    <section class="admin-group-fullscreen" role="dialog" aria-modal="true" aria-label="تلاميذ مجموعة ${escapeHtml(selectedGroup.name||"المجموعة")}" dir="rtl">
+      <header class="admin-group-fullscreen-header">
+        <div class="admin-group-fullscreen-heading">
+          <span class="admin-group-fullscreen-heading-icon" aria-hidden="true">👥</span>
+          <div><small>المجموعات · لائحة التلاميذ</small><h1>${escapeHtml(selectedGroup.name||"المجموعة")}</h1></div>
+        </div>
+        <div class="admin-group-fullscreen-header-actions">
+          <span class="admin-group-fullscreen-level">${normalizeGroupCourseLevel(selectedGroup.level)}</span>
+          <span class="admin-group-fullscreen-count">${selectedGroupUsers.length} تلميذ</span>
+          <button type="button" class="admin-group-fullscreen-back" data-action="admin-close-group-fullscreen" aria-label="رجوع إلى قائمة المجموعات">رجوع للمجموعات <span aria-hidden="true">←</span></button>
+        </div>
+      </header>
+      <main class="admin-group-fullscreen-body" id="adminGroupFullscreenBody">
+        <div class="admin-group-fullscreen-inner">${groupDetailMarkup}</div>
+      </main>
+    </section>` : "";
 
-  app.innerHTML=`<div class="admin-page admin-layout-page">
-    <header class="admin-topbar"><div class="admin-brand"><span class="admin-brand-mark">A1</span><div><strong>Admin Dashboard</strong><small>Deutsch A1 · Centre Alpha</small></div></div><div class="admin-user"><span>👤 Administrator</span><button class="logout-btn" data-action="logout">Abmelden</button></div></header>
+  const adminMainContent = adminSection==="students" ? adminV31StudentSection : adminSection==="teachers" ? adminV31TeacherSection : adminSection==="settings" ? adminV31SettingsSection : adminSection==="groups" ? groupsMarkupPage : adminSection==="results" ? resultsMarkupPage : adminSection==="content" ? contentLibraryMarkup : adminSection==="pages" ? pagesManagerMarkup : homeMarkup;
+  const adminTitles={home:"لوحة الإدارة",students:"التلاميذ",teachers:"المعلمون",groups:"المجموعات",results:"التقارير",content:"الدروس",settings:"الإعدادات",pages:"محرر HTML"};
+  const adminTitle=adminTitles[adminSection]||"لوحة الإدارة";
+
+  app.innerHTML=`<div class="admin-page admin-layout-page admin-v31">
     <div class="admin-shell">
-      <aside class="admin-sidebar">
-        <div class="admin-sidebar-caption">القائمة الرئيسية</div>
-        <nav>
-          <button class="${adminSection==="home"?"active":""}" data-action="admin-nav" data-section="home"><span>⌂</span> الصفحة الرئيسية</button>
+      <aside class="admin-sidebar" aria-label="القائمة الرئيسية للأدمن">
+        <div class="admin-v31-sidebar-brand"><span class="admin-v31-logo">📚</span><strong>المنصة التعليمية</strong><small>لوحة التحكم والإدارة</small></div>
+        <nav aria-label="أقسام الإدارة">
+          <button class="${adminSection==="home"?"active":""}" data-action="admin-nav" data-section="home"><span>⌂</span> الرئيسية</button>
+          <button class="${adminSection==="students"?"active":""}" data-action="admin-nav" data-section="students"><span>👩🏻‍🎓</span> التلاميذ</button>
+          <button class="${adminSection==="content"?"active":""}" data-action="admin-nav" data-section="content"><span>📖</span> الدروس</button>
           <button class="${adminSection==="groups"?"active":""}" data-action="admin-nav" data-section="groups"><span>👥</span> المجموعات</button>
-          <button class="${adminSection==="results"?"active":""}" data-action="admin-nav" data-section="results"><span>📊</span> النتائج</button>
-          <button class="${adminSection==="content"?"active":""}" data-action="admin-nav" data-section="content"><span>📚</span> الدروس والاختبارات</button>
-          <button class="${adminSection==="pages"?"active":""}" data-action="admin-nav" data-section="pages"><span>🧩</span> محرر صفحات HTML</button>
+          <button class="${adminSection==="teachers"?"active":""}" data-action="admin-nav" data-section="teachers"><span>👩🏻‍🏫</span> المعلمون</button>
+          <button class="${adminSection==="results"?"active":""}" data-action="admin-nav" data-section="results"><span>📊</span> التقارير</button>
+          <button class="${adminSection==="settings"?"active":""}" data-action="admin-nav" data-section="settings"><span>⚙️</span> الإعدادات</button>
+          <button class="${adminSection==="pages"?"active":""}" data-action="admin-nav" data-section="pages"><span>🧩</span> صفحات HTML</button>
         </nav>
-        <div class="admin-sidebar-foot"><small>القسم الحالي</small><strong>${adminTitle}</strong></div>
+        <div class="admin-v31-sidebar-foot"><span aria-hidden="true">🎓</span><small>تعلم الألمانية خطوة بخطوة</small></div>
       </aside>
-      <main class="admin-content">${adminMainContent}</main>
+      <main class="admin-content" id="adminMainContent">
+        <header class="admin-v31-topbar">
+          <div class="admin-v31-heading"><div class="admin-v31-heading-logo" aria-hidden="true">📚</div><div><h1>${escapeHtml(adminTitle)}</h1><p>تحكم في المنصة وتابع جميع الأقسام</p></div></div>
+          <div class="admin-v31-user"><span class="admin-v31-hello">مرحباً، ${escapeHtml(currentUser.name||"مدير المنصة")}<small>مدير النظام</small></span><span class="admin-v31-avatar" aria-hidden="true">👨🏻‍💼</span><button type="button" class="admin-v31-signout" data-action="logout" title="تسجيل الخروج" aria-label="تسجيل الخروج">↪</button></div>
+        </header>
+        ${adminMainContent}
+      </main>
     </div>
+    ${adminGroupFullscreenMarkup}
     <div class="admin-student-modal-backdrop" id="adminStudentDetailsModal" aria-hidden="true">
       <section class="admin-student-modal" role="dialog" aria-modal="true" aria-labelledby="adminStudentDetailsTitle">
         <header class="admin-student-modal-head"><div><p>حساب الطالب</p><h2 id="adminStudentDetailsTitle">تفاصيل الطالب</h2></div><button type="button" class="admin-student-modal-close" data-action="admin-close-student-details" aria-label="إغلاق">×</button></header>
@@ -5349,14 +6740,21 @@ function studentSkillOverviewMarkup(skillReport){
   </section>`;
 }
 
-function studentVocabularyReviewLessonName(lessonNo){
+const STUDENT_A2_VOCABULARY = {"1":{"Nomen":[{"de":"die Erfahrung","ar":"تجربة"},{"de":"das Erlebnis","ar":"حدث / تجربة"},{"de":"die Reise","ar":"رحلة"},{"de":"das Wochenende","ar":"نهاية الأسبوع"}],"Verben":[{"de":"besuchen","ar":"يزور","example":"Am Wochenende will ich meine Freunde besuchen.","exampleAr":"في عطلة نهاية الأسبوع أريد زيارة أصدقائي."},{"de":"erleben","ar":"يعيش تجربة","example":"Ich möchte etwas Neues erleben.","exampleAr":"أريد أن أعيش تجربة جديدة."},{"de":"ausprobieren","ar":"يجرّب","example":"Ich probiere ein neues Restaurant aus.","exampleAr":"أجرّب مطعماً جديداً."},{"de":"erzählen","ar":"يحكي","example":"Ich erzähle von meiner Reise.","exampleAr":"أحكي عن رحلتي."},{"de":"planen","ar":"يخطط","example":"Wir planen eine Reise.","exampleAr":"نخطط لرحلة."},{"de":"reisen","ar":"يسافر","example":"Nächstes Jahr möchte ich nach Deutschland reisen.","exampleAr":"أريد السفر إلى ألمانيا العام القادم."},{"de":"fahren","ar":"يذهب / يسافر بوسيلة نقل","example":"Wir sind letztes Jahr nach Agadir gefahren.","exampleAr":"سافرنا إلى أكادير العام الماضي."},{"de":"machen","ar":"يفعل / يقوم بـ","example":"Wir haben viele Fotos gemacht.","exampleAr":"التقطنا الكثير من الصور."}],"Adjektive":[{"de":"neu","ar":"جديد","example":"Ich habe ein neues Restaurant besucht.","exampleAr":"زرت مطعماً جديداً."}]},"2":{"Nomen":[{"de":"die Mütze","ar":"قبعة صوفية"},{"de":"der Anzug","ar":"بدلة"},{"de":"das Hemd","ar":"قميص"},{"de":"die Jacke","ar":"سترة"},{"de":"das Kleid","ar":"فستان"},{"de":"der Rock","ar":"تنورة"},{"de":"der Mantel","ar":"معطف"},{"de":"die Schuhe","ar":"أحذية"},{"de":"die Krawatte","ar":"ربطة عنق"},{"de":"die Hose","ar":"سروال"},{"de":"der Pullover","ar":"كنزة"},{"de":"die Stiefel","ar":"أحذية طويلة"},{"de":"die Bluse","ar":"بلوزة"},{"de":"die Jeans","ar":"جينز"},{"de":"der Schal","ar":"وشاح"},{"de":"der Gürtel","ar":"حزام"},{"de":"die Kappe","ar":"قبعة"},{"de":"die Turnschuhe","ar":"حذاء رياضي"},{"de":"die Socken","ar":"جوارب"},{"de":"die Handschuhe","ar":"قفازات"},{"de":"die Sandalen","ar":"صنادل"},{"de":"der Hut","ar":"قبعة"},{"de":"die Shorts","ar":"سروال قصير"},{"de":"die Farbe","ar":"اللون"},{"de":"die Größe","ar":"المقاس / الحجم"}],"Verben":[{"de":"suchen","ar":"يبحث عن","example":"Ich suche einen Pullover.","exampleAr":"أبحث عن كنزة."},{"de":"möchten","ar":"يودّ / يرغب","example":"Welche Farbe möchten Sie?","exampleAr":"أي لون تريد؟"},{"de":"brauchen","ar":"يحتاج","example":"Welche Größe brauchen Sie?","exampleAr":"ما المقاس الذي تحتاجه؟"},{"de":"anprobieren","ar":"يجرّب ارتداء","example":"Kann ich das anprobieren?","exampleAr":"هل يمكنني تجربة هذا؟"},{"de":"gefallen","ar":"يعجب","example":"Der Pullover gefällt mir.","exampleAr":"الكنزة تعجبني."},{"de":"passen","ar":"يناسب","example":"Es passt mir nicht.","exampleAr":"إنه لا يناسبني."},{"de":"nehmen","ar":"يأخذ","example":"Ich nehme es.","exampleAr":"سآخذه."},{"de":"tragen","ar":"يرتدي","example":"Ich trage einen Pullover.","exampleAr":"أنا أرتدي كنزة."}],"Adjektive":[{"de":"rot","ar":"أحمر"},{"de":"blau","ar":"أزرق"},{"de":"gelb","ar":"أصفر"},{"de":"grün","ar":"أخضر"},{"de":"schwarz","ar":"أسود"},{"de":"weiß","ar":"أبيض"},{"de":"grau","ar":"رمادي"},{"de":"braun","ar":"بني"},{"de":"rosa","ar":"وردي"},{"de":"orange","ar":"برتقالي"},{"de":"schön","ar":"جميل"},{"de":"groß","ar":"كبير"},{"de":"klein","ar":"صغير"},{"de":"lang","ar":"طويل"},{"de":"kurz","ar":"قصير"},{"de":"teuer","ar":"غالي"},{"de":"billig","ar":"رخيص"},{"de":"alt","ar":"قديم"},{"de":"neu","ar":"جديد"},{"de":"gut","ar":"جيد"},{"de":"hoch","ar":"مرتفع"},{"de":"bequem","ar":"مريح"},{"de":"modern","ar":"عصري"},{"de":"warm","ar":"دافئ"},{"de":"kalt","ar":"بارد"},{"de":"interessant","ar":"ممتع"},{"de":"schöner","ar":"أجمل"},{"de":"größer","ar":"أكبر"},{"de":"kleiner","ar":"أصغر"},{"de":"länger","ar":"أطول"},{"de":"kürzer","ar":"أقصر"},{"de":"teurer","ar":"أغلى"},{"de":"billiger","ar":"أرخص"},{"de":"älter","ar":"أقدم"},{"de":"jung","ar":"شاب"},{"de":"jünger","ar":"أصغر سنًّا"},{"de":"höher","ar":"أعلى"},{"de":"besser","ar":"أفضل"}]},"3":{"Nomen":[{"de":"der Vater","ar":"الأب"},{"de":"die Mutter","ar":"الأم"},{"de":"der Bruder","ar":"الأخ"},{"de":"die Schwester","ar":"الأخت"},{"de":"der Sohn","ar":"الابن"},{"de":"die Tochter","ar":"الابنة"},{"de":"der Opa","ar":"الجد"},{"de":"die Oma","ar":"الجدة"},{"de":"der Onkel","ar":"العم / الخال"},{"de":"die Tante","ar":"العمة / الخالة"},{"de":"der Cousin","ar":"ابن العم / ابن الخال"},{"de":"die Cousine","ar":"بنت العم / بنت الخال"},{"de":"die Familie","ar":"الأسرة"},{"de":"die Freunde","ar":"الأصدقاء"},{"de":"die Eltern","ar":"الوالدان"},{"de":"die Großeltern","ar":"الأجداد"},{"de":"die Geschwister","ar":"الإخوة"},{"de":"das Kind","ar":"الطفل"},{"de":"der Mann","ar":"الرجل"},{"de":"die Frau","ar":"المرأة"},{"de":"das Baby","ar":"الرضيع"}],"Verben":[{"de":"lieben","ar":"يحب"},{"de":"helfen","ar":"يساعد"},{"de":"sprechen","ar":"يتحدث"},{"de":"wohnen","ar":"يسكن"},{"de":"spielen","ar":"يلعب"},{"de":"lernen","ar":"يتعلم"},{"de":"lachen","ar":"يضحك"},{"de":"besuchen","ar":"يزور"}],"Adjektive":[{"de":"jung","ar":"شاب"},{"de":"alt","ar":"كبير السن"},{"de":"freundlich","ar":"ودود"},{"de":"nett","ar":"لطيف"},{"de":"schön","ar":"جميل"},{"de":"groß","ar":"كبير"},{"de":"klein","ar":"صغير"},{"de":"fleißig","ar":"مجتهد"},{"de":"intelligent","ar":"ذكي"}]},"4":{"Nomen":[{"de":"das Hotel","ar":"الفندق"},{"de":"die Ferienwohnung","ar":"شقة العطلة"},{"de":"der Campingplatz","ar":"مخيم"},{"de":"die Jugendherberge","ar":"نزل الشباب"},{"de":"das Hostel","ar":"نزل شبابي"},{"de":"das Wohnzimmer","ar":"غرفة الجلوس"},{"de":"das Schlafzimmer","ar":"غرفة النوم"},{"de":"die Küche","ar":"المطبخ"},{"de":"das Badezimmer","ar":"الحمام"},{"de":"der Balkon","ar":"الشرفة"},{"de":"der Garten","ar":"الحديقة"},{"de":"das Bett","ar":"السرير"},{"de":"das Sofa","ar":"الأريكة"},{"de":"der Tisch","ar":"الطاولة"},{"de":"der Stuhl","ar":"الكرسي"},{"de":"der Schrank","ar":"الخزانة"},{"de":"das Regal","ar":"الرف"},{"de":"die Lampe","ar":"المصباح"},{"de":"der Teppich","ar":"السجادة"}],"Verben":[{"de":"übernachten","ar":"يبيت / يقيم"},{"de":"mieten","ar":"يستأجر"},{"de":"kosten","ar":"يكلّف"},{"de":"suchen","ar":"يبحث عن"},{"de":"finden","ar":"يجد"},{"de":"tauschen","ar":"يبدّل / يتبادل"}],"Adjektive":[{"de":"teuer","ar":"غالي"},{"de":"billig","ar":"رخيص"},{"de":"schön","ar":"جميل"},{"de":"ruhig","ar":"هادئ"},{"de":"laut","ar":"مزعج"},{"de":"groß","ar":"كبير"},{"de":"klein","ar":"صغير"},{"de":"gut","ar":"جيد"},{"de":"toll","ar":"رائع"}]},"5":{"Nomen":[{"de":"der Apfel","ar":"التفاح"},{"de":"die Banane","ar":"الموز"},{"de":"die Tomaten","ar":"الطماطم"},{"de":"die Kartoffeln","ar":"البطاطس"},{"de":"die Zwiebeln","ar":"البصل"},{"de":"der Salat","ar":"السلطة"},{"de":"das Brot","ar":"الخبز"},{"de":"der Käse","ar":"الجبن"},{"de":"die Nudeln","ar":"المعكرونة"},{"de":"der Reis","ar":"الأرز"},{"de":"die Milch","ar":"الحليب"},{"de":"die Eier","ar":"البيض"},{"de":"die Dose","ar":"العلبة المعدنية"},{"de":"das Glas","ar":"المرطبان"},{"de":"die Flasche","ar":"القارورة"},{"de":"die Tüte","ar":"الكيس"},{"de":"das Päckchen","ar":"العلبة الصغيرة"},{"de":"das Kilo","ar":"الكيلوغرام"},{"de":"das Stück","ar":"قطعة"},{"de":"die Speisekarte","ar":"قائمة الطعام"},{"de":"der Kellner","ar":"النادل"},{"de":"die Rechnung","ar":"الفاتورة"},{"de":"das Trinkgeld","ar":"الإكرامية"},{"de":"der Müll","ar":"النفايات"},{"de":"die Tonne","ar":"حاوية النفايات"},{"de":"Selbstbedienung","ar":"خدمة ذاتية"},{"de":"Bioabfall","ar":"نفايات عضوية"},{"de":"das Papier","ar":"الورق"},{"de":"das Plastik","ar":"البلاستيك"}],"Verben":[{"de":"kaufen, ich kaufe","ar":"أشتري"},{"de":"essen, ich esse","ar":"آكل"},{"de":"trinken, ich trinke","ar":"أشرب"},{"de":"bestellen, ich bestelle","ar":"أطلب"},{"de":"bezahlen, ich bezahle","ar":"أدفع"},{"de":"wiegen, ich wiege","ar":"أزن"}],"Adjektive":[]},"6":{"Nomen":[{"de":"die Kunst","ar":"الفن"},{"de":"das Graffiti","ar":"الغرافيتي"},{"de":"die Streetart","ar":"فن الشارع"},{"de":"der Künstler","ar":"الفنان"},{"de":"der Protest","ar":"الاحتجاج"},{"de":"die Brücke","ar":"الجسر"},{"de":"schmutzig","ar":"متسخ"},{"de":"sauber","ar":"نظيف"},{"de":"die Polizei","ar":"الشرطة"},{"de":"Ich erinnere mich.","ar":"أتذكر."},{"de":"Ich beschwere mich.","ar":"أشتكي."},{"de":"Ich ärgere mich.","ar":"أنزعج."},{"de":"Ich fühle mich gut.","ar":"أشعر أنني بخير."},{"de":"das Open-Air-Kino","ar":"سينما الهواء الطلق"},{"de":"der Film","ar":"الفيلم"},{"de":"spannend","ar":"مشوق"},{"de":"traurig","ar":"حزين"},{"de":"romantisch","ar":"رومانسي"},{"de":"langweilig","ar":"ممل"},{"de":"lustig","ar":"مضحك"}],"Verben":[{"de":"sich freuen","ar":"يفرح"},{"de":"sich ärgern","ar":"ينزعج"},{"de":"sich fühlen","ar":"يشعر"},{"de":"sich erinnern","ar":"يتذكر"},{"de":"sich beschweren","ar":"يشتكي"},{"de":"sich setzen","ar":"يجلس"},{"de":"sich waschen","ar":"يغتسل"},{"de":"sich anziehen","ar":"يرتدي ملابسه"},{"de":"sich duschen","ar":"يستحم"},{"de":"sich interessieren","ar":"يهتم"}],"Adjektive":[{"de":"fröhlich","ar":"سعيد"},{"de":"traurig","ar":"حزين"},{"de":"wütend","ar":"غاضب"},{"de":"überrascht","ar":"متفاجئ"},{"de":"müde","ar":"نعسان"},{"de":"schmutzig","ar":"متسخ"},{"de":"sauber","ar":"نظيف"},{"de":"spannend","ar":"مشوّق"},{"de":"romantisch","ar":"رومانسي"},{"de":"langweilig","ar":"ممل"},{"de":"lustig","ar":"مضحك"}]},"7":{"Nomen":[{"de":"das Wetter","ar":"الطقس"},{"de":"die Jahreszeit","ar":"الفصل"},{"de":"der Frühling","ar":"الربيع"},{"de":"der Sommer","ar":"الصيف"},{"de":"der Herbst","ar":"الخريف"},{"de":"der Winter","ar":"الشتاء"},{"de":"der Regenschirm","ar":"المظلة"},{"de":"die Temperatur","ar":"درجة الحرارة"},{"de":"der Termin","ar":"الموعد"},{"de":"der Arzttermin","ar":"موعد الطبيب"},{"de":"der Kalender","ar":"التقويم"},{"de":"der Mai","ar":"ماي"},{"de":"der Zug","ar":"القطار"},{"de":"der Kuchen","ar":"الكعكة"}],"Verben":[{"de":"regnen","ar":"تمطر","example":"Wenn es regnet, nehme ich einen Regenschirm.","exampleAr":"عندما تمطر، آخذ معي مظلة."}],"Adjektive":[{"de":"kalt","ar":"بارد"},{"de":"warm","ar":"دافئ"},{"de":"sonnig","ar":"مشمس"},{"de":"windig","ar":"عاصف"}]},"8":{"Nomen":[{"de":"das Verkehrsmittel","ar":"وسيلة النقل"},{"de":"das Fahrrad","ar":"الدراجة"},{"de":"der Bus","ar":"الحافلة"},{"de":"die U-Bahn","ar":"المترو"},{"de":"der Zug","ar":"القطار"},{"de":"der Bahnhof","ar":"محطة القطار"},{"de":"die Ampel","ar":"إشارة المرور"},{"de":"das Carsharing","ar":"مشاركة السيارة"},{"de":"die Umwelt","ar":"البيئة"},{"de":"die Fahrt","ar":"الرحلة"}],"Verben":[{"de":"fahren","ar":"يقود / يذهب بوسيلة نقل","example":"Ich fahre mit dem Zug nach Hamburg.","exampleAr":"أذهب إلى هامبورغ بالقطار."},{"de":"ankommen","ar":"يصل","example":"Der Zug kommt um zehn Uhr an.","exampleAr":"يصل القطار في الساعة العاشرة."}],"Adjektive":[{"de":"billig","ar":"رخيص","example":"Fahrradfahren ist billig.","exampleAr":"ركوب الدراجة رخيص."},{"de":"gesund","ar":"صحي","example":"Fahrradfahren ist gesund.","exampleAr":"ركوب الدراجة صحي."},{"de":"gut","ar":"جيد","example":"Fahrradfahren ist gut für die Umwelt.","exampleAr":"ركوب الدراجة مفيد للبيئة."}]},"9":{"Nomen":[{"de":"der Flohmarkt","ar":"سوق السلع المستعملة"},{"de":"die Winterjacke","ar":"سترة شتوية"},{"de":"das Wörterbuch","ar":"قاموس"},{"de":"der Roman","ar":"رواية"},{"de":"die Gitarre","ar":"الغيتار"},{"de":"das Wochenende","ar":"نهاية الأسبوع"},{"de":"das Restaurant","ar":"المطعم"},{"de":"der Preis","ar":"الثمن"}],"Verben":[{"de":"kaufen","ar":"يشتري","example":"Tom möchte eine gebrauchte Gitarre kaufen.","exampleAr":"يريد توم شراء غيتار مستعمل."},{"de":"verkaufen","ar":"يبيع","example":"Ich verkaufe ein Wörterbuch.","exampleAr":"أبيع قاموساً."},{"de":"sich treffen","ar":"يلتقي","example":"Wir treffen uns am Samstag um elf Uhr.","exampleAr":"نلتقي يوم السبت في الساعة الحادية عشرة."},{"de":"bestellen","ar":"يطلب","example":"Ich bestelle Spaghetti mit Gemüse.","exampleAr":"أطلب سباغيتي بالخضروات."}],"Adjektive":[{"de":"gebraucht","ar":"مستعمل","example":"Ich suche eine gebrauchte Gitarre.","exampleAr":"أبحث عن غيتار مستعمل."},{"de":"günstig","ar":"مناسب السعر"}]},"10":{"Nomen":[{"de":"der Frühling","ar":"الربيع"},{"de":"das Meer","ar":"البحر"},{"de":"das Flugzeug","ar":"الطائرة"},{"de":"die Reise","ar":"الرحلة"},{"de":"das Kolosseum","ar":"الكولوسيوم"},{"de":"der Winter","ar":"الشتاء"},{"de":"die Zukunft","ar":"المستقبل"},{"de":"die Fotos","ar":"الصور"}],"Verben":[{"de":"blühen","ar":"يزهر","example":"Im Frühling blühen die Blumen.","exampleAr":"في الربيع تتفتح الأزهار."},{"de":"schwimmen","ar":"يسبح","example":"Im Sommer möchte Sara im Meer schwimmen.","exampleAr":"تريد سارة السباحة في البحر في الصيف."},{"de":"surfen","ar":"يركب الأمواج"},{"de":"segeln","ar":"يبحر"},{"de":"reisen","ar":"يسافر","example":"Ich würde gern nach Kanada reisen.","exampleAr":"أود السفر إلى كندا."},{"de":"besichtigen","ar":"يزور / يشاهد معلماً","example":"Wir haben das Kolosseum besichtigt.","exampleAr":"زرنا الكولوسيوم."},{"de":"Ski fahren","ar":"يتزلج","example":"Im Winter kann man Ski fahren.","exampleAr":"يمكن التزلج في الشتاء."},{"de":"snowboarden","ar":"يتزلج على اللوح","example":"Im Winter kann man snowboarden.","exampleAr":"يمكن التزلج على اللوح في الشتاء."}],"Adjektive":[]}};
+
+function studentVocabularyReviewLessonName(lessonNo, level="A1"){
+  const no=Number(lessonNo);
+  if(String(level).toUpperCase()==="A2"){
+    return a2CourseLessons.find(lesson=>lesson.number===no)?.title || `A2 · Lektion ${no}`;
+  }
   const courseNames={
     6:"Meine Stadt",
     7:"Wie, wo und wann?",
     8:"Unterwegs",
-    9:"Flohmarkt"
+    9:"Flohmarkt",
+    10:"Reisen & Jahreszeiten"
   };
-  return courseNames[Number(lessonNo)] || lessons[Number(lessonNo)-1]?.name || `Lektion ${lessonNo}`;
+  return courseNames[no] || lessons[no-1]?.name || `Lektion ${no}`;
 }
 function studentVocabularyReviewIcon(word,category,fallback=""){
   if(fallback && fallback!=="📚")return fallback;
@@ -5374,18 +6772,32 @@ function studentVocabularyReviewIcon(word,category,fallback=""){
     "das wohnzimmer":"🛋️","das schlafzimmer":"🛏️","die küche":"🍳",
     "das badezimmer":"🛁","das haus":"🏠","die wohnung":"🏢","der balkon":"🌇",
     "der garten":"🌻","schön":"🌸","groß":"📏","klein":"🏡","ruhig":"😌",
-    "laut":"🔊","teuer":"💰","billig":"🏷️","grün":"🌳","modern":"🏙️"
+    "laut":"🔊","teuer":"💰","billig":"🏷️","grün":"🌳","modern":"🏙️",
+    "die mütze":"🧢","der anzug":"🤵","das hemd":"👔","die jacke":"🧥","das kleid":"👗","der rock":"👗","der mantel":"🧥","die schuhe":"👟","die krawatte":"👔","die hose":"👖","der pullover":"🧶","die stiefel":"🥾","die bluse":"👚","die jeans":"👖","der schal":"🧣","der gürtel":"🧷","die kappe":"🧢","die turnschuhe":"👟","die socken":"🧦","die handschuhe":"🧤","die sandalen":"🩴","der hut":"🎩","die shorts":"🩳",
+    "die erfahrung":"🧠","das erlebnis":"✨","die familie":"👨‍👩‍👧","die freunde":"🧑‍🤝‍🧑","die eltern":"👨‍👩‍👦","die großeltern":"👵","das kind":"🧒","der vater":"👨","die mutter":"👩","der bruder":"👦","die schwester":"👧","der sohn":"👦","die tochter":"👧","der opa":"👴","die oma":"👵","der onkel":"👨","die tante":"👩","der cousin":"🧑","die cousine":"🧑",
+    "das hotel":"🏨","die ferienwohnung":"🏡","der campingplatz":"🏕️","die jugendherberge":"🛏️","das hostel":"🏨","das wohnzimmer":"🛋️","das schlafzimmer":"🛏️","die küche":"🍳","das badezimmer":"🛁","der balkon":"🌇","der garten":"🌻","das bett":"🛏️","das sofa":"🛋️","der tisch":"🪑","der stuhl":"🪑","der schrank":"🚪","das regal":"📚","die lampe":"💡","der teppich":"🧶",
+    "der apfel":"🍎","die banane":"🍌","die tomaten":"🍅","die kartoffeln":"🥔","die zwiebeln":"🧅","der salat":"🥗","das brot":"🍞","der käse":"🧀","die nudeln":"🍝","der reis":"🍚","die milch":"🥛","die eier":"🥚","die dose":"🥫","das glas":"🥛","die flasche":"🍼","die tüte":"🛍️","das päckchen":"📦","das kilo":"⚖️","das stück":"🧩","die speisekarte":"📋","der kellner":"🧑‍🍳","die rechnung":"🧾","das trinkgeld":"💶","der müll":"🗑️","die tonne":"🗑️","das papier":"📄","das plastik":"♻️",
+    "die kunst":"🎨","das graffiti":"🎨","die streetart":"🖼️","der künstler":"🧑‍🎨","der protest":"📢","die brücke":"🌉","die polizei":"👮","das open-air-kino":"🎬","der film":"🎞️","das wetter":"🌦️","die jahreszeit":"🍂","der frühling":"🌷","der sommer":"☀️","der herbst":"🍁","der winter":"❄️","der regenschirm":"☂️","die temperatur":"🌡️","der termin":"📅","der arzttermin":"🩺","der kalender":"🗓️","der mai":"🌼","der zug":"🚆","der kuchen":"🍰",
+    "das verkehrsmittel":"🚦","das fahrrad":"🚲","der bus":"🚌","die u-bahn":"🚇","der bahnhof":"🚉","die ampel":"🚦","das carsharing":"🚗","die umwelt":"🌍","die fahrt":"🛣️","der flohmarkt":"🛍️","die winterjacke":"🧥","das wörterbuch":"📖","der roman":"📕","die gitarre":"🎸","das restaurant":"🍽️","der preis":"💶","das meer":"🌊","das flugzeug":"✈️","das kolosseum":"🏛️","die zukunft":"🔮","die fotos":"📸",
+    "fröhlich":"😄","traurig":"😢","wütend":"😠","überrascht":"😮","müde":"😴","schmutzig":"🧹","sauber":"✨","spannend":"🎬","romantisch":"💗","langweilig":"🥱","lustig":"😂","sonnig":"☀️","windig":"🌬️","gesund":"💚","gebraucht":"♻️","günstig":"🏷️"
   };
   if(icons[key])return icons[key];
   if(category==="Nomen")return "📚";
   if(category==="Verben")return "🏃";
   return "⭐";
 }
-function studentVocabularyReviewEntries(lessonNo,category){
-  const courseLesson=window.DEUTSCH_LESSON_VOCABULARY && window.DEUTSCH_LESSON_VOCABULARY[String(lessonNo)];
-  const courseEntries=courseLesson && courseLesson[category];
-  const fallbackEntries=lessons[Number(lessonNo)-1]?.data?.[category] || [];
-  const source=Array.isArray(courseEntries)&&courseEntries.length?courseEntries:fallbackEntries;
+function studentVocabularyReviewEntries(lessonNo,category,level=studentVocabularyReviewLevel){
+  const courseLevel=String(level||"A1").toUpperCase()==="A2"?"A2":"A1";
+  const no=Number(lessonNo)||1;
+  let source=[];
+  if(courseLevel==="A2"){
+    source=STUDENT_A2_VOCABULARY[no]?.[category] || [];
+  }else{
+    const courseLesson=window.DEUTSCH_LESSON_VOCABULARY && window.DEUTSCH_LESSON_VOCABULARY[String(no)];
+    const courseEntries=courseLesson && courseLesson[category];
+    const fallbackEntries=lessons[no-1]?.data?.[category] || [];
+    source=Array.isArray(courseEntries)&&courseEntries.length?courseEntries:fallbackEntries;
+  }
   return source.map((entry,index)=>{
     let german="",meaning="",example="",speakText="",fallbackIcon="",exampleArabic="";
     if(Array.isArray(entry)){
@@ -5399,27 +6811,31 @@ function studentVocabularyReviewEntries(lessonNo,category){
       meaning=String(entry.ar||"");
       example=String(entry.example||"");
       speakText=String(entry.speak||entry.de||"");
+      fallbackIcon=String(entry.icon||"");
       exampleArabic=String(entry.exampleAr||entry.arExample||entry.exampleTranslation||entry.example_ar||"");
     }
     const displayGerman=category==="Verben"?german.replace(/\s*\([^)]*\)\s*/g,"").trim():german;
     return {
-      id:`${lessonNo}-${category}-${index}`,
+      id:`${courseLevel}-${no}-${category}-${index}`,
       german:displayGerman || german,
       fullGerman:german,
       meaning,
       example,
-      exampleArabic:typeof exampleArabic!=="undefined"?exampleArabic:"",
+      exampleArabic,
       category,
-      lessonNo:Number(lessonNo),
+      lessonNo:no,
+      level:courseLevel,
       speakText:speakText || german,
       icon:studentVocabularyReviewIcon(displayGerman||german,category,fallbackIcon)
     };
-  }).filter(item=>item.german);
+  }).filter(item=>item.german&&item.meaning);
 }
-
 function studentVocabularyWordKey(value){
   return String(value||"").toLocaleLowerCase("de").replace(/\s*\([^)]*\)/g,"").trim();
 }
+const A2_VOCABULARY_EXAMPLES = {"möchten":[["Ich möchte einen Pullover kaufen.","أود شراء كنزة."],["Welche Farbe möchten Sie?","أي لون تريد؟"],["Wir möchten heute bezahlen.","نود الدفع اليوم."]],"erleben":[["Ich möchte etwas Neues erleben.","أريد أن أعيش تجربة جديدة."],["Wir erleben einen schönen Tag.","نعيش يوماً جميلاً."],["Sie erlebt viel auf ihrer Reise.","تعيش تجارب كثيرة في رحلتها."]],"ausprobieren":[["Ich probiere ein neues Restaurant aus.","أجرّب مطعماً جديداً."],["Wir probieren ein neues Spiel aus.","نجرب لعبة جديدة."],["Möchtest du das auch ausprobieren?","هل تريد تجربة ذلك أيضاً؟"]],"erzählen":[["Ich erzähle von meiner Reise.","أحكي عن رحلتي."],["Sie erzählt eine interessante Geschichte.","تحكي قصة ممتعة."],["Wir erzählen unseren Freunden davon.","نحكي لأصدقائنا عن ذلك."]],"planen":[["Wir planen eine Reise.","نخطط لرحلة."],["Ich plane das Wochenende.","أخطط لعطلة نهاية الأسبوع."],["Sie plant ihren Urlaub.","تخطط لعطلتها."]],"machen":[["Wir haben viele Fotos gemacht.","التقطنا الكثير من الصور."],["Was machst du am Wochenende?","ماذا تفعل في نهاية الأسبوع؟"],["Ich mache meine Hausaufgaben.","أقوم بواجباتي."]],"anprobieren":[["Kann ich das anprobieren?","هل يمكنني تجربة هذا؟"],["Ich probiere die Jacke an.","أجرب السترة."],["Sie probiert die Schuhe an.","هي تجرب الحذاء."]],"gefallen":[["Der Pullover gefällt mir.","تعجبني الكنزة."],["Die Farbe gefällt dir.","يعجبك اللون."],["Die Schuhe gefallen mir.","تعجبني الأحذية."]],"passen":[["Die Jacke passt mir.","السترة تناسبني."],["Die Schuhe passen gut.","الحذاء مناسب."],["Die Hose passt nicht.","السروال لا يناسب."]],"nehmen":[["Ich nehme den Pullover.","سآخذ الكنزة."],["Ich nehme die blaue Jacke.","سآخذ السترة الزرقاء."],["Nimmst du auch einen Schal?","هل ستأخذ وشاحاً أيضاً؟"]],"tragen":[["Ich trage einen Pullover.","أرتدي كنزة."],["Sie trägt eine Bluse.","هي ترتدي بلوزة."],["Wir tragen warme Jacken.","نرتدي سترات دافئة."]],"übernachten":[["Ich übernachte im Hotel.","أبيت في الفندق."],["Wir übernachten in einer Ferienwohnung.","نقيم في شقة للعطلة."],["Wo übernachtest du im Urlaub?","أين تقيم في العطلة؟"]],"mieten":[["Ich miete eine Ferienwohnung.","أستأجر شقة للعطلة."],["Wir mieten ein kleines Haus.","نستأجر منزلاً صغيراً."],["Sie möchte ein Zimmer mieten.","تريد استئجار غرفة."]],"tauschen":[["Wir tauschen die Bücher.","نتبادل الكتب."],["Kann ich diese Jacke tauschen?","هل يمكنني تبديل هذه السترة؟"],["Sie tauscht ihre Wohnung.","هي تبدل شقتها."]],"bestellen":[["Ich bestelle einen Salat.","أطلب سلطة."],["Wir bestellen das Essen.","نطلب الطعام."],["Möchten Sie etwas trinken bestellen?","هل ترغب في طلب شيء للشرب؟"]],"wiegen":[["Ich wiege das Gemüse.","أزن الخضروات."],["Der Verkäufer wiegt die Äpfel.","البائع يزن التفاح."],["Wie viel wiegt die Tasche?","كم يزن هذا الكيس؟"]],"sich freuen":[["Ich freue mich auf das Wochenende.","أتطلع إلى عطلة نهاية الأسبوع."],["Wir freuen uns auf die Reise.","نتطلع إلى الرحلة."],["Sie freut sich über das Geschenk.","هي سعيدة بالهدية."]],"sich ärgern":[["Ich ärgere mich über den Lärm.","أنزعج من الضجيج."],["Er ärgert sich über den Fehler.","هو ينزعج من الخطأ."],["Wir ärgern uns nicht.","نحن لا ننزعج."]],"sich fühlen":[["Ich fühle mich müde.","أشعر بالتعب."],["Wie fühlst du dich heute?","كيف تشعر اليوم؟"],["Sie fühlt sich gut.","هي تشعر أنها بخير."]],"sich erinnern":[["Ich erinnere mich an den Film.","أتذكر الفيلم."],["Er erinnert sich an seine Reise.","يتذكر رحلته."],["Wir erinnern uns an den Tag.","نتذكر ذلك اليوم."]],"sich beschweren":[["Ich beschwere mich über den Lärm.","أشتكي من الضجيج."],["Sie beschwert sich beim Chef.","هي تشتكي لدى المدير."],["Wir beschweren uns nicht.","نحن لا نشتكي."]],"sich setzen":[["Ich setze mich auf das Sofa.","أجلس على الأريكة."],["Setz dich bitte hierhin.","اجلس هنا من فضلك."],["Wir setzen uns an den Tisch.","نجلس إلى الطاولة."]],"sich waschen":[["Ich wasche mich am Morgen.","أغتسل في الصباح."],["Das Kind wäscht sich.","الطفل يغتسل."],["Wir waschen uns die Hände.","نغسل أيدينا."]],"sich anziehen":[["Ich ziehe mich schnell an.","أرتدي ملابسي بسرعة."],["Sie zieht sich warm an.","هي ترتدي ملابس دافئة."],["Die Kinder ziehen sich an.","الأطفال يرتدون ملابسهم."]],"sich duschen":[["Ich dusche mich am Abend.","أستحم في المساء."],["Er duscht sich nach dem Sport.","يستحم بعد الرياضة."],["Wir duschen uns nach dem Schwimmen.","نستحم بعد السباحة."]],"sich interessieren":[["Ich interessiere mich für Kunst.","أهتم بالفن."],["Sie interessiert sich für Streetart.","هي تهتم بفن الشارع."],["Interessierst du dich für Filme?","هل تهتم بالأفلام؟"]],"regnen":[["Wenn es regnet, nehme ich einen Regenschirm.","عندما تمطر، آخذ معي مظلة."],["Heute regnet es stark.","تمطر بغزارة اليوم."],["Im Herbst regnet es oft.","غالباً ما تمطر في الخريف."]],"ankommen":[["Der Zug kommt um zehn Uhr an.","يصل القطار في الساعة العاشرة."],["Wir kommen am Bahnhof an.","نصل إلى محطة القطار."],["Wann kommt der Bus an?","متى تصل الحافلة؟"]],"verkaufen":[["Ich verkaufe ein Wörterbuch.","أبيع قاموساً."],["Sie verkauft ihre Winterjacke.","هي تبيع سترتها الشتوية."],["Wir verkaufen alte Bücher.","نبيع كتباً قديمة."]],"sich treffen":[["Wir treffen uns am Samstag.","نلتقي يوم السبت."],["Wann treffen wir uns?","متى نلتقي؟"],["Sie trifft ihre Freunde vor dem Bahnhof.","تلتقي أصدقاءها أمام محطة القطار."]],"blühen":[["Im Frühling blühen die Blumen.","في الربيع تتفتح الأزهار."],["Die Blumen blühen im Garten.","تتفتح الأزهار في الحديقة."],["Im April blühen viele Bäume.","في أبريل تتفتح أشجار كثيرة."]],"surfen":[["Im Sommer surfe ich im Meer.","في الصيف أركب الأمواج في البحر."],["Sie surft gern.","تحب ركوب الأمواج."],["Wir surfen am Strand.","نركب الأمواج عند الشاطئ."]],"segeln":[["Wir segeln am Wochenende.","نبحر في عطلة نهاية الأسبوع."],["Sie segelt auf dem Meer.","هي تبحر في البحر."],["Ich möchte segeln lernen.","أريد تعلم الإبحار."]],"besichtigen":[["Wir haben das Kolosseum besichtigt.","زرنا الكولوسيوم."],["Die Touristen besichtigen das Museum.","السياح يزورون المتحف."],["Morgen besichtigen wir die Stadt.","غداً سنزور المدينة."]],"ski fahren":[["Im Winter fahre ich Ski.","في الشتاء أتزلج."],["Wir fahren in den Bergen Ski.","نتزلج في الجبال."],["Kannst du Ski fahren?","هل تستطيع التزلج؟"]],"snowboarden":[["Im Winter kann man snowboarden.","يمكن التزلج على اللوح في الشتاء."],["Mein Bruder snowboardet gern.","أخي يحب التزلج على اللوح."],["Wir snowboarden in den Bergen.","نتزلج على اللوح في الجبال."]],"reisen":[["Nächstes Jahr möchte ich nach Deutschland reisen.","أريد السفر إلى ألمانيا العام القادم."],["Ich reise gern mit dem Zug.","أحب السفر بالقطار."],["Wir reisen im Sommer nach Italien.","نسافر إلى إيطاليا في الصيف."]]};
+const A2_ADJECTIVE_EXAMPLES = {"fröhlich":[["Ich bin heute fröhlich.","أنا سعيد اليوم."],["Die Kinder sind fröhlich.","الأطفال سعداء."],["Sie sieht fröhlich aus.","تبدو سعيدة."]],"traurig":[["Der Film ist traurig.","الفيلم حزين."],["Er ist heute traurig.","هو حزين اليوم."],["Die Geschichte ist traurig.","القصة حزينة."]],"wütend":[["Der Mann ist wütend.","الرجل غاضب."],["Warum bist du wütend?","لماذا أنت غاضب؟"],["Sie ist nicht mehr wütend.","لم تعد غاضبة."]],"überrascht":[["Ich bin überrascht.","أنا متفاجئ."],["Sie ist sehr überrascht.","هي متفاجئة جداً."],["Wir sind über das Geschenk überrascht.","نحن متفاجئون بالهدية."]],"müde":[["Ich bin müde.","أنا متعب."],["Nach der Arbeit bin ich müde.","بعد العمل أكون متعباً."],["Das Kind ist schon müde.","الطفل متعب بالفعل."]],"schmutzig":[["Die Straße ist schmutzig.","الشارع متسخ."],["Meine Schuhe sind schmutzig.","حذائي متسخ."],["Das Fenster ist schmutzig.","النافذة متسخة."]],"sauber":[["Die Wohnung ist sauber.","الشقة نظيفة."],["Die Küche ist sauber.","المطبخ نظيف."],["Bitte halte dein Zimmer sauber.","من فضلك حافظ على غرفتك نظيفة."]],"spannend":[["Der Film ist spannend.","الفيلم مشوق."],["Das Buch ist sehr spannend.","الكتاب مشوق جداً."],["Die Geschichte ist spannend.","القصة مشوقة."]],"romantisch":[["Der Film ist romantisch.","الفيلم رومانسي."],["Das Restaurant ist romantisch.","المطعم رومانسي."],["Es ist ein romantischer Abend.","إنها أمسية رومانسية."]],"langweilig":[["Der Film ist langweilig.","الفيلم ممل."],["Die Aufgabe ist langweilig.","المهمة مملة."],["Der Unterricht ist nicht langweilig.","الدرس ليس مملاً."]],"lustig":[["Der Film ist lustig.","الفيلم مضحك."],["Das ist eine lustige Geschichte.","هذه قصة مضحكة."],["Mein Freund ist sehr lustig.","صديقي مرح جداً."]],"kalt":[["Heute ist es kalt.","الجو بارد اليوم."],["Im Winter ist es oft kalt.","غالباً ما يكون الجو بارداً في الشتاء."],["Das Wasser ist kalt.","الماء بارد."]],"warm":[["Im Sommer ist es warm.","الجو دافئ في الصيف."],["Heute ist das Wetter warm.","الطقس دافئ اليوم."],["Der Tee ist noch warm.","الشاي ما زال دافئاً."]],"sonnig":[["Heute ist es sonnig.","الجو مشمس اليوم."],["Im Sommer ist es oft sonnig.","غالباً ما يكون الجو مشمساً في الصيف."],["Morgen wird es sonnig.","سيكون الجو مشمساً غداً."]],"windig":[["Heute ist es windig.","الجو عاصف اليوم."],["Im Herbst ist es oft windig.","غالباً ما يكون الجو عاصفاً في الخريف."],["Es ist kalt und windig.","الجو بارد وعاصف."]],"gebraucht":[["Ich suche eine gebrauchte Gitarre.","أبحث عن غيتار مستعمل."],["Das Fahrrad ist gebraucht.","الدراجة مستعملة."],["Sie kauft eine gebrauchte Jacke.","تشتري سترة مستعملة."]],"günstig":[["Der Preis ist günstig.","الثمن مناسب."],["Das Angebot ist sehr günstig.","العرض مناسب جداً."],["Wir suchen eine günstige Wohnung.","نبحث عن شقة مناسبة السعر."]],"billig":[["Fahrradfahren ist billig.","ركوب الدراجة رخيص."],["Diese Tasche ist billig.","هذه الحقيبة رخيصة."],["Das Ticket ist nicht teuer, es ist billig.","التذكرة ليست غالية، بل رخيصة."]],"gesund":[["Fahrradfahren ist gesund.","ركوب الدراجة صحي."],["Obst ist gesund.","الفواكه صحية."],["Sport ist gut und gesund.","الرياضة جيدة وصحية."]],"neu":[["Ich habe ein neues Restaurant besucht.","زرت مطعماً جديداً."],["Das ist meine neue Jacke.","هذه سترتي الجديدة."],["Wir lernen ein neues Wort.","نتعلم كلمة جديدة."]],"gut":[["Fahrradfahren ist gut für die Umwelt.","ركوب الدراجة مفيد للبيئة."],["Das Wetter ist gut.","الطقس جيد."],["Die Idee ist gut.","الفكرة جيدة."]]};
+
 function studentVocabularyWordExamples(item){
   if(!item)return [];
   const key=studentVocabularyWordKey(item.german);
@@ -5432,6 +6848,9 @@ function studentVocabularyWordExamples(item){
         {de:"Er spricht mit seiner Lehrerin.",ar:"هو يتكلم مع معلمته.",art:"👨🏻‍🎓👩🏻‍🏫"},
         {de:"Wir sprechen heute über die Schule.",ar:"نحن نتكلم اليوم عن المدرسة.",art:"👨‍👩‍👧🏫"}
       ];
+    }
+    if(item.level==="A2" && A2_VOCABULARY_EXAMPLES[key]){
+      return A2_VOCABULARY_EXAMPLES[key].map(([de,ar],index)=>({de,ar,art:["🧑🏻‍🎓","👩🏻‍🏫","👨‍👩‍👧"][index]||"🗣️"}));
     }
     const germanExamples=(verbExamples[key]||[]).slice(0,3);
     const arabicExamples={
@@ -5496,6 +6915,9 @@ function studentVocabularyWordExamples(item){
     "lecker":"لذيذة","aktiv":"نشيطة","nett":"لطيفة","offen":"مفتوحة"
   };
   if(category==="Adjektive"){
+    if(item.level==="A2" && A2_ADJECTIVE_EXAMPLES[key]){
+      return A2_ADJECTIVE_EXAMPLES[key].map(([de,ar],index)=>({de,ar,art:["🏠","🌤️","💬"][index]||"⭐"}));
+    }
     const adjective=key;
     const ar=adjectiveArabic[adjective]||meaning;
     return [
@@ -5517,7 +6939,7 @@ function studentVocabularyWordExamples(item){
   return combined.slice(0,3);
 }
 function studentVocabularyPracticeOptions(item){
-  const pool=studentVocabularyReviewEntries(item.lessonNo||studentVocabularyReviewLesson,item.category||"Verben")
+  const pool=studentVocabularyReviewEntries(item.lessonNo||studentVocabularyReviewLesson,item.category||"Verben",item.level||studentVocabularyReviewLevel)
     .filter(entry=>entry.german!==item.german&&entry.meaning);
   const distractors=pool.slice(0,2).map(entry=>entry.meaning);
   const options=[...new Set([item.meaning,...distractors].filter(Boolean))].slice(0,3);
@@ -5555,7 +6977,7 @@ function studentVocabularyWordDetailMarkup(){
     <div class="student-vocab-word-meta">
       <span>📖 الدرس ${Number(item.lessonNo)||studentVocabularyReviewLesson}</span>
       <span>🏃 ${escapeHtml(item.category||"Verben")}</span>
-      <span>☆ A1</span>
+      <span>☆ ${escapeHtml(item.level||"A1")}</span>
     </div>
     <div class="student-vocab-examples-title"><span></span><b>✨ 3 أمثلة</b><span></span></div>
     <div class="student-vocab-examples-list">${exampleCards}</div>
@@ -5582,7 +7004,7 @@ function studentVocabularyTrainingCategoryArabic(category){
 }
 function studentVocabularyTrainingOptions(item,useGerman=false){
   const category=item.category||studentVocabularyReviewCategory||"Verben";
-  const entries=studentVocabularyReviewEntries(item.lessonNo||studentVocabularyReviewLesson,category)
+  const entries=studentVocabularyReviewEntries(item.lessonNo||studentVocabularyReviewLesson,category,item.level||studentVocabularyReviewLevel)
     .filter(entry=>studentVocabularyWordKey(entry.german)!==studentVocabularyWordKey(item.german)&&entry.meaning);
   const correct=useGerman?item.german:item.meaning;
   const distractors=entries.map(entry=>useGerman?entry.german:entry.meaning).filter(value=>value&&value!==correct);
@@ -5643,7 +7065,7 @@ function studentVocabularyTrainingHubMarkup(item){
     </div>
     <article class="student-vocab-training-hero">
       <div class="student-vocab-training-hero-art">🎓<span>📚</span></div>
-      <div><h2>تدرّب أكثر وتقدّم أسرع!</h2><p>${categoryMode?`تدرّب على ${categoryCount} من ${categoryArabic} في الدرس الحالي، وثبّت حفظك كلمة بكلمة.`:"مارس مهاراتك بطرق متنوعة وثبّت تعلّمك بشكل فعّال."}</p><small>${categoryMode?`تدريب على ${categoryArabic} · ${escapeHtml(studentVocabularyReviewLessonName(studentVocabularyTrainingPool[0]?.lessonNo||studentVocabularyReviewLesson))}`:`تدريب خاص بكلمة: <bdi dir="ltr">${escapeHtml(item.german)}</bdi>`}</small></div>
+      <div><h2>تدرّب أكثر وتقدّم أسرع!</h2><p>${categoryMode?`تدرّب على ${categoryCount} من ${categoryArabic} في الدرس الحالي، وثبّت حفظك كلمة بكلمة.`:"مارس مهاراتك بطرق متنوعة وثبّت تعلّمك بشكل فعّال."}</p><small>${categoryMode?`تدريب على ${categoryArabic} · ${escapeHtml(studentVocabularyReviewLessonName(studentVocabularyTrainingPool[0]?.lessonNo||studentVocabularyReviewLesson,studentVocabularyTrainingPool[0]?.level||studentVocabularyReviewLevel))}`:`تدريب خاص بكلمة: <bdi dir="ltr">${escapeHtml(item.german)}</bdi>`}</small></div>
     </article>
     <div class="student-vocab-training-methods">${methods}</div>
   </section>`;
@@ -5714,13 +7136,16 @@ function studentVocabularyTrainingMarkup(){
 }
 
 function studentVocabularyReviewMarkup(){
-  const lessonNo=Math.min(lessons.length,Math.max(1,Number(studentVocabularyReviewLesson)||6));
+  const level=String(studentVocabularyReviewLevel||"A1").toUpperCase()==="A2"?"A2":"A1";
+  const lessonCount=level==="A2"?a2CourseLessons.length:lessons.length;
+  const lessonNo=Math.min(lessonCount,Math.max(1,Number(studentVocabularyReviewLesson)||(level==="A2"?1:6)));
+  studentVocabularyReviewLesson=lessonNo;
   const category=["Nomen","Verben","Adjektive"].includes(studentVocabularyReviewCategory)?studentVocabularyReviewCategory:"Verben";
-  const entries=studentVocabularyReviewEntries(lessonNo,category);
-  const options=lessons.map((lesson,index)=>{
+  const entries=studentVocabularyReviewEntries(lessonNo,category,level);
+  const options=Array.from({length:lessonCount},(_,index)=>{
     const no=index+1;
-    const label=studentVocabularyReviewLessonName(no);
-    return `<option value="${no}" ${no===lessonNo?"selected":""}>L${no} ${escapeHtml(label)}</option>`;
+    const label=studentVocabularyReviewLessonName(no,level);
+    return `<option value="${no}" ${no===lessonNo?"selected":""}>${level} · L${no} ${escapeHtml(label)}</option>`;
   }).join("");
   const categoryButtons=[
     {id:"Nomen",label:"Nomen",icon:"♙"},
@@ -5735,7 +7160,7 @@ function studentVocabularyReviewMarkup(){
       data-word="${escapeHtml(item.german)}" data-full-word="${escapeHtml(item.fullGerman)}"
       data-meaning="${escapeHtml(item.meaning)}" data-example="${escapeHtml(item.example)}"
       data-example-ar="${escapeHtml(item.exampleArabic||"")}" data-category="${escapeHtml(category)}"
-      data-icon="${escapeHtml(item.icon)}" data-lesson="${lessonNo}"
+      data-icon="${escapeHtml(item.icon)}" data-lesson="${lessonNo}" data-level="${level}"
       data-speak="${escapeHtml(item.speakText)}" data-search="${escapeHtml(searchText)}">
       <span class="student-vocab-row-icon" aria-hidden="true">${item.icon}</span>
       <span class="student-vocab-row-german" dir="ltr">${escapeHtml(item.german)}</span>
@@ -5743,11 +7168,11 @@ function studentVocabularyReviewMarkup(){
       <span class="student-vocab-row-arrow" aria-hidden="true">›</span>
     </button>`;
   }).join("");
-  return `<section class="student-vocabulary-review" dir="rtl">
+  return `<section class="student-vocabulary-review" dir="rtl" data-course-level="${level}">
     <header class="student-vocab-heading">
       <div class="student-vocab-book"><span>Aa</span><b>📖</b></div>
       <span class="student-vocab-heading-divider"></span>
-      <div class="student-vocab-heading-copy"><h2>المفردات</h2><p>راجع الكلمات التي تعلمتها</p></div>
+      <div class="student-vocab-heading-copy"><h2>المفردات</h2><p>راجع الكلمات التي تعلمتها · ${level}</p></div>
     </header>
     <label class="student-vocab-search">
       <span aria-hidden="true">⌕</span>
@@ -5756,11 +7181,11 @@ function studentVocabularyReviewMarkup(){
     <div class="student-vocab-lesson-filter">
       <span class="student-vocab-filter-icon" aria-hidden="true">▽</span>
       <label for="studentVocabularyLessonFilter">اختَر الدرس</label>
-      <select id="studentVocabularyLessonFilter" aria-label="اختَر الدرس">${options}</select>
+      <select id="studentVocabularyLessonFilter" aria-label="اختَر الدرس" data-level="${level}">${options}</select>
       <span class="student-vocab-funnel" aria-hidden="true">⚲</span>
     </div>
     <nav class="student-vocab-categories" aria-label="تصنيف المفردات">${categoryButtons}</nav>
-    <button type="button" class="student-vocab-category-training" data-action="student-vocab-start-category-practice" data-category="${category}" data-lesson="${lessonNo}" ${entries.length?"":"disabled"}>
+    <button type="button" class="student-vocab-category-training" data-action="student-vocab-start-category-practice" data-category="${category}" data-lesson="${lessonNo}" data-level="${level}" ${entries.length?"":"disabled"}>
       <span class="student-vocab-category-training-icon">🎓</span>
       <span class="student-vocab-category-training-copy"><strong>تدرّب على ${studentVocabularyTrainingCategoryArabic(category)}</strong><small>اختبر نفسك في ${entries.length} ${entries.length===1?"كلمة":"كلمة من هذا الدرس"}</small></span>
       <span class="student-vocab-category-training-arrow">←</span>
@@ -5769,6 +7194,292 @@ function studentVocabularyReviewMarkup(){
       ${rows || `<div class="student-vocab-empty">ما كايناش كلمات فهاد التصنيف فهاد الدرس.</div>`}
     </div>
     <div class="student-vocab-search-empty" id="studentVocabularySearchEmpty" hidden>ما لقيناش كلمات مطابقة للبحث.</div>
+  </section>`;
+}
+
+
+const STUDENT_SKILL_EXTRA_DIALOGUES = {
+  6: {
+    title:"Meine Stadt, meine Wohnung",
+    intro:"تعرّف على أماكن المدينة ووصف المنزل والشقة.",
+    lines:[
+      ["Lina","Guten Morgen, Omar! Wo wohnst du?","صباح الخير عمر! فين ساكن؟"],
+      ["Omar","Ich wohne in einer Wohnung im Zentrum.","ساكن في شقة في وسط المدينة."],
+      ["Lina","Gibt es einen Park in deiner Nähe?","واش كاينة شي حديقة قريبة منك؟"],
+      ["Omar","Ja, der Park ist neben dem Bahnhof.","نعم، الحديقة بجانب محطة القطار."],
+      ["Lina","Wo kaufst du ein?","فين كتقضي أغراضك؟"],
+      ["Omar","Ich gehe zum Supermarkt und zum Geschäft.","كنمشي للسوبرماركت وللمتجر."],
+      ["Lina","Ist deine Wohnung groß?","واش الشقة ديالك كبيرة؟"],
+      ["Omar","Nein, sie ist klein, aber sehr schön.","لا، صغيرة ولكن زوينة بزاف."],
+      ["Lina","Wie viele Zimmer hat sie?","شحال فيها من غرفة؟"],
+      ["Omar","Sie hat drei Zimmer, eine Küche und ein Bad.","فيها ثلاثة ديال الغرف ومطبخ وحمام."]
+    ]
+  },
+  7: {
+    title:"Wie, wo und wann?",
+    intro:"تحدّث عن الطقس والفصول والشهور والوقت.",
+    lines:[
+      ["Mira","Wie ist das Wetter heute?","كيف داير الجو اليوم؟"],
+      ["Sami","Es ist sonnig und warm.","الجو مشمس ودافئ."],
+      ["Mira","In welcher Jahreszeit sind wir?","فأي فصل حنا دابا؟"],
+      ["Sami","Wir sind im Frühling.","حنا في فصل الربيع."],
+      ["Mira","Wann beginnt der Sommer?","فوقاش كيبدا الصيف؟"],
+      ["Sami","Der Sommer beginnt im Juni.","الصيف كيبدا في يونيو."],
+      ["Mira","Regnet es morgen?","واش غادي تشتي غدا؟"],
+      ["Sami","Nein, morgen bleibt es trocken.","لا، غدا ما غاديش تشتي."],
+      ["Mira","Was machst du im Winter?","شنو كتدير في الشتاء؟"],
+      ["Sami","Ich trinke Tee und bleibe zu Hause.","كنشرب أتاي وكنبقى في الدار."]
+    ]
+  },
+  8: {
+    title:"Unterwegs",
+    intro:"تدرّب على وسائل النقل والسؤال عن الطريق والتنقل.",
+    lines:[
+      ["Nora","Wie kommst du zur Schule?","كيفاش كتمشي للمدرسة؟"],
+      ["Adam","Ich fahre mit dem Bus.","كنمشي بالطوبيس."],
+      ["Nora","Nimmst du manchmal das Fahrrad?","واش كتركب البيكالة أحياناً؟"],
+      ["Adam","Ja, wenn das Wetter schön ist.","نعم، ملي كيكون الجو زوين."],
+      ["Nora","Wo ist die Haltestelle?","فين كاينة محطة الحافلة؟"],
+      ["Adam","Sie ist neben dem Bahnhof.","كاينة بجانب محطة القطار."],
+      ["Nora","Wie lange dauert die Fahrt?","شحال كتدوم الرحلة؟"],
+      ["Adam","Ungefähr zwanzig Minuten.","تقريباً عشرين دقيقة."],
+      ["Nora","Fährst du am Wochenende nach Hamburg?","واش غادي لهامبورغ في نهاية الأسبوع؟"],
+      ["Adam","Ja, ich fahre mit dem Zug.","نعم، غادي بالقطار."]
+    ]
+  },
+  9: {
+    title:"Unter Freunden – Der Flohmarkt",
+    intro:"تدرّب على الشراء والبيع والسؤال عن الأثمنة في سوق المستعمل.",
+    lines:[
+      ["Emma","Gehst du am Samstag zum Flohmarkt?","واش غادي لسوق المستعمل نهار السبت؟"],
+      ["Lina","Ja, ich möchte eine Tasche kaufen.","نعم، بغيت نشري شنطة."],
+      ["Emma","Wie viel kostet die Tasche?","بشحال هاد الشنطة؟"],
+      ["Lina","Sie kostet zehn Euro.","ثمنها عشرة أورو."],
+      ["Emma","Ist der Preis fest?","واش الثمن ثابت؟"],
+      ["Lina","Nein, wir können handeln.","لا، نقدروا نتفاوضوا على الثمن."],
+      ["Emma","Möchtest du auch Bücher kaufen?","واش بغيتي حتى تشري الكتب؟"],
+      ["Lina","Ja, ich suche ein interessantes Buch.","نعم، كنقلب على كتاب ممتع."],
+      ["Emma","Dann sehen wir uns um zehn Uhr.","إوا نتلاقاو مع العشرة."],
+      ["Lina","Super, bis Samstag!","زوين، حتى للسبت!"]
+    ]
+  },
+  10: {
+    title:"Reisen und Jahreszeiten",
+    intro:"تحدّث عن السفر والعطلة والفصول والرحلات.",
+    lines:[
+      ["Sara","Wohin möchtest du im Urlaub fahren?","فين بغيتي تمشي في العطلة؟"],
+      ["Max","Ich möchte nach Österreich reisen.","بغيت نسافر للنمسا."],
+      ["Sara","Was machst du dort im Winter?","شنو كتدير تما في الشتاء؟"],
+      ["Max","Ich fahre Ski und trinke heißen Tee.","كنزلق بالتزلج وكنشرب أتاي سخون."],
+      ["Sara","Und wohin fährst du im Sommer?","وفين كتمشي في الصيف؟"],
+      ["Max","Ich fahre gern ans Meer.","كنحب نمشي للبحر."],
+      ["Sara","Was nimmst du mit?","شنو غادي تاخد معاك؟"],
+      ["Max","Ich nehme warme Kleidung und meinen Koffer.","غادي ناخد حوايج دافيين والفاليزة ديالي."],
+      ["Sara","War deine letzte Reise schön?","واش كانت الرحلة الأخيرة ديالك زوينة؟"],
+      ["Max","Ja, ich habe viele neue Orte gesehen.","نعم، شفت بزاف ديال الأماكن الجديدة."]
+    ]
+  }
+};
+
+function studentSkillLessonDialogue(lessonNo){
+  const no=Math.max(1,Math.min(lessons.length,Number(lessonNo)||6));
+  if(STUDENT_SKILL_EXTRA_DIALOGUES[no])return STUDENT_SKILL_EXTRA_DIALOGUES[no];
+  const source=dialogues[no-1];
+  if(source && Array.isArray(source.lines))return source;
+  return {title:studentVocabularyReviewLessonName(no),intro:"تدرّب على جمل الدرس.",lines:[]};
+}
+function studentSkillLessonLines(lessonNo){
+  const dialogue=studentSkillLessonDialogue(lessonNo);
+  return (dialogue.lines||[]).filter(line=>Array.isArray(line)&&line[1]&&line[2]).map((line,index)=>({
+    speaker:String(line[0]||""),
+    german:String(line[1]||""),
+    arabic:String(line[2]||""),
+    index
+  }));
+}
+function studentSkillNormalizeSentence(value){
+  return String(value||"").toLocaleLowerCase("de").normalize("NFC")
+    .replace(/[.,!?;:،؛؟…"'“”„]/g,"")
+    .replace(/\s+/g," ").trim();
+}
+function studentSkillPracticeLimit(lessonNo){
+  return Math.min(5,studentSkillLessonLines(lessonNo).length);
+}
+function studentSkillListeningQuestion(lessonNo,index){
+  const lines=studentSkillLessonLines(lessonNo);
+  if(!lines.length)return null;
+  const targetIndex=(index*2+Math.max(0,Number(lessonNo)||1))%lines.length;
+  const indexes=[targetIndex];
+  for(let offset=1;indexes.length<Math.min(4,lines.length);offset++){
+    const candidate=(targetIndex+offset*2+1)%lines.length;
+    if(!indexes.includes(candidate))indexes.push(candidate);
+  }
+  const shift=(index+Number(lessonNo))%indexes.length;
+  const rotated=indexes.slice(shift).concat(indexes.slice(0,shift));
+  const options=rotated.map(lineIndex=>({label:lines[lineIndex].arabic,correct:lineIndex===targetIndex}));
+  return {line:lines[targetIndex],options,correctIndex:options.findIndex(option=>option.correct)};
+}
+function studentSkillSentenceItems(lessonNo){
+  const lines=studentSkillLessonLines(lessonNo);
+  return lines.filter(item=>{
+    const count=item.german.trim().split(/\s+/).length;
+    return count>=3&&count<=11;
+  }).slice(0,8);
+}
+function studentSkillShuffledTokens(sentence,index,lessonNo){
+  const tokens=String(sentence||"").trim().split(/\s+/).map((text,tokenIndex)=>({text,tokenIndex}));
+  let seed=((Number(lessonNo)||1)*7919+(Number(index)||0)*104729+17)>>>0;
+  const random=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
+  for(let i=tokens.length-1;i>0;i--){
+    const j=Math.floor(random()*(i+1));
+    [tokens[i],tokens[j]]=[tokens[j],tokens[i]];
+  }
+  return tokens;
+}
+function studentSkillResetPractice(){
+  studentSkillListeningIndex=0;
+  studentSkillListeningChoice=-1;
+  studentSkillListeningChecked=false;
+  studentSkillListeningScore=0;
+  studentSkillWritingIndex=0;
+  studentSkillWritingInput="";
+  studentSkillWritingChecked=false;
+  studentSkillWritingScore=0;
+  studentSkillSpeakingIndex=0;
+  studentSkillSentenceIndex=0;
+  studentSkillSentenceOrder=[];
+  studentSkillSentenceChecked=false;
+  studentSkillSentenceScore=0;
+}
+function studentSkillCompleteMarkup(skillId,count,score=null){
+  const skill=STUDENT_RESULT_SKILLS.find(item=>item.id===skillId);
+  return `<section class="student-skill-practice-complete" dir="rtl">
+    <div class="student-skill-practice-complete-icon">🏆</div>
+    <h2>أحسنت! أكملت التدريب</h2>
+    <p>أنهيت تدريب ${escapeHtml(skill?.label||"المهارة")} في ${escapeHtml(studentVocabularyReviewLessonName(studentSkillLearningLesson))}.</p>
+    <div class="student-skill-practice-complete-stats">
+      <div><b>${count}</b><span>تمارين مكتملة</span></div>
+      ${score===null?"":`<div><b>${score}/${count}</b><span>إجابات صحيحة</span></div>`}
+    </div>
+    <div class="student-skill-practice-complete-actions">
+      <button type="button" data-action="student-skill-restart">إعادة التدريب ↻</button>
+      <button type="button" data-action="student-skill-back-content">العودة إلى محتوى الدرس ←</button>
+    </div>
+  </section>`;
+}
+function studentSkillPracticeMarkup(skillId,lessonNo){
+  const lines=studentSkillLessonLines(lessonNo);
+  const total=studentSkillPracticeLimit(lessonNo);
+  if(skillId==="listening"){
+    if(studentSkillListeningIndex>=total)return studentSkillCompleteMarkup(skillId,total,studentSkillListeningScore);
+    const question=studentSkillListeningQuestion(lessonNo,studentSkillListeningIndex);
+    const options=question.options.map((option,index)=>`<button type="button" class="student-skill-option ${studentSkillListeningChoice===index?"selected":""} ${studentSkillListeningChecked&&option.correct?"correct":""} ${studentSkillListeningChecked&&studentSkillListeningChoice===index&&!option.correct?"wrong":""}" data-action="student-skill-listening-option" data-option="${index}" ${studentSkillListeningChecked?"disabled":""}>${escapeHtml(option.label)}</button>`).join("");
+    return `<section class="student-skill-practice-card" dir="rtl">
+      <div class="student-skill-practice-progress"><span>سؤال الاستماع ${studentSkillListeningIndex+1} من ${total}</span><b>${Math.round((studentSkillListeningIndex/total)*100)}%</b></div>
+      <div class="student-skill-practice-track"><i style="width:${Math.round((studentSkillListeningIndex/total)*100)}%"></i></div>
+      <div class="student-skill-audio-prompt"><span>🎧</span><div><strong>استمع إلى الجملة الألمانية</strong><small>يمكنك إعادة تشغيلها أكثر من مرة.</small></div><button type="button" data-action="student-skill-listening-play" aria-label="استمع إلى الجملة">🔊</button></div>
+      <button type="button" class="student-skill-play-sentence" data-action="student-skill-listening-play" data-text="${escapeHtml(question.line.german)}">▶ استمع للجملة</button>
+      <h3>اختَر المعنى الصحيح للجملة:</h3>
+      <div class="student-skill-options">${options}</div>
+      ${studentSkillListeningChecked?`<div class="student-skill-feedback ${studentSkillListeningChoice===question.correctIndex?"correct":"wrong"}">${studentSkillListeningChoice===question.correctIndex?"إجابة صحيحة، أحسنت! ✓":`ليس هذا هو المعنى الصحيح. المعنى هو: ${escapeHtml(question.line.arabic)}`}</div>
+      <button type="button" class="student-skill-next" data-action="student-skill-listening-next">${studentSkillListeningIndex+1<total?"السؤال التالي ←":"عرض النتيجة ✓"}</button>`:`<button type="button" class="student-skill-check" data-action="student-skill-listening-check" ${studentSkillListeningChoice<0?"disabled":""}>تحقق من الإجابة</button>`}
+    </section>`;
+  }
+  if(skillId==="writing"){
+    if(studentSkillWritingIndex>=total)return studentSkillCompleteMarkup(skillId,total,studentSkillWritingScore);
+    const item=lines[studentSkillWritingIndex];
+    return `<section class="student-skill-practice-card" dir="rtl">
+      <div class="student-skill-practice-progress"><span>تمرين الكتابة ${studentSkillWritingIndex+1} من ${total}</span><b>${Math.round((studentSkillWritingIndex/total)*100)}%</b></div>
+      <div class="student-skill-practice-track"><i style="width:${Math.round((studentSkillWritingIndex/total)*100)}%"></i></div>
+      <div class="student-skill-writing-prompt"><span>✍️</span><div><strong>اكتب الجملة التي تسمعها</strong><small>${escapeHtml(item.arabic)}</small></div></div>
+      <button type="button" class="student-skill-play-sentence" data-action="student-skill-writing-play">🔊 استمع إلى الجملة الألمانية</button>
+      <textarea id="studentSkillWritingInput" class="student-skill-writing-input" rows="3" dir="ltr" placeholder="Schreiben Sie den Satz auf …" ${studentSkillWritingChecked?"disabled":""}>${escapeHtml(studentSkillWritingInput)}</textarea>
+      ${studentSkillWritingChecked?`<div class="student-skill-feedback ${studentSkillNormalizeSentence(studentSkillWritingInput)===studentSkillNormalizeSentence(item.german)?"correct":"wrong"}">${studentSkillNormalizeSentence(studentSkillWritingInput)===studentSkillNormalizeSentence(item.german)?"ممتاز! كتبت الجملة بشكل صحيح. ✓":`راجع الكتابة، الجملة الصحيحة هي: <bdi dir="ltr">${escapeHtml(item.german)}</bdi>`}</div>
+      <button type="button" class="student-skill-next" data-action="student-skill-writing-next">${studentSkillWritingIndex+1<total?"الجملة التالية ←":"عرض النتيجة ✓"}</button>`:`<button type="button" class="student-skill-check" data-action="student-skill-writing-check" ${studentSkillWritingInput.trim()?"":"disabled"}>تحقق من الكتابة</button>`}
+    </section>`;
+  }
+  if(skillId==="speaking"){
+    if(studentSkillSpeakingIndex>=lines.length)return studentSkillCompleteMarkup(skillId,lines.length);
+    const item=lines[studentSkillSpeakingIndex];
+    return `<section class="student-skill-practice-card student-skill-speaking-practice" dir="rtl">
+      <div class="student-skill-practice-progress"><span>تدرّب على الحوار ${studentSkillSpeakingIndex+1} من ${lines.length}</span><b>${Math.round((studentSkillSpeakingIndex/lines.length)*100)}%</b></div>
+      <div class="student-skill-practice-track"><i style="width:${Math.round((studentSkillSpeakingIndex/lines.length)*100)}%"></i></div>
+      <div class="student-skill-dialogue-turn"><small>دور ${escapeHtml(item.speaker)}</small><h2 dir="ltr">${escapeHtml(item.german)}</h2><p>${escapeHtml(item.arabic)}</p><button type="button" data-action="student-skill-speaking-play">🔊 استمع ثم كرّر بصوتك</button></div>
+      <p class="student-skill-speaking-tip">استمع للجملة، ثم حاول تكرارها بصوت واضح قبل الانتقال للجملة التالية.</p>
+      <button type="button" class="student-skill-next" data-action="student-skill-speaking-next">${studentSkillSpeakingIndex+1<lines.length?"تدرّبت عليها — التالي ←":"أنهيت الحوار ✓"}</button>
+    </section>`;
+  }
+  if(skillId==="sentences"){
+    const items=studentSkillSentenceItems(lessonNo);
+    if(studentSkillSentenceIndex>=items.length)return studentSkillCompleteMarkup(skillId,items.length,studentSkillSentenceScore);
+    const item=items[studentSkillSentenceIndex];
+    const tokens=studentSkillShuffledTokens(item.german,studentSkillSentenceIndex,lessonNo);
+    const selectedSet=new Set(studentSkillSentenceOrder);
+    const selectedMarkup=studentSkillSentenceOrder.map(tokenIndex=>{
+      const token=tokens.find(entry=>entry.tokenIndex===tokenIndex);
+      return token?`<button type="button" class="student-skill-word-chip chosen" data-action="student-skill-sentence-pick" data-token="${tokenIndex}">${escapeHtml(token.text)} ×</button>`:"";
+    }).join("");
+    const availableMarkup=tokens.filter(token=>!selectedSet.has(token.tokenIndex)).map(token=>`<button type="button" class="student-skill-word-chip" data-action="student-skill-sentence-pick" data-token="${token.tokenIndex}">${escapeHtml(token.text)}</button>`).join("");
+    const isCorrect=studentSkillNormalizeSentence(studentSkillSentenceOrder.map(tokenIndex=>tokens.find(entry=>entry.tokenIndex===tokenIndex)?.text||"").join(" "))===studentSkillNormalizeSentence(item.german);
+    return `<section class="student-skill-practice-card" dir="rtl">
+      <div class="student-skill-practice-progress"><span>ترتيب الجمل ${studentSkillSentenceIndex+1} من ${items.length}</span><b>${Math.round((studentSkillSentenceIndex/items.length)*100)}%</b></div>
+      <div class="student-skill-practice-track"><i style="width:${Math.round((studentSkillSentenceIndex/items.length)*100)}%"></i></div>
+      <div class="student-skill-writing-prompt"><span>🧩</span><div><strong>رتّب الكلمات لتكوين جملة صحيحة</strong><small>${escapeHtml(item.arabic)}</small></div></div>
+      <div class="student-skill-sentence-answer" dir="ltr">${selectedMarkup||`<span>اضغط على الكلمات بالترتيب الصحيح</span>`}</div>
+      <div class="student-skill-word-bank" dir="ltr">${availableMarkup}</div>
+      ${studentSkillSentenceChecked?`<div class="student-skill-feedback ${isCorrect?"correct":"wrong"}">${isCorrect?"أحسنت! ترتيب الجملة صحيح. ✓":`الترتيب الصحيح: <bdi dir="ltr">${escapeHtml(item.german)}</bdi>`}</div>
+      <button type="button" class="student-skill-next" data-action="student-skill-sentence-next">${studentSkillSentenceIndex+1<items.length?"الجملة التالية ←":"عرض النتيجة ✓"}</button>`:`<div class="student-skill-practice-actions"><button type="button" class="student-skill-clear" data-action="student-skill-sentence-clear">مسح الترتيب</button><button type="button" class="student-skill-check" data-action="student-skill-sentence-check" ${studentSkillSentenceOrder.length===tokens.length?"":"disabled"}>تحقق من الجملة</button></div>`}
+    </section>`;
+  }
+  return `<div class="student-skill-empty">لا توجد تمارين لهذا الاختيار.</div>`;
+}
+function studentSkillLessonLibraryMarkup(skillId){
+  const lessonNo=Math.max(1,Math.min(lessons.length,Number(studentSkillLearningLesson)||6));
+  const skill=STUDENT_RESULT_SKILLS.find(item=>item.id===skillId)||STUDENT_RESULT_SKILLS[1];
+  const dialogue=studentSkillLessonDialogue(lessonNo);
+  const lines=studentSkillLessonLines(lessonNo);
+  const options=lessons.map((lesson,index)=>{
+    const no=index+1;
+    return `<option value="${no}" ${no===lessonNo?"selected":""}>L${no} ${escapeHtml(studentVocabularyReviewLessonName(no))}</option>`;
+  }).join("");
+  const lessonFilter=`<div class="student-vocab-lesson-filter student-skill-lesson-filter">
+    <span class="student-vocab-filter-icon" aria-hidden="true">▽</span>
+    <label for="studentSkillLessonFilter">اختَر الدرس</label>
+    <select id="studentSkillLessonFilter" aria-label="اختَر الدرس">${options}</select>
+    <span class="student-vocab-funnel" aria-hidden="true">⚲</span>
+  </div>`;
+  const icon={listening:"🎧",writing:"✍️",speaking:"💬",sentences:"🧩"}[skillId]||"📘";
+  if(studentSkillLearningMode==="practice"){
+    return `<section class="student-skill-learning-page" dir="rtl">
+      <header class="student-skill-learning-heading"><span>${icon}</span><div><small>${escapeHtml(studentVocabularyReviewLessonName(lessonNo))}</small><h2>${escapeHtml(skill.label)}</h2><p>تدريب خاص بالدرس المختار</p></div></header>
+      ${lessonFilter}
+      <button type="button" class="student-skill-back-content" data-action="student-skill-back-content">← العودة إلى محتوى الدرس</button>
+      ${studentSkillPracticeMarkup(skillId,lessonNo)}
+    </section>`;
+  }
+  let content="";
+  if(skillId==="speaking"){
+    content=`<div class="student-skill-material-head"><div><h3>الحوار الخاص بالدرس</h3><p>${escapeHtml(dialogue.intro||"استمع إلى الحوار وتدرّب على نطقه.")}</p></div><button type="button" data-action="student-skill-play-dialogue" data-text="${escapeHtml(lines.map(line=>line.german).join(" "))}">▶ استمع للحوار كاملاً</button></div>
+      <div class="student-skill-dialogue-list">${lines.map((line,index)=>`<article class="student-skill-dialogue-line"><div class="student-skill-dialogue-speaker">${escapeHtml(line.speaker||`Sprecher ${index+1}`)}</div><div class="student-skill-dialogue-copy"><strong dir="ltr">${escapeHtml(line.german)}</strong><small>${escapeHtml(line.arabic)}</small></div><button type="button" data-action="student-skill-speak-line" data-text="${escapeHtml(line.german)}" aria-label="استمع إلى الجملة">🔊</button></article>`).join("")}</div>`;
+  }else if(skillId==="listening"){
+    content=`<div class="student-skill-material-head"><div><h3>استمع إلى جمل الدرس</h3><p>شغّل الجمل الألمانية وحاول فهم معناها قبل إظهار الترجمة.</p></div><span>🎧</span></div>
+      <div class="student-skill-material-list">${lines.slice(0,6).map((line,index)=>`<article class="student-skill-material-line"><span>${index+1}</span><div><strong dir="ltr">${escapeHtml(line.german)}</strong><small>${escapeHtml(line.arabic)}</small></div><button type="button" data-action="student-skill-speak-line" data-text="${escapeHtml(line.german)}">🔊</button></article>`).join("")}</div>`;
+  }else if(skillId==="writing"){
+    content=`<div class="student-skill-material-head"><div><h3>جمل للكتابة والإملاء</h3><p>استمع إلى الجملة وحاول كتابتها بنفسك في التدريب.</p></div><span>✍️</span></div>
+      <div class="student-skill-material-list">${lines.slice(0,6).map((line,index)=>`<article class="student-skill-material-line"><span>${index+1}</span><div><strong>${escapeHtml(line.arabic)}</strong><small dir="ltr">${escapeHtml(line.german)}</small></div><button type="button" data-action="student-skill-speak-line" data-text="${escapeHtml(line.german)}">🔊</button></article>`).join("")}</div>`;
+  }else{
+    const sentenceItems=studentSkillSentenceItems(lessonNo);
+    content=`<div class="student-skill-material-head"><div><h3>جمل الدرس</h3><p>راجع الجمل ومعانيها، ثم جرّب ترتيب الكلمات بنفسك.</p></div><span>🧩</span></div>
+      <div class="student-skill-material-list">${sentenceItems.slice(0,6).map((line,index)=>`<article class="student-skill-material-line"><span>${index+1}</span><div><strong dir="ltr">${escapeHtml(line.german)}</strong><small>${escapeHtml(line.arabic)}</small></div><button type="button" data-action="student-skill-speak-line" data-text="${escapeHtml(line.german)}">🔊</button></article>`).join("")}</div>`;
+  }
+  const practiceLabel={listening:"ابدأ تدريب الاستماع",writing:"ابدأ تدريب الكتابة",speaking:"ابدأ التدريب على الحوار",sentences:"ابدأ تدريب تركيب الجمل"}[skillId]||"ابدأ التدريب";
+  const practiceDesc={listening:"استمع إلى الجملة واختر معناها الصحيح.",writing:"استمع إلى الجملة ثم اكتبها بالألمانية.",speaking:"استمع إلى كل دور وكرّر الجمل بصوتك.",sentences:"رتّب الكلمات حتى تحصل على جملة صحيحة."}[skillId]||"تدرّب على محتوى الدرس.";
+  return `<section class="student-skill-learning-page" dir="rtl">
+    <header class="student-skill-learning-heading"><span>${icon}</span><div><small>${escapeHtml(studentVocabularyReviewLessonName(lessonNo))}</small><h2>${escapeHtml(skill.label)}</h2><p>${escapeHtml(skill.description)}</p></div></header>
+    ${lessonFilter}
+    <article class="student-skill-learning-hero"><div><strong>${escapeHtml(dialogue.title||studentVocabularyReviewLessonName(lessonNo))}</strong><p>${escapeHtml(practiceDesc)}</p></div><span>📚</span></article>
+    ${content}
+    <button type="button" class="student-skill-start-practice" data-action="student-skill-start-practice" data-skill="${skillId}"><span>▶</span>${practiceLabel}<b>←</b></button>
   </section>`;
 }
 
@@ -5808,6 +7519,7 @@ function studentSkillAnalyticsMarkup(skillReport,activeSkill="vocab",showDetail=
   </section>`:"";
   const hasLearned=current.id==="vocab"&&current.learnedItems?.length>0;
   const empty=current.assessed===0&&!hasLearned?`<div class="student-skill-empty"><span>${current.icon}</span><strong>مازال ما كايناش نتائج مسجلة فهاد المهارة</strong><p>منين تكمل تمرين مصحح مرتبط بهاد المهارة، غادي يبان التحليل هنا.</p></div>`:"";
+  const learningMarkup=current.id!=="vocab"?studentSkillLessonLibraryMarkup(current.id):"";
   return `<section class="student-skills-analysis student-skill-detail-screen">
     <section class="student-skill-detail-card">
       <div class="student-skill-detail-head"><div><small>${escapeHtml(current.de)}</small><h2>${escapeHtml(current.label)}</h2><p>${escapeHtml(current.description)}</p></div><div class="student-skill-main-score"><b>${current.average===null?"—":current.average+"%"}</b><small>${escapeHtml(studentSkillStatusLabel(current.average))}</small></div></div>
@@ -5815,6 +7527,7 @@ function studentSkillAnalyticsMarkup(skillReport,activeSkill="vocab",showDetail=
       <div class="student-skill-counts"><div><b>${current.mastered}</b><span>متقن</span></div><div><b>${current.medium}</b><span>متوسط</span></div><div><b>${current.weak}</b><span>ضعيف</span></div></div>`:""}
       ${note}
     </section>
+    ${learningMarkup}
     ${empty || `${current.assessed?`<div class="student-skill-groups">${groupMarkup}</div>`:""}${learnedMarkup}`}
   </section>`;
 }
@@ -6070,7 +7783,7 @@ function renderStudentResults(){
     {icon:"◎",tone:"indigo",label:"الترتيب العالمي",action:"student-nav",tab:"community"},
     {icon:"✎",tone:"pink",label:"الميزات",action:"student-nav",tab:"learn"},
     {icon:"♧",tone:"teal",label:"مع الآخرين",action:"student-nav",tab:"sessions"},
-    {icon:"▥",tone:"blue",label:"تقدم الدروس",target:"resultsLessonProgress"},
+    {icon:"▥",tone:"blue",label:"حالة الدروس",target:"resultsLessonStatus"},
     {icon:"✓",tone:"green",label:"إنجاز التمارين",target:"resultsCourseProgress"},
     {icon:"▦",tone:"cyan",label:"تفاصيل التمارين",target:"resultsExercises"},
     {icon:"◫",tone:"indigo",label:"تحليل المراحل",target:"resultsStages"}
@@ -6126,20 +7839,15 @@ function renderStudentResults(){
   }
 
   const savedCourseRecords=courseProgressRecords();
-  const courseLessonStates=lessons.map((lesson,index)=>{
-    const record=savedCourseRecords[`A1_${index+1}`]||{};
-    const percent=courseProgressPercent(record);
-    const completed=record.completed===true || percent>=100;
-    const inProgress=!completed && !!record.startedAt;
-    return {completed,inProgress,notStarted:!completed&&!inProgress,percent};
-  });
-  const masteredLessons=courseLessonStates.filter(item=>item.completed).length;
-  const inProgressLessons=courseLessonStates.filter(item=>item.inProgress).length;
-  const notStartedLessons=courseLessonStates.filter(item=>item.notStarted).length;
+  const studentLessonStatusStates=buildProgressLessonStatusRecords(savedCourseRecords,allResults,[String(selectedLevel||"A1").split(".")[0]]);
+  const masteredLessons=studentLessonStatusStates.filter(item=>item.completed).length;
+  const inProgressLessons=studentLessonStatusStates.filter(item=>item.inProgress).length;
+  const notStartedLessons=studentLessonStatusStates.filter(item=>item.notStarted).length;
   const startedLessons=masteredLessons+inProgressLessons;
-  const lessonProgressPercent=lessons.length?Math.round(startedLessons/lessons.length*100):0;
-  const hasCourseProgress=courseLessonStates.some(item=>item.completed||item.inProgress);
-  const courseAverageProgress=lessons.length?Math.round(courseLessonStates.reduce((sum,item)=>sum+item.percent,0)/lessons.length):0;
+  const totalStatusLessons=studentLessonStatusStates.length;
+  const lessonProgressPercent=totalStatusLessons?Math.round(startedLessons/totalStatusLessons*100):0;
+  const hasCourseProgress=studentLessonStatusStates.some(item=>item.completed||item.inProgress);
+  const courseAverageProgress=totalStatusLessons?Math.round(studentLessonStatusStates.reduce((sum,item)=>sum+(Number(item.progress)||0),0)/totalStatusLessons):0;
   const overallProgressPercent=Math.max(0,Math.min(100,hasCourseProgress?courseAverageProgress:exerciseProgressPercent));
   const vocabularySkill=skillReport.find(skill=>skill.id==="vocab")||{learnedItems:[],items:[]};
   const savedWordsCount=(vocabularySkill.learnedItems||[]).length;
@@ -6166,7 +7874,7 @@ function renderStudentResults(){
           <button type="button" class="results-stat-card words" data-action="student-results-open-skill-picker">
             <span class="results-stat-icon">▰</span><strong>${savedWordsCount}</strong><small>مفردة محفوظة</small>
           </button>
-          <button type="button" class="results-stat-card lessons" data-action="student-results-jump" data-target="resultsLessonProgress">
+          <button type="button" class="results-stat-card lessons" data-action="student-results-open-lesson-status" data-status="completed">
             <span class="results-stat-icon">📖</span><strong>${masteredLessons}</strong><small>دروس متقنة</small>
           </button>
           <div class="results-stat-card streak">
@@ -6189,16 +7897,16 @@ function renderStudentResults(){
         <section class="results-dashboard-card results-lesson-status">
           <div class="results-section-heading"><h2>حالة الدروس</h2><span aria-hidden="true">📚</span></div>
           <div class="results-lesson-status-body">
-            <div class="results-lesson-ring" style="--lesson-progress:${lessonProgressPercent}%">
-              <div><strong>${startedLessons}/${lessons.length}</strong><small>دروس</small></div>
-            </div>
+            <button type="button" class="results-lesson-ring results-lesson-ring-button" data-action="student-results-open-lesson-status" data-status="all" aria-label="عرض جميع الدروس" style="--lesson-progress:${lessonProgressPercent}%">
+              <span><strong>${startedLessons}/${totalStatusLessons}</strong><small>دروس</small></span>
+            </button>
             <div class="results-lesson-legend">
-              <div><i class="mastered"></i><span>${masteredLessons} دروس متقنة</span></div>
-              <div><i class="in-progress"></i><span>${inProgressLessons} دروس قيد التعلم</span></div>
-              <div><i class="not-started"></i><span>${notStartedLessons} دروس لم تبدأ بعد</span></div>
+              <button type="button" data-action="student-results-open-lesson-status" data-status="completed"><i class="mastered"></i><span>${masteredLessons} دروس متقنة</span></button>
+              <button type="button" data-action="student-results-open-lesson-status" data-status="inProgress"><i class="in-progress"></i><span>${inProgressLessons} دروس قيد التعلم</span></button>
+              <button type="button" data-action="student-results-open-lesson-status" data-status="notStarted"><i class="not-started"></i><span>${notStartedLessons} دروس لم تبدأ بعد</span></button>
             </div>
           </div>
-          <button type="button" class="results-inline-link" data-action="student-results-jump" data-target="resultsLessonProgress">تفاصيل تقدم الدروس <span>←</span></button>
+          <button type="button" class="results-inline-link" data-action="student-results-open-lesson-status" data-status="all">تفاصيل تقدم الدروس <span>←</span></button>
         </section>
       </div>
 
@@ -6264,6 +7972,7 @@ function renderStudentResults(){
     resultsExercises:heatmap || `<section class="admin-panel"><div class="admin-section-head"><div><p class="admin-eyebrow">أداء التمارين</p><h2>تفاصيل التمارين</h2></div></div><p class="admin-analytics-muted">لا توجد تفاصيل تمارين محفوظة لهذا الاختيار بعد.</p></section>`,
     resultsCourseProgress:courseProgressMarkup,
     resultsLessonProgress:lessonProgressMarkup,
+    resultsLessonStatus:lessonStatusDetailContentMarkup(studentLessonStatusStates,studentLessonStatusFilter,false),
     resultsSkills:studentSkillAnalyticsMarkup(skillReport,studentResultsActiveSkill,studentResultsSkillDetailOpen),
     resultsVocabulary:studentVocabularyReviewMarkup(),
     resultsVocabularyWord:studentVocabularyWordDetailMarkup(),
@@ -6279,6 +7988,7 @@ function renderStudentResults(){
     resultsExercises:"تفاصيل التمارين",
     resultsCourseProgress:"إنجاز التمارين",
     resultsLessonProgress:"تقدم الدروس",
+    resultsLessonStatus:"حالة الدروس",
     resultsSkills:"تحليل مهارات اللغة",
     resultsVocabulary:"المفردات",
     resultsVocabularyWord:"تفاصيل الكلمة",
@@ -6289,6 +7999,7 @@ function renderStudentResults(){
   const isVocabularyTool=studentResultsActiveTool==="resultsVocabulary";
   const isVocabularyWordTool=studentResultsActiveTool==="resultsVocabularyWord";
   const isVocabularyPracticeTool=studentResultsActiveTool==="resultsVocabularyPractice";
+  const isLessonStatusTool=studentResultsActiveTool==="resultsLessonStatus";
   const isVocabularyPracticeMode=isVocabularyPracticeTool&&!!studentVocabularyTrainingMode;
   const activePracticeMethod=studentVocabularyTrainingMethod();
   const isCategoryVocabularyTraining=isVocabularyPracticeTool&&studentVocabularyTrainingScope==="category"&&studentVocabularyTrainingPool.length>0;
@@ -6296,17 +8007,17 @@ function renderStudentResults(){
     ?(selectedSkillForHeader?.label||"تحليل المهارة")
     :(resultToolTitles[studentResultsActiveTool]||"")))));
   const isSkillPicker=studentResultsActiveTool==="resultsSkills"&&!studentResultsSkillDetailOpen;
-  const toolBackAction=isVocabularyPracticeMode?"student-results-practice-mode-back":(isVocabularyPracticeTool?"student-results-practice-back":(isVocabularyWordTool?"student-results-word-back":(isVocabularyTool?"student-results-vocab-back":(studentResultsActiveTool==="resultsSkills"&&studentResultsSkillDetailOpen?"student-results-skill-detail-back":"student-results-tool-back"))));
-  const toolBackLabel=isVocabularyPracticeMode?"رجوع لاختيار التدريب":(isVocabularyPracticeTool?(isCategoryVocabularyTraining?"رجوع للمفردات":"رجوع للكلمة"):(isVocabularyWordTool?"رجوع للمفردات":((isVocabularyTool||(studentResultsActiveTool==="resultsSkills"&&studentResultsSkillDetailOpen))?"رجوع للمهارات":"رجوع")));
-  const toolEyebrow=isVocabularyPracticeTool?(isCategoryVocabularyTraining?"تدرّب على مفردات الدرس":"تدرّب على الكلمة"):(isVocabularyWordTool?"المفردات":(isVocabularyTool?"مراجعة الكلمات":(studentResultsActiveTool==="resultsSkills"&&studentResultsSkillDetailOpen?"تحليل المهارات":"أدوات النتائج")));
+  const toolBackAction=isLessonStatusTool?"student-results-lesson-status-back":(isVocabularyPracticeMode?"student-results-practice-mode-back":(isVocabularyPracticeTool?"student-results-practice-back":(isVocabularyWordTool?"student-results-word-back":(isVocabularyTool?"student-results-vocab-back":(studentResultsActiveTool==="resultsSkills"&&studentResultsSkillDetailOpen?"student-results-skill-detail-back":"student-results-tool-back")))));
+  const toolBackLabel=isLessonStatusTool?"رجوع للإحصائيات":(isVocabularyPracticeMode?"رجوع لاختيار التدريب":(isVocabularyPracticeTool?(isCategoryVocabularyTraining?"رجوع للمفردات":"رجوع للكلمة"):(isVocabularyWordTool?"رجوع للمفردات":((isVocabularyTool||(studentResultsActiveTool==="resultsSkills"&&studentResultsSkillDetailOpen))?"رجوع للمهارات":"رجوع"))));
+  const toolEyebrow=isLessonStatusTool?"متابعة تقدمك الدراسي":(isVocabularyPracticeTool?(isCategoryVocabularyTraining?"تدرّب على مفردات الدرس":"تدرّب على الكلمة"):(isVocabularyWordTool?"المفردات":(isVocabularyTool?"مراجعة الكلمات":(studentResultsActiveTool==="resultsSkills"&&studentResultsSkillDetailOpen?"تحليل المهارات":"أدوات النتائج"))));
   const fullscreenTool=activeToolMarkup?`
-    <section class="student-results-tool-overlay ${isSkillPicker?"student-results-skill-picker-overlay":""} ${isVocabularyTool?"student-results-vocabulary-overlay":""} ${isVocabularyWordTool?"student-results-vocabulary-word-overlay":""} ${isVocabularyPracticeTool?"student-results-vocabulary-practice-overlay":""}" role="dialog" aria-modal="true" aria-label="${escapeHtml(activeToolTitle)}">
+    <section class="student-results-tool-overlay ${isSkillPicker?"student-results-skill-picker-overlay":""} ${isVocabularyTool?"student-results-vocabulary-overlay":""} ${isVocabularyWordTool?"student-results-vocabulary-word-overlay":""} ${isVocabularyPracticeTool?"student-results-vocabulary-practice-overlay":""} ${isLessonStatusTool?"student-results-lesson-status-overlay":""}" role="dialog" aria-modal="true" aria-label="${escapeHtml(activeToolTitle)}">
       <header class="student-results-tool-header ${isVocabularyWordTool?"student-results-vocabulary-word-header":""} ${isVocabularyPracticeTool?"student-results-vocabulary-practice-header":""}">
         <button type="button" class="student-results-tool-back" data-action="${toolBackAction}"><span aria-hidden="true">←</span> ${toolBackLabel}</button>
         <div class="student-results-tool-heading"><small>${toolEyebrow}</small><h1>${escapeHtml(activeToolTitle)}</h1></div>
       </header>
       <main class="student-results-tool-body ${isSkillPicker?"student-results-skill-picker-body":""} ${isVocabularyTool?"student-results-vocabulary-body":""} ${isVocabularyWordTool?"student-results-vocabulary-word-body":""} ${isVocabularyPracticeTool?"student-results-vocabulary-practice-body":""}">
-        ${isSkillPicker||isVocabularyTool||isVocabularyWordTool||isVocabularyPracticeTool?"":studentProgressLessonFilterMarkup(selectedLesson)}
+        ${isSkillPicker||isVocabularyTool||isVocabularyWordTool||isVocabularyPracticeTool||isLessonStatusTool?"":studentProgressLessonFilterMarkup(selectedLesson)}
         <div class="student-results-tool-content">${activeToolMarkup}</div>
       </main>
     </section>`:"";
@@ -6554,6 +8265,15 @@ function loadManagedPageIntoFrame(frame,path){
   // JavaScript initializes stage 1. The two windows share sessionStorage when
   // the course file is on the same origin as this app.
   let targetUrl=sourceUrl;
+  // V48: force the newly deployed microphone page instead of a stale cached HTML.
+  // Other managed lessons keep their existing URLs and resume behavior.
+  if(normalized==="pages/B2/training/b2-sprechen-training.html"){
+    try{
+      const fresh=new URL(sourceUrl,window.location.href);
+      fresh.searchParams.set("b2-microphone","v48");
+      targetUrl=fresh.href;
+    }catch(error){console.warn("Speaking page cache refresh unavailable",error);}
+  }
   if(activeCourseFrame?.frame===frame && currentUser?.role==="student"){
     const {level,no}=activeCourseFrame;
     try{
@@ -8360,10 +10080,25 @@ function renderResult(){
   );
 }
 function render(){
+  applySettingsDashboardTheme();
   if(!currentUser){page="login";return renderLogin();}
   if(currentUser.role==="admin" && page==="admin-managed-html") return renderAdminManagedHtmlPage();
   if(currentUser.role==="admin"){page="admin";return renderAdmin();}
   if(page==="login"||page==="admin") page="home";
+  if(currentUser.role==="student"){
+    const requiredLevel=studentPageLevelRequirement();
+    if(requiredLevel && !getStudentLevelAccess(requiredLevel)){
+      page="learn-hub";
+      showToast(`المستوى ${requiredLevel} مقفل حالياً من الإدارة.`);
+      return renderLearnHub();
+    }
+    const requiredSection=studentPageSectionRequirement();
+    if(requiredLevel && requiredSection && !getStudentSectionAccess(requiredLevel,requiredSection)){
+      page="upper-level-home";
+      showToast(`قسم ${requiredSection} مقفل حالياً من الإدارة.`);
+      return renderUpperLevelHome();
+    }
+  }
   if(page==="student-results") return renderStudentResults();
   if(page==="custom-content") return renderCustomContentPage();
   if(page==="learn-hub") return renderLearnHub();
@@ -8377,6 +10112,12 @@ function render(){
   if(page==="levels") return renderLevels();
   if(page==="level-home") return renderLevelHome();
   if(page==="a2-level-home") return renderA2LevelHome();
+  if(page==="upper-level-home") return renderUpperLevelHome();
+  if(page==="upper-level-section") return renderUpperLevelSection();
+  if(page==="upper-level-course-lesson") return renderUpperLevelCourseLesson();
+  if(page==="upper-level-training-skill") return renderUpperLevelTrainingSkill();
+  if(page==="upper-level-muendlich-subsection") return renderUpperLevelMuendlichSubsection();
+  if(page==="upper-level-muendlich-model") return renderUpperLevelMuendlichModel();
   if(page==="a2-lesson-html") return renderA2LessonHtmlPage();
   if(page==="a2-course-content") return renderA2CourseContentPage();
   if(page==="a2-test-html") return renderA2TestHtmlPage();
@@ -8418,6 +10159,25 @@ function back(){
   else if(page==="levels") page="home";
   else if(page==="level-home") page="learn-hub";
   else if(page==="a2-level-home") page="learn-hub";
+  else if(page==="upper-level-home") page="learn-hub";
+  else if(page==="upper-level-section") page="upper-level-home";
+  else if(page==="upper-level-course-lesson"){
+    saveActiveCourseBeforeExit();
+    document.documentElement.classList.remove("challenge-fullscreen-open");
+    document.body.classList.remove("challenge-fullscreen-open");
+    page="upper-level-section";
+  }
+  else if(page==="upper-level-training-skill") page="upper-level-section";
+  else if(page==="upper-level-muendlich-subsection"){
+    document.documentElement.classList.remove("challenge-fullscreen-open");
+    document.body.classList.remove("challenge-fullscreen-open");
+    page="upper-level-training-skill";
+  }
+  else if(page==="upper-level-muendlich-model"){
+    document.documentElement.classList.remove("challenge-fullscreen-open");
+    document.body.classList.remove("challenge-fullscreen-open");
+    page="upper-level-muendlich-subsection";
+  }
   else if(page==="a2-course-content"){
     saveActiveCourseBeforeExit();
     document.documentElement.classList.remove("challenge-fullscreen-open");
@@ -8460,6 +10220,7 @@ function showToast(message){
   window.clearTimeout(showToast.timer);showToast.timer=window.setTimeout(()=>toast.classList.remove("show"),2600);
 }
 function speak(text){
+  if(!readSettingsDashboardPrefs().sound){showToast("الصوت متوقف من الإعدادات.");return;}
   if(!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)){
     showToast("Die Sprachausgabe wird von diesem Browser leider nicht unterstützt.");return;
   }
@@ -8486,10 +10247,31 @@ if(podcastWordOverlay) podcastWordOverlay.addEventListener("click",function(even
 });
 document.addEventListener("keydown",function(event){
   if(event.key === "Escape"){
+    if(page==="upper-level-muendlich-subsection" && upperLevelInfo()==="B2" && upperLevelSelectedMundlichSection==="speaking"){
+      document.documentElement.classList.remove("challenge-fullscreen-open");
+      document.body.classList.remove("challenge-fullscreen-open");
+      upperLevelSelectedTrainingSkill="muendlich";
+      page="upper-level-training-skill";render();return;
+    }
+    if(page==="upper-level-muendlich-model"){
+      document.documentElement.classList.remove("challenge-fullscreen-open");
+      document.body.classList.remove("challenge-fullscreen-open");
+      page="upper-level-muendlich-subsection";render();return;
+    }
     if(page==="settings-detail"){page="settings";settingsActivePanel="account";render();return;}
     if(document.getElementById("courseResumeDialog")){pendingCourseLaunch=null;closeCourseResumeDialog();}
     closePodcastWordPopup();
+    if(page==="admin" && adminGroupFullscreenOpen){
+      const detailsModal=document.getElementById("adminStudentDetailsModal");
+      if(detailsModal && detailsModal.classList.contains("open")){closeAdminStudentDetails();return;}
+      if(adminEditingStudentLessonsId){adminEditingStudentLessonsId=null;render();return;}
+      adminGroupFullscreenOpen=false;
+      adminSelectedGroupId=null;
+      render();
+      return;
+    }
     closeAdminStudentDetails();
+    if(page==="student-results" && studentResultsActiveTool==="resultsLessonStatus"){studentLessonStatusFilter="all";studentResultsActiveTool="";render();return;}
     if(page==="student-results" && studentResultsActiveTool==="resultsVocabularyPractice" && studentVocabularyTrainingMode){studentVocabularyTrainingMode="";studentVocabularyTrainingFeedback="";studentVocabularyTrainingOrder=[];studentVocabularyTrainingRevealed=false;studentVocabularyTrainingDone=false;render();return;}
     if(page==="student-results" && studentResultsActiveTool==="resultsVocabularyPractice"){studentResultsActiveTool="resultsVocabularyWord";studentVocabularyTrainingMode="";render();return;}
     if(page==="student-results" && studentResultsActiveTool==="resultsVocabularyWord"){studentResultsActiveTool="resultsVocabulary";studentVocabularyPracticeOpen=false;studentVocabularyPracticeFeedback="";render();return;}
@@ -8534,8 +10316,19 @@ document.addEventListener("change",function(event){
   }
   if(target.id==="studentVocabularyLessonFilter"){
     const lessonNo=Number(target.value);
-    if(Number.isInteger(lessonNo)&&lessonNo>=1&&lessonNo<=lessons.length){
+    const lessonCount=studentVocabularyReviewLevel==="A2"?a2CourseLessons.length:lessons.length;
+    if(Number.isInteger(lessonNo)&&lessonNo>=1&&lessonNo<=lessonCount){
       studentVocabularyReviewLesson=lessonNo;
+      render();
+    }
+    return;
+  }
+  if(target.id==="studentSkillLessonFilter"){
+    const lessonNo=Number(target.value);
+    if(Number.isInteger(lessonNo)&&lessonNo>=1&&lessonNo<=lessons.length){
+      studentSkillLearningLesson=lessonNo;
+      studentSkillLearningMode="browse";
+      studentSkillResetPractice();
       render();
     }
     return;
@@ -8585,8 +10378,8 @@ document.addEventListener("change",function(event){
   if(target.id==="adminGroupFilter"){adminGroupFilter=target.value||"all";render();return;}
   if(target.id==="adminAnalyticsGroupFilter"){adminAnalyticsGroupFilter=target.value||"all";render();return;}
   if(target.id==="adminAnalyticsStudentFilter"){adminAnalyticsStudentFilter=target.value||"all";render();return;}
-  if(target.id==="adminResultsGroupFilter"){adminResultsGroupId=target.value||"all";adminResultsStudentId="all";render();return;}
-  if(target.id==="adminResultsStudentFilter"){adminResultsStudentId=target.value||"all";render();return;}
+  if(target.id==="adminResultsGroupFilter"){adminResultsGroupId=target.value||"all";adminResultsStudentId="all";adminProgressLessonStatusFilter="";adminProgressMetricOpen="";adminProgressMetricStudentId="";render();return;}
+  if(target.id==="adminResultsStudentFilter"){adminResultsStudentId=target.value||"all";adminProgressLessonStatusFilter="";adminProgressMetricOpen="";adminProgressMetricStudentId="";render();return;}
   if(target.id==="adminResultsLessonFilter"){adminResultsLessonFilter=target.value||"all";render();return;}
   if(target.id==="adminResultsTypeFilter"){adminResultsTypeFilter=target.value||"all";render();return;}
   if(target.id==="studentProgressLessonFilter"){studentProgressLessonFilter=target.value||"all";render();return;}
@@ -8714,6 +10507,12 @@ document.addEventListener("input",function(event){
     if(empty)empty.hidden=visible>0;
     return;
   }
+  if(target.id==="studentSkillWritingInput"){
+    studentSkillWritingInput=String(target.value||"");
+    const checkButton=document.querySelector('[data-action="student-skill-writing-check"]');
+    if(checkButton)checkButton.disabled=!studentSkillWritingInput.trim();
+    return;
+  }
   if(target.matches("[data-competition-text-question]")){
     const index=Number(target.dataset.competitionTextQuestion);
     const question=competitionRoomData?.questions?.[index];
@@ -8741,10 +10540,24 @@ document.addEventListener("click",function(event){
   const el=event.target.closest("[data-action]");
   if(!el)return;
   const action=el.dataset.action;
+  if(action==="settings-v30-toggle"){
+    const pref=el.dataset.pref;
+    if(!["notifications","sound","dark","reminders"].includes(pref))return;
+    const prefs=readSettingsDashboardPrefs();
+    prefs[pref]=!prefs[pref];
+    saveSettingsDashboardPrefs(prefs);
+    applySettingsDashboardTheme();
+    if(pref==="sound"&&!prefs.sound&&"speechSynthesis" in window)window.speechSynthesis.cancel();
+    renderSettings();
+    if((pref==="notifications"||pref==="reminders")&&prefs[pref])showToast("تم حفظ التفضيل. الإشعارات والتذكيرات الفعلية تحتاج تفعيل خدمة الإشعارات.");
+    return;
+  }
   if(action==="settings-open-panel"){
     const section=el.dataset.panel;
-    if(["account","learning","display"].includes(section)){
+    if(["account","learning","display","privacy","help"].includes(section)){
       settingsActivePanel=section;page="settings-detail";render();
+      const focusId=el.dataset.focus;
+      if(focusId)window.requestAnimationFrame(()=>{const field=document.getElementById(focusId);if(field)field.focus({preventScroll:true});});
     }
     return;
   }
@@ -8920,20 +10733,132 @@ document.addEventListener("click",function(event){
   else if(action==="daily-open"){openDailyTask(el.dataset.task);return;}
   else if(action==="daily-complete"){setDailyTaskDone(el.dataset.task);renderHome();return;}
   else if(action==="level-path"){
-    if(el.dataset.level==="A1"){selectedLevel="A1.1";page="level-home";render();}
-    else if(el.dataset.level==="A2"){currentA2LessonNo=1;page="a2-level-home";render();}
-    else showToast(`محتوى ${el.dataset.level} قيد الإعداد، والمتاح حالياً هو A1 وA2.`);
+    const requestedLevel=normalizeGroupCourseLevel(el.dataset.level||"A1");
+    if(!getStudentLevelAccess(requestedLevel)){showToast(`المستوى ${requestedLevel} مقفل حالياً من الإدارة.`);return;}
+    if(requestedLevel==="A1"){selectedLevel="A1.1";page="level-home";render();}
+    else if(requestedLevel==="A2"){currentA2LessonNo=1;page="a2-level-home";render();}
+    else if(["B1","B2"].includes(requestedLevel)){upperLevelSelected=requestedLevel;page="upper-level-home";render();}
+    else showToast("هذا المستوى غير معروف.");
+    return;
+  }
+  else if(action==="upper-level-open-section"){
+    const section=el.dataset.section;
+    if(UPPER_LEVEL_SECTIONS.some(item=>item.id===section)){
+      if(!getStudentSectionAccess(upperLevelInfo(),section)){showToast(`قسم ${section} مقفل حالياً من الإدارة.`);return;}
+      upperLevelSelectedSection=section;
+      page="upper-level-section";
+      render();
+    }
+    return;
+  }
+  else if(action==="upper-level-return"){
+    page="upper-level-home";render();return;
+  }
+  else if(action==="upper-level-course-open-lesson"){
+    const no=Number(el.dataset.lessonNo);
+    if(!Number.isInteger(no)||no<1||no>UPPER_LEVEL_KURS_LESSON_COUNT)return;
+    const level=upperLevelInfo();
+    if(!getStudentLevelAccess(level) || !getStudentSectionAccess(level,"kurs") || !getStudentLessonAccess(no-1,level)){showToast("هاد الدرس مقفل حالياً من طرف الإدارة.");return;}
+    upperLevelSelectedLessonNo=no;
+    const lesson=upperLevelCourseLesson(level,no);
+    if(lesson.path){
+      askCourseResume(level,no,()=>{page="upper-level-course-lesson";render();});
+    }else{
+      page="upper-level-course-lesson";
+      render();
+    }
+    return;
+  }
+  else if(action==="upper-level-course-back"){
+    page="upper-level-section";
+    render();
+    return;
+  }
+  else if(action==="upper-level-training-skill"){
+    const skillId=el.dataset.skill||"";
+    if(!getStudentSectionAccess(upperLevelInfo(),"training")){showToast("قسم Training Prüfung مقفل حالياً من الإدارة.");return;}
+    if(UPPER_LEVEL_TRAINING_SKILLS.some(item=>item.id===skillId)){
+      upperLevelSelectedTrainingSkill=skillId;
+      page="upper-level-training-skill";
+      render();
+    }
+    return;
+  }
+  else if(action==="upper-level-muendlich-open"){
+    const sectionId=el.dataset.section||"";
+    if(!getStudentSectionAccess(upperLevelInfo(),"training")){showToast("قسم Training Prüfung مقفل حالياً من الإدارة.");return;}
+    if(UPPER_LEVEL_MUENDLICH_SECTIONS.some(section=>section.id===sectionId)){
+      if(upperLevelInfo()==="B2" && sectionId==="speaking"){
+        openB2SpeakingInSameTab();
+        return;
+      }
+      upperLevelSelectedMundlichSection=sectionId;
+      page="upper-level-muendlich-subsection";
+      render();
+    }
+    return;
+  }
+  else if(action==="upper-level-muendlich-model-open"){
+    if(upperLevelInfo()!=="B2" || upperLevelSelectedMundlichSection!=="models")return;
+    const idx=Number(el.dataset.modelIndex);
+    const resources=(UPPER_LEVEL_RESOURCE_LISTS.B2.training||[]).filter(item=>item && item.skill==="muendlich" && item.subsection==="models" && item.path);
+    if(!Number.isInteger(idx)||idx<0||idx>=resources.length)return;
+    upperLevelSelectedMuendlichModel=idx;
+    page="upper-level-muendlich-model";
+    render();
+    return;
+  }
+  else if(action==="upper-level-muendlich-model-close"){
+    document.documentElement.classList.remove("challenge-fullscreen-open");
+    document.body.classList.remove("challenge-fullscreen-open");
+    page="upper-level-muendlich-subsection";
+    render();
+    return;
+  }
+  else if(action==="upper-level-muendlich-speaking-close"){
+    document.documentElement.classList.remove("challenge-fullscreen-open");
+    document.body.classList.remove("challenge-fullscreen-open");
+    upperLevelSelectedTrainingSkill="muendlich";
+    page="upper-level-training-skill";
+    render();
+    return;
+  }
+  else if(action==="upper-level-muendlich-return"){
+    document.documentElement.classList.remove("challenge-fullscreen-open");
+    document.body.classList.remove("challenge-fullscreen-open");
+    upperLevelSelectedTrainingSkill="muendlich";
+    page="upper-level-training-skill";
+    render();
+    return;
+  }
+  else if(action==="upper-level-training-return"){
+    upperLevelSelectedSection="training";
+    page="upper-level-section";
+    render();
     return;
   }
   else if(action==="a2-lesson"){
     const lessonNo=Number(el.dataset.lessonNo);
     if(a2CourseLessons.some(item=>item.number===lessonNo)){
+      if(!getStudentLessonAccess(lessonNo-1,"A2")){showToast("هاد الدرس مقفل حالياً من طرف الإدارة.");return;}
       currentA2LessonNo=lessonNo;page="a2-lesson-html";render();
     }
     return;
   }
   else if(action==="a2-stage-open"){
     const stage=el.dataset.stage||"explanation";
+    if(stage==="vocabulary"){
+      studentResultsReturnPage="a2-lesson-html";
+      studentVocabularyReviewLevel="A2";
+      studentVocabularyReviewLesson=Number(currentA2LessonNo)||1;
+      studentResultsActiveSkill="vocab";
+      studentResultsActiveTool="resultsSkills";
+      studentResultsSkillDetailOpen=false;
+      studentSkillLearningLesson=Number(currentA2LessonNo)||1;
+      page="student-results";
+      render();
+      return;
+    }
     if(stage==="practice"){
       const lesson=a2CourseLessons.find(item=>item.number===Number(currentA2LessonNo));
       if(lesson && lesson.test){
@@ -9048,7 +10973,66 @@ document.addEventListener("click",function(event){
   else if(action==="community-open-room"){communityRoom=el.dataset.room||"general";page="community";renderCommunity();return;}
   else if(action==="community-back"){communityRoom=null;renderCommunity();return;}
   else if(action==="admin-heatmap-mode"){adminExerciseHeatmapMode=el.dataset.mode==="time"?"time":"performance";render();return;}
-  if(action==="admin-nav"){adminSection=el.dataset.section||"home";render();return;}
+  if(action==="admin-nav"){adminGroupFullscreenOpen=false;adminSelectedGroupId=null;adminSection=el.dataset.section||"home";adminProgressLessonStatusFilter="";adminProgressMetricOpen="";adminProgressMetricStudentId="";render();return;}
+  else if(action==="admin-progress-open-metric"){
+    const metric=String(el.dataset.metric||"");
+    if(["words","review","lessons","streak","tasks"].includes(metric)){
+      adminProgressMetricOpen=metric;
+      adminProgressMetricStudentId="";
+      adminProgressLessonStatusFilter="";
+      adminSection="results";
+      render();
+    }
+    return;
+  }
+  else if(action==="admin-progress-metric-select-student"){
+    const id=String(el.dataset.id||"");
+    const student=readUsers().find(user=>String(user.id)===id);
+    if(student && (adminResultsGroupId==="all" || (adminResultsGroupId==="__ungrouped__"?!student.groupId:String(student.groupId)===String(adminResultsGroupId)))){
+      adminProgressMetricStudentId=id;
+      render();
+    }
+    return;
+  }
+  else if(action==="admin-progress-metric-group-back"){
+    adminProgressMetricStudentId="";
+    render();return;
+  }
+  else if(action==="admin-progress-metric-close"){
+    adminProgressMetricOpen="";
+    adminProgressMetricStudentId="";
+    render();return;
+  }
+  else if(action==="admin-progress-open-lesson-status"){
+    adminProgressLessonStatusFilter=["all","completed","inProgress","notStarted"].includes(el.dataset.status)?el.dataset.status:"all";
+    adminSection="results";
+    render();
+    return;
+  }
+  else if(action==="admin-progress-lesson-status-filter"){
+    adminProgressLessonStatusFilter=["all","completed","inProgress","notStarted"].includes(el.dataset.status)?el.dataset.status:"all";
+    render();
+    return;
+  }
+  else if(action==="admin-progress-lesson-status-back"){
+    adminProgressLessonStatusFilter="";
+    render();
+    return;
+  }
+  else if(action==="admin-results-select-student"){
+    const id=String(el.dataset.id||"");
+    const user=readUsers().find(item=>String(item.id)===id);
+    if(user){
+      adminResultsGroupId=user.groupId?String(user.groupId):"__ungrouped__";
+      adminResultsStudentId=id;
+      adminResultsLessonFilter="all";
+      adminResultsTypeFilter="all";
+      adminProgressLessonStatusFilter="";
+      adminSection="results";
+      render();
+    }
+    return;
+  }
   else if(action==="admin-page-choose-folder"){chooseAdminProjectFolder();return;}
   else if(action==="admin-page-load"){loadAdminPageIntoEditor();return;}
   else if(action==="admin-page-import"){
@@ -9083,18 +11067,59 @@ document.addEventListener("click",function(event){
   else if(action==="admin-content-delete"){deleteAdminContent(el.dataset.id);return;}
   else if(action==="open-custom-content"){openCustomContent(el.dataset.id);return;}
   else if(action==="custom-content-back"){page=customContentReturnPage||"lesson-hub";activeCustomContentMeta=null;activeCustomContentFile=null;render();return;}
-  if(action==="admin-open-group"){adminSelectedGroupId=el.dataset.id||null;adminSection="groups";render();return;}
+  if(action==="admin-open-group"){
+    const groupId=el.dataset.id||"";
+    if(!groupId || !cloudGroups[groupId]){showToast("المجموعة ما بقاتش متاحة.");return;}
+    adminSelectedGroupId=groupId;
+    adminGroupFullscreenOpen=true;
+    adminSection="groups";
+    render();
+    return;
+  }
+  if(action==="admin-close-group-fullscreen"){
+    adminGroupFullscreenOpen=false;
+    adminSelectedGroupId=null;
+    adminSection="groups";
+    render();
+    return;
+  }
   if(action==="login-submit"){loginFromForm();return;}
   else if(action==="logout"){logout();return;}
-  else if(action==="student-results"){page="student-results";studentResultsExpanded=false;studentResultsActiveTool="";studentResultsActiveSkill="vocab";studentResultsSkillDetailOpen=false;render();return;}
+  else if(action==="student-results"){studentVocabularyReviewLevel="A1";studentResultsReturnPage="student-results";page="student-results";studentResultsExpanded=false;studentResultsActiveTool="";studentResultsActiveSkill="vocab";studentResultsSkillDetailOpen=false;studentLessonStatusFilter="all";render();return;}
   else if(action==="student-results-toggle"){studentResultsExpanded=!studentResultsExpanded;render();if(studentResultsExpanded){const panel=document.getElementById("studentResultsDetails");if(panel)panel.scrollIntoView({behavior:"smooth",block:"start"});}return;}
   else if(action==="student-results-jump"){
     const targetId=el.dataset.target||"";
-    if(targetId){studentResultsReturnPage="student-results";studentResultsActiveTool=targetId;studentResultsSkillDetailOpen=false;render();}
+    if(targetId){
+      studentResultsReturnPage="student-results";
+      studentVocabularyReviewLevel="A1";
+      studentResultsActiveTool=targetId==="resultsLessonProgress"?"resultsLessonStatus":targetId;
+      studentLessonStatusFilter="all";
+      studentResultsSkillDetailOpen=false;
+      render();
+    }
+    return;
+  }
+  else if(action==="student-results-open-lesson-status"){
+    studentLessonStatusFilter=["all","completed","inProgress","notStarted"].includes(el.dataset.status)?el.dataset.status:"all";
+    studentResultsActiveTool="resultsLessonStatus";
+    studentResultsSkillDetailOpen=false;
+    render();
+    return;
+  }
+  else if(action==="student-results-lesson-status-filter"){
+    studentLessonStatusFilter=["all","completed","inProgress","notStarted"].includes(el.dataset.status)?el.dataset.status:"all";
+    render();
+    return;
+  }
+  else if(action==="student-results-lesson-status-back"){
+    studentLessonStatusFilter="all";
+    studentResultsActiveTool="";
+    render();
     return;
   }
   else if(action==="student-results-open-skill-picker"){
     studentResultsReturnPage="student-results";
+    studentVocabularyReviewLevel="A1";
     studentResultsActiveSkill="vocab";
     studentResultsActiveTool="resultsSkills";
     studentResultsSkillDetailOpen=false;
@@ -9103,6 +11128,9 @@ document.addEventListener("click",function(event){
   }
   else if(action==="student-results-open-skill"){
     studentResultsActiveSkill=el.dataset.skill||"vocab";
+    studentSkillLearningLesson=studentProgressLessonFilter==="all"?6:(Number(studentProgressLessonFilter)||6);
+    studentSkillLearningMode="browse";
+    studentSkillResetPractice();
     if(studentResultsActiveSkill==="vocab"){
       studentResultsActiveTool="resultsVocabulary";
       studentResultsSkillDetailOpen=false;
@@ -9115,6 +11143,9 @@ document.addEventListener("click",function(event){
   }
   else if(action==="student-results-skill-select"){
     studentResultsActiveSkill=el.dataset.skill||"vocab";
+    studentSkillLearningLesson=studentProgressLessonFilter==="all"?6:(Number(studentProgressLessonFilter)||6);
+    studentSkillLearningMode="browse";
+    studentSkillResetPractice();
     if(studentResultsActiveSkill==="vocab"){
       studentResultsActiveTool="resultsVocabulary";
       studentResultsSkillDetailOpen=false;
@@ -9132,6 +11163,127 @@ document.addEventListener("click",function(event){
     render();
     return;
   }
+  else if(action==="student-skill-start-practice"){
+    studentSkillLearningMode="practice";
+    studentSkillResetPractice();
+    render();
+    return;
+  }
+  else if(action==="student-skill-back-content"){
+    studentSkillLearningMode="browse";
+    render();
+    return;
+  }
+  else if(action==="student-skill-restart"){
+    studentSkillResetPractice();
+    studentSkillLearningMode="practice";
+    render();
+    return;
+  }
+  else if(action==="student-skill-speak-line"||action==="student-skill-play-dialogue"){
+    const text=el.dataset.text||"";
+    if(text)speak(text);
+    return;
+  }
+  else if(action==="student-skill-listening-play"){
+    const question=studentSkillListeningQuestion(studentSkillLearningLesson,studentSkillListeningIndex);
+    const text=el.dataset.text||question?.line?.german||"";
+    if(text)speak(text);
+    return;
+  }
+  else if(action==="student-skill-listening-option"){
+    if(studentSkillListeningChecked)return;
+    studentSkillListeningChoice=Number(el.dataset.option);
+    render();
+    return;
+  }
+  else if(action==="student-skill-listening-check"){
+    if(studentSkillListeningChoice<0){showToast("اختَر المعنى أولاً.");return;}
+    if(studentSkillListeningChecked)return;
+    const question=studentSkillListeningQuestion(studentSkillLearningLesson,studentSkillListeningIndex);
+    if(studentSkillListeningChoice===question?.correctIndex)studentSkillListeningScore++;
+    studentSkillListeningChecked=true;
+    render();
+    return;
+  }
+  else if(action==="student-skill-listening-next"){
+    if(!studentSkillListeningChecked){showToast("تحقق من الإجابة أولاً.");return;}
+    studentSkillListeningIndex++;
+    studentSkillListeningChoice=-1;
+    studentSkillListeningChecked=false;
+    render();
+    return;
+  }
+  else if(action==="student-skill-writing-play"){
+    const item=studentSkillLessonLines(studentSkillLearningLesson)[studentSkillWritingIndex];
+    if(item)speak(item.german);
+    return;
+  }
+  else if(action==="student-skill-writing-check"){
+    if(!studentSkillWritingInput.trim()){showToast("اكتب الجملة أولاً.");return;}
+    if(studentSkillWritingChecked)return;
+    const item=studentSkillLessonLines(studentSkillLearningLesson)[studentSkillWritingIndex];
+    if(item&&studentSkillNormalizeSentence(studentSkillWritingInput)===studentSkillNormalizeSentence(item.german))studentSkillWritingScore++;
+    studentSkillWritingChecked=true;
+    render();
+    return;
+  }
+  else if(action==="student-skill-writing-next"){
+    if(!studentSkillWritingChecked){showToast("تحقق من الكتابة أولاً.");return;}
+    studentSkillWritingIndex++;
+    studentSkillWritingInput="";
+    studentSkillWritingChecked=false;
+    render();
+    return;
+  }
+  else if(action==="student-skill-speaking-play"){
+    const item=studentSkillLessonLines(studentSkillLearningLesson)[studentSkillSpeakingIndex];
+    if(item)speak(item.german);
+    return;
+  }
+  else if(action==="student-skill-speaking-next"){
+    studentSkillSpeakingIndex++;
+    render();
+    return;
+  }
+  else if(action==="student-skill-sentence-pick"){
+    if(studentSkillSentenceChecked)return;
+    const token=Number(el.dataset.token);
+    if(!Number.isInteger(token))return;
+    if(studentSkillSentenceOrder.includes(token)){
+      studentSkillSentenceOrder=studentSkillSentenceOrder.filter(value=>value!==token);
+    }else{
+      studentSkillSentenceOrder=[...studentSkillSentenceOrder,token];
+    }
+    render();
+    return;
+  }
+  else if(action==="student-skill-sentence-clear"){
+    if(studentSkillSentenceChecked)return;
+    studentSkillSentenceOrder=[];
+    render();
+    return;
+  }
+  else if(action==="student-skill-sentence-check"){
+    const item=studentSkillSentenceItems(studentSkillLearningLesson)[studentSkillSentenceIndex];
+    if(!item)return;
+    const tokens=studentSkillShuffledTokens(item.german,studentSkillSentenceIndex,studentSkillLearningLesson);
+    if(studentSkillSentenceOrder.length!==tokens.length){showToast("رتّب جميع الكلمات أولاً.");return;}
+    if(studentSkillSentenceChecked)return;
+    const answer=studentSkillSentenceOrder.map(tokenIndex=>tokens.find(entry=>entry.tokenIndex===tokenIndex)?.text||"").join(" ");
+    if(studentSkillNormalizeSentence(answer)===studentSkillNormalizeSentence(item.german))studentSkillSentenceScore++;
+    studentSkillSentenceChecked=true;
+    render();
+    return;
+  }
+  else if(action==="student-skill-sentence-next"){
+    if(!studentSkillSentenceChecked){showToast("تحقق من الجملة أولاً.");return;}
+    studentSkillSentenceIndex++;
+    studentSkillSentenceOrder=[];
+    studentSkillSentenceChecked=false;
+    render();
+    return;
+  }
   else if(action==="student-vocab-category"){
     const category=el.dataset.category||"Verben";
     if(["Nomen","Verben","Adjektive"].includes(category)){
@@ -9144,6 +11296,7 @@ document.addEventListener("click",function(event){
     const german=el.dataset.fullWord||el.dataset.speak||el.dataset.word||"";
     const meaning=el.dataset.meaning||"";
     const lessonNo=Number(el.dataset.lesson)||Number(studentVocabularyReviewLesson)||6;
+    const level=String(el.dataset.level||studentVocabularyReviewLevel||"A1").toUpperCase()==="A2"?"A2":"A1";
     studentVocabularySelectedWord={
       german:el.dataset.word||german,
       fullGerman:german,
@@ -9152,6 +11305,7 @@ document.addEventListener("click",function(event){
       exampleArabic:el.dataset.exampleAr||"",
       category:el.dataset.category||studentVocabularyReviewCategory,
       lessonNo,
+      level,
       icon:el.dataset.icon||"📚",
       speakText:el.dataset.speak||german
     };
@@ -9160,7 +11314,7 @@ document.addEventListener("click",function(event){
     studentVocabularyTrainingIndex=0;
     studentVocabularyPracticeOpen=false;
     studentVocabularyPracticeFeedback="";
-    if(german)recordStudentLearnedWord("A1",lessonNo,german,meaning,"vocabulary-review");
+    if(german)recordStudentLearnedWord(level,lessonNo,german,meaning,"vocabulary-review");
     studentResultsActiveTool="resultsVocabularyWord";
     render();
     return;
@@ -9191,13 +11345,15 @@ document.addEventListener("click",function(event){
   else if(action==="student-vocab-start-category-practice"){
     const category=el.dataset.category||studentVocabularyReviewCategory||"Verben";
     const lessonNo=Number(el.dataset.lesson)||Number(studentVocabularyReviewLesson)||6;
+    const level=String(el.dataset.level||studentVocabularyReviewLevel||"A1").toUpperCase()==="A2"?"A2":"A1";
     if(!["Nomen","Verben","Adjektive"].includes(category)){showToast("اختَر تصنيفاً صحيحاً للتدريب.");return;}
-    const pool=studentVocabularyReviewEntries(lessonNo,category).filter(entry=>entry.german&&entry.meaning);
+    const pool=studentVocabularyReviewEntries(lessonNo,category,level).filter(entry=>entry.german&&entry.meaning);
     if(!pool.length){showToast("لا توجد كلمات للتدريب في هذا التصنيف.");return;}
     studentVocabularyTrainingScope="category";
     studentVocabularyTrainingPool=pool;
     studentVocabularyTrainingIndex=0;
     studentVocabularyTrainingCategory=category;
+    studentVocabularyReviewLevel=level;
     studentVocabularySelectedWord=pool[0];
     studentVocabularyTrainingMode="";
     studentVocabularyTrainingFeedback="";
@@ -9416,9 +11572,45 @@ document.addEventListener("click",function(event){
     });
     return;
   }
+  else if(action==="admin-toggle-group-level"){
+    const level=normalizeGroupCourseLevel(el.dataset.level||"A1");
+    const wasOpen=el.getAttribute("aria-expanded")==="true";
+    // Keep the accordion to one open level at a time; clicking the open level closes it.
+    document.querySelectorAll(".admin-group-level-toggle").forEach(button=>{
+      button.setAttribute("aria-expanded","false");
+      const panel=document.getElementById(button.getAttribute("aria-controls"));
+      if(panel)panel.hidden=true;
+      button.closest(".admin-group-level-item")?.classList.remove("is-open");
+    });
+    if(!wasOpen){
+      el.setAttribute("aria-expanded","true");
+      const panel=document.getElementById(el.getAttribute("aria-controls"));
+      if(panel)panel.hidden=false;
+      el.closest(".admin-group-level-item")?.classList.add("is-open");
+    }
+    // Retain the last chosen level for the group's existing primary-level field.
+    adminGroupLevelDraft=level;
+    return;
+  }
+  else if(action==="admin-group-lessons-toggle-all"){
+    // Select or clear lessons only inside the matching level's accordion panel.
+    const level=normalizeGroupCourseLevel(el.dataset.level||"A1");
+    const checked=el.dataset.select==="all";
+    const container=document.getElementById(`groupLevelLessonChecks-${level}`);
+    if(container){
+      container.querySelectorAll('input[type="checkbox"][name="groupLessons"]').forEach(input=>{input.checked=checked;});
+    }
+    return;
+  }
   else if(action==="admin-save-group"){saveGroupFromForm();return;}
-  else if(action==="admin-edit-group"){editingGroupId=el.dataset.id;adminSection="groups";render();return;}
-  else if(action==="admin-cancel-group-edit"){editingGroupId=null;render();return;}
+  else if(action==="admin-edit-group"){
+    editingGroupId=el.dataset.id;
+    adminGroupLevelDraft=normalizeGroupCourseLevel(cloudGroups[editingGroupId]?.level||"A1");
+    adminGroupLessonDrafts={};adminSection="groups";render();return;
+  }
+  else if(action==="admin-cancel-group-edit"){
+    editingGroupId=null;adminGroupLevelDraft=null;adminGroupLessonDrafts={};render();return;
+  }
   else if(action==="admin-delete-group"){deleteGroup(el.dataset.id);return;}
   else if(action==="admin-manage-access"){manageStudentLessonAccess(el.dataset.id);return;}
   else if(action==="admin-save-student-lessons"){saveStudentLessonAccess(el.dataset.id);return;}
@@ -9444,7 +11636,7 @@ document.addEventListener("click",function(event){
     const stage=el.dataset.stage||"explanation";
     if(stage==="explanation"){
       activeVerbCard=null;
-      if([5,6,7,8].includes(currentLesson)){openLessonSectionPage("course");return;}
+      if([4,5,6,7,8].includes(currentLesson)){openLessonSectionPage("course");return;}
       const coursePath=getLessonSectionPagePath("course",lessonNumber());
       if(window.location.protocol==="file:"){
         courseReturnPage="lesson-hub";page="lesson";render();return;
@@ -9457,6 +11649,7 @@ document.addEventListener("click",function(event){
     }
     if(stage==="vocabulary"){
       studentResultsReturnPage="lesson-hub";
+      studentVocabularyReviewLevel="A1";
       studentResultsActiveSkill="vocab";
       studentResultsActiveTool="resultsSkills";
       studentResultsSkillDetailOpen=false;
@@ -9621,6 +11814,7 @@ if(app && window.MutationObserver){
   uiDisplayObserver.observe(app,{childList:true,subtree:true});
 }
 window.addEventListener("storage",function(event){
+  if(event.key===settingsDashboardStorageKey()){applySettingsDashboardTheme();if(page==="settings")renderSettings();}
   if(event.key===UI_DISPLAY_PREFERENCES_KEY)applyUiDisplayPreferences();
   if(event.key===settingsPrefStorageKey() && (page==="settings" || page==="settings-detail"))render();
 });
