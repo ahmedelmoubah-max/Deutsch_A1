@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f3f1ff">
+<title>ÖSD B2 — Sprechen Training</title>
+<style>
+:root{--blue:#2d57e8;--purple:#7845f5;--ink:#1b2850;--muted:#687393;--line:#dcdcff;--green:#188d56;--orange:#a96911}
+*{box-sizing:border-box}
+html{min-height:100%;scroll-behavior:smooth}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at 96% 5%,#e0fbf5,transparent 29%),linear-gradient(130deg,#f7f1ff,#f5f8ff 58%,#edf8ff);font-family:Tahoma,Arial,sans-serif;color:var(--ink)}
+button,select,textarea{font:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.58;cursor:not-allowed}
+[hidden]{display:none!important}
+.shell{width:min(1250px,calc(100% - 28px));margin:18px auto 60px}
+.hero{background:linear-gradient(110deg,#245be4,#6942e9);color:#fff;border-radius:25px;padding:29px clamp(18px,4vw,46px);display:flex;gap:25px;align-items:center;justify-content:space-between;min-height:150px;box-shadow:0 15px 32px #3f43be2f}
+.hero small{display:inline-flex;border:1px solid #ffffff50;border-radius:25px;padding:5px 12px;background:#ffffff2a;font-weight:900;font-size:12px}
+.hero h1{font-size:clamp(31px,4vw,49px);margin:6px 0 4px;line-height:1.2}
+.hero p{margin:7px 0 0;color:#f1edff;font-size:clamp(11px,1.1vw,15px);line-height:1.7}
+.hero-art{display:grid;place-items:center;min-width:100px;height:100px;border:1px solid #ffffff55;background:#ffffff26;border-radius:25px;font-size:56px}
+.notice{background:#fff9e7;border:1px solid #eadcaa;color:#82600d;padding:12px 16px;border-radius:14px;margin-top:17px;font-size:12px;line-height:1.8}
+.toolbar{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:15px}
+.field{display:grid;gap:6px;font-size:12px;font-weight:900;color:#394982}
+.field select{width:100%;min-width:0;border:1px solid #cfcbff;border-radius:14px;padding:13px 15px;background:#fff;color:#253467;outline-offset:3px;font-size:15px}
+.activity-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 14px}
+.activity-tab{border:1px solid #d5d3ff;background:#fff;color:#3c398b;border-radius:99px;padding:10px 17px;box-shadow:0 3px 9px #514bae0b;font-size:13px;font-weight:900}
+.activity-tab[aria-selected="true"]{background:linear-gradient(100deg,var(--purple),#3e54ed);color:white;border-color:transparent;box-shadow:0 6px 13px #6742e847}
+.stats{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.stat{padding:7px 14px;border-radius:20px;background:#e8e7ff;color:#443eb8;font-weight:900;font-size:12px}
+.progress{height:9px;background:#e2e6f5;border-radius:15px;overflow:hidden;margin:0 0 18px}
+.progress>div{width:0;height:100%;background:linear-gradient(90deg,#2d5de8,#8651fc);transition:width .22s}
+.training{background:#fff;border:1px solid #dcdcff;box-shadow:0 13px 26px #3a4e9f12;border-radius:24px;padding:clamp(17px,2.7vw,34px);min-height:320px}
+.training-head{display:flex;align-items:center;gap:12px;justify-content:space-between}
+.training-head small{font-size:12px;color:#7653d6;font-weight:900}
+.kind-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:17px;background:#ebe8ff;font-size:26px}
+.target{background:linear-gradient(120deg,#f7f5ff,#edf2ff);border:1px solid #dedaff;border-radius:22px;padding:clamp(18px,2.6vw,30px);margin:15px 0;text-align:center;min-height:126px;display:flex;flex-direction:column;justify-content:center;gap:12px}
+.target .de{font-size:clamp(22px,2.9vw,36px);font-weight:950;line-height:1.45;color:#23277f;direction:ltr;overflow-wrap:anywhere}
+.target .ar{font-size:clamp(13px,1.4vw,18px);font-weight:700;color:#5c7192;line-height:1.7}
+.target .hint{font-size:12px;color:#776ea0}
+.actions{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin:15px 0 4px}
+.btn{border:0;border-radius:14px;min-height:46px;padding:10px 19px;font-size:13px;font-weight:900}
+.btn.primary{background:linear-gradient(115deg,#9050fc,#5540e8);color:white;box-shadow:0 6px 14px #6944ed36}
+.btn.secondary{border:1px solid #c9caff;background:#f2f1ff;color:#3d3eab}
+.btn.danger{background:#fff0f0;border:1px solid #eec3c3;color:#a32139}
+.btn.speaking{background:linear-gradient(110deg,#087bcc,#3a5bf3);color:#fff;box-shadow:0 6px 14px #2d75d338}
+.btn.speaking.active{background:#bf3259;animation:pulse 1.4s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 8px #c5445017}}
+.live-box{margin-top:20px;border:1px dashed #b5baf6;background:#fafaff;border-radius:17px;padding:17px;min-height:135px}
+.live-box .live-title{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;font-weight:900;color:#5555a7;margin-bottom:8px}
+.live-box .live-text{direction:ltr;text-align:left;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8;font-size:clamp(16px,1.6vw,22px);font-weight:750;color:#182853;min-height:39px}
+.live-box .placeholder{color:#9ba1b9;font-weight:600;font-size:13px;direction:rtl;text-align:right}
+.live-box .interim{color:#8291a9}
+.transcript-manual{width:100%;resize:vertical;min-height:88px;max-height:260px;border:1px solid #cdcdf1;background:#fff;border-radius:12px;padding:12px;direction:ltr;text-align:left;color:#1f2e63;font-size:15px;margin-top:12px}
+.status{min-height:25px;color:#6559bc;font-size:12px;font-weight:750;line-height:1.7;margin-top:9px}
+.feedback{border-radius:15px;padding:15px;margin-top:14px;border:1px solid #d8dbf8;background:#f5f6ff;display:grid;gap:8px}
+.feedback.good{background:#e9f9ee;border-color:#b4e3c6;color:#187b49}
+.feedback.retry{background:#fff6e8;border-color:#f0dabc;color:#84541c}
+.feedback.neutral{background:#f2f6ff;border-color:#ccd7f4;color:#304c85}
+.feedback h3{font-size:15px;margin:0}
+.feedback p{font-size:12px;line-height:1.75;margin:0}
+.feedback strong{font-size:15px}
+.footer-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px}
+.footer-actions .btn{flex:0 1 190px}
+.topic-indicator{color:#67718f;font-size:12px;font-weight:850}
+.note-bottom{margin:18px auto 0;color:#687697;font-size:12px;text-align:center;line-height:1.9}
+@media(max-width:650px){.shell{width:calc(100% - 14px);margin:7px auto 45px}.hero{padding:18px 14px;min-height:126px;gap:8px;border-radius:18px}.hero-art{min-width:67px;width:67px;height:67px;font-size:39px;border-radius:16px}.hero h1{font-size:30px}.hero p{font-size:11px}.toolbar{grid-template-columns:1fr}.activity-tabs{gap:6px}.activity-tab{font-size:11px;padding:9px 12px}.training{border-radius:18px;padding:14px;min-height:270px}.target{padding:16px 12px;min-height:108px}.target .de{font-size:23px}.target .ar{font-size:13px}.btn{font-size:12px;padding:10px 12px;min-height:43px}.footer-actions .btn{flex:1}.notice{font-size:11px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;scroll-behavior:auto!important}}
+
+/* V48 — genuine user-controlled audio recording + local playback */
+.direct-mic-link{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;height:auto;min-height:46px;box-sizing:border-box}
+.notice a{color:#443db8;font-weight:900;text-decoration:underline;text-underline-offset:3px}
+.recording-playback{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:15px;padding:12px;border-radius:14px;background:#edf9f4;border:1px solid #b7ddcc;color:#185b44}
+.recording-playback strong{font-size:13px}
+.recording-playback audio{flex:1 1 260px;max-width:100%;height:42px}
+.recording-download{color:#3635ad;font-weight:900;text-decoration:none;border:1px solid #c8d1fc;border-radius:10px;padding:8px 12px;background:white;font-size:12px}
+.btn.speaking.active{background:#ba2a50!important}
+
+</style>
+</head>
+<body>
+<main class="shell">
+<header class="hero"><div><small>ÖSD B2 · Training Prüfung · Mündlich</small><h1>Sprechen</h1><p>اختار الموضوع ونوع التدريب، وتدرّب على الكلمات والجمل والأسئلة بالميكروفون.</p></div><div class="hero-art" aria-hidden="true">🎙️</div></header>
+<div class="notice">ملاحظة: تحويل الصوت إلى نص يعتمد على دعم المتصفح وإذن الميكروفون والاتصال بالشبكة عند بعض المتصفحات. نتيجة المطابقة كتقارن <strong>النص المتعرّف عليه</strong> بالنموذج فقط؛ ماشي تقييم دقيق لمخارج الحروف أو الطلاقة. التسجيل الصوتي كيبقى محلياً فالمتصفح، وتقدر تسمعو أو تحمّلو بعد الإيقاف؛ ما كيتبعثش للسيرفر. تحويل الصوت إلى نص ممكن يستعمل خدمة المتصفح. <a id="standaloneLink" href="./b2-sprechen-training.html" target="_blank" rel="noopener noreferrer">إذا الميكروفون ما خدمش، افتح صفحة التدريب مباشرة ↗</a>.</div>
+<div class="toolbar">
+<label class="field" for="topic">اختار الموضوع (Thema)<select id="topic"></select></label>
+<label class="field" for="modeSelect">اختار نوع التدريب<select id="modeSelect"></select></label>
+</div>
+<nav id="activityTabs" class="activity-tabs" aria-label="أنواع تدريب التكلم"></nav>
+<div class="stats"><span class="stat" id="position">1 / 1</span><span class="stat" id="counter">0 محاولة في هاد التدريب</span></div><div class="progress"><div id="progressBar"></div></div>
+<section class="training" aria-label="تدريب على التكلم">
+  <div class="training-head"><small id="trainingTitle">Wörter · المفردات</small><span class="kind-icon" id="kindIcon" aria-hidden="true">🔤</span></div>
+  <div class="target"><div class="de" lang="de" id="targetText"></div><div class="ar" id="translation"></div><div class="hint" id="hintText"></div></div>
+  <div class="actions">
+    <button class="btn secondary" id="listenBtn" type="button">🔊 استمع للنموذج</button>
+    <button class="btn secondary" id="sampleBtn" type="button" hidden>👁️ عرض وسماع جواب نموذجي</button>
+    <button class="btn speaking" id="micBtn" type="button">🎤 ابدأ التسجيل</button>
+    <a class="btn secondary direct-mic-link" id="directMicLink" href="./b2-sprechen-training.html" target="_blank" rel="noopener noreferrer">↗ فتح في تبويب مستقل</a>
+    <button class="btn secondary" id="repeatBtn" type="button">↻ حاول من جديد</button>
+  </div>
+  <section class="live-box" aria-live="polite"><div class="live-title"><span>النص الذي تعرف عليه المتصفح</span><span id="recState">جاهز</span></div><div class="live-text placeholder" id="transcript">اضغط على الميكروفون وبدا تكلم بالألمانية...</div>
+    <div id="manualBox" hidden><textarea class="transcript-manual" id="manualText" placeholder="إذا لم يعمل الميكروفون، يمكنك كتابة الجملة هنا للتدرّب على مطابقة النص."></textarea><div class="actions"><button class="btn secondary" id="manualCheck" type="button">تحقق من النص المكتوب</button></div></div>
+    <div class="status" id="status" role="status"></div>
+    <div id="recordingPlayback" class="recording-playback" hidden>
+      <strong>🎧 التسجيل ديالك</strong>
+      <audio id="recordedAudio" controls preload="metadata" aria-label="الاستماع للتسجيل"></audio>
+      <a id="recordingDownload" class="recording-download" download="b2-sprechen.webm">⬇ تحميل التسجيل</a>
+    </div>
+  </section>
+  <div class="feedback" id="feedback" hidden aria-live="polite"></div>
+  <div class="footer-actions"><button class="btn secondary" id="prev" type="button">السابق →</button><span class="topic-indicator" id="topicLabel"></span><button class="btn primary" id="next" type="button">← التالي</button></div>
+</section>
+<p class="note-bottom">الأسئلة الحرة كتحتاج جواب منك، لذلك ما كنعطيوش فيها حكم «صحيح/خطأ» تلقائي. تقدر تسمع جواباً نموذجياً وتقارنو مع جوابك.</p>
+</main>
+<script>
+'use strict';
+const TOPICS={"bildbeschreibung":{"title":"Bildbeschreibung","arabic":"وصف الصورة","words":[{"de":"wandern","ar":"التنزه سيرًا"},{"de":"(im) Gebirge","ar":"(في) الجبال"},{"de":"der Wanderweg","ar":"مسار التنزه"},{"de":"der Rucksack","ar":"حقيبة الظهر"},{"de":"die Natur","ar":"الطبيعة"},{"de":"die Erholung","ar":"الراحة والاستجمام"},{"de":"Alltagsstress","ar":"ضغط الحياة اليومية"},{"de":"die Gesundheit","ar":"الصحة"},{"de":"fit bleiben","ar":"المحافظة على اللياقة"},{"de":"entspannen","ar":"الاسترخاء"},{"de":"Energie tanken","ar":"استعادة الطاقة"},{"de":"der Ausgleich","ar":"التوازن"},{"de":"die Freizeit","ar":"وقت الفراغ"},{"de":"die Aktivität","ar":"النشاط"},{"de":"die Bewegung","ar":"الحركة"},{"de":"der Zusammenhalt","ar":"الترابط"},{"de":"das Abenteuer","ar":"المغامرة"},{"de":"die Aussicht","ar":"الإطلالة"},{"de":"die Landschaft","ar":"المناظر الطبيعية"},{"de":"umweltfreundlich","ar":"صديق للبيئة"},{"de":"nachhaltig","ar":"مستدام"},{"de":"die frische Luft","ar":"الهواء النقي"}],"sentences":[{"de":"Ich habe mich für dieses Bild entschieden, weil es für mich Erholung, Bewegung und Naturverbundenheit symbolisiert.","ar":"اخترت هذه الصورة لأنها ترمز بالنسبة لي إلى الراحة والحركة والارتباط بالطبيعة."},{"de":"Auf dem Bild sehe ich vier Personen, die in den Bergen wandern. Sie tragen Rucksäcke und sportliche Kleidung. Im Hintergrund sind hohe, schneebedeckte Berge und ein blauer Himmel zu sehen.","ar":"أرى أربعة أشخاص يتنزهون في الجبال، ويحملون حقائب ظهر ويلبسون ملابس رياضية. وفي الخلفية جبال عالية مغطاة بالثلج وسماء زرقاء."},{"de":"Die Gruppe geht auf einem Wanderweg. Die Landschaft wirkt sehr grün und ruhig. Die Personen scheinen eine gute Zeit zu haben, denn ihre Körperhaltung ist entspannt.","ar":"تمشي المجموعة في مسار للتنزه، والطبيعة تبدو خضراء وهادئة، والأشخاص مرتاحون."},{"de":"Das Bild passt zum Thema „Freizeit und Natur“. Es zeigt, wie man seine Freizeit aktiv und sinnvoll verbringen kann. Wandern ist nicht nur eine Sportart, sondern auch eine Möglichkeit, dem Alltagsstress zu entkommen und neue Energie zu tanken.","ar":"الصورة مناسبة لموضوع وقت الفراغ والطبيعة؛ فالتنزه يتيح قضاء وقت مفيد والهروب من ضغط الحياة اليومية واستعادة الطاقة."},{"de":"Meiner Meinung nach ist es sehr wichtig, Zeit in der Natur zu verbringen. Man tut damit etwas Gutes für die Gesundheit, bleibt fit und kann sich mental erholen. Außerdem stärkt es den Zusammenhalt, zum Beispiel mit Freunden oder der Familie.","ar":"في رأيي قضاء الوقت في الطبيعة مهم للصحة واللياقة والراحة النفسية، كما يقوّي الترابط مع الأصدقاء والعائلة."},{"de":"Ich denke, dass immer mehr Menschen solche Aktivitäten wählen werden, weil sie einen guten Ausgleich zum stressigen Alltag bieten.","ar":"أعتقد أن عددًا أكبر من الناس سيختار هذه الأنشطة لأنها تساعد على تحقيق التوازن مع ضغوط الحياة."}],"questions":[{"de":"Wandern Sie selbst gerne?","ar":"هل تحب التنزه سيرًا على الأقدام؟","answer":"Ja, ich wandere sehr gerne, besonders am Wochenende. Es hilft mir, mich zu entspannen und neue Energie zu bekommen.","answerAr":"نعم، أحب التنزه كثيرًا، خاصة في عطلة نهاية الأسبوع؛ فهو يساعدني على الاسترخاء واستعادة الطاقة."},{"de":"Welche Vorteile hat Wandern?","ar":"ما فوائد التنزه سيرًا؟","answer":"Wandern hat viele Vorteile: Man bleibt körperlich fit, stärkt das Immunsystem, baut Stress ab und kann die Natur genießen.","answerAr":"للتنزه فوائد كثيرة: المحافظة على اللياقة، وتقوية المناعة، وتخفيف التوتر، والاستمتاع بالطبيعة."},{"de":"Gibt es auch Nachteile?","ar":"هل توجد سلبيات أيضًا؟","answer":"Ja, es kann anstrengend sein, vor allem in den Bergen. Außerdem braucht man eine gute Ausrüstung und muss auf das Wetter achten.","answerAr":"نعم، قد يكون متعبًا خاصة في الجبال؛ كما يحتاج الشخص إلى تجهيزات جيدة والانتباه إلى الطقس."},{"de":"Wie verbringen Sie am liebsten Ihre Freizeit?","ar":"كيف تفضّل قضاء وقت فراغك؟","answer":"In meiner Freizeit treibe ich gerne Sport, treffe Freunde und mache gelegentlich einen Ausflug in die Natur.","answerAr":"في وقت فراغي أحب ممارسة الرياضة ولقاء الأصدقاء والقيام أحيانًا بنزهة إلى الطبيعة."}],"expressions":[{"de":"Ich habe mich für dieses Bild entschieden, weil ...","ar":"اخترت هذه الصورة لأن ..."},{"de":"Auf dem Bild sehe ich ... / Im Hintergrund ...","ar":"أرى في الصورة ... / في الخلفية ..."},{"de":"Im Vordergrund ... / Auf der rechten/linken Seite ...","ar":"في المقدمة ... / على الجهة اليمنى/اليسرى ..."},{"de":"Das Bild passt zum Thema ..., weil ...","ar":"الصورة مناسبة للموضوع ... لأن ..."},{"de":"Meiner Meinung nach ... / Ich finde, dass ...","ar":"في رأيي ... / أرى أن ..."},{"de":"Man kann vermuten, dass ...","ar":"يمكن أن نفترض أن ..."},{"de":"Ich denke, dass ... / Es ist wichtig, dass ...","ar":"أعتقد أن ... / من المهم أن ..."}],"prompts":[{"de":"Sehen Sie sich die drei Bilder an und wählen Sie eines aus.","ar":"انظر إلى الصور الثلاث واختر واحدة."},{"de":"Beschreiben Sie das Bild.","ar":"صِف الصورة."},{"de":"Sagen Sie, was das Bild mit dem Thema zu tun hat.","ar":"اشرح علاقة الصورة بالموضوع."},{"de":"Äußern Sie Ihre Meinung und begründen Sie sie.","ar":"عبّر عن رأيك وقدّم الأسباب."},{"de":"Reagieren Sie anschließend auf die Fragen der Prüferin / des Prüfers.","ar":"أجب بعد ذلك عن أسئلة الممتحِنة أو الممتحِن."}]},"familie":{"title":"Familie und Zusammenleben","arabic":"الأسرة والعيش المشترك","words":[{"de":"die Familie","ar":"العائلة"},{"de":"der Zusammenhalt","ar":"الترابط"},{"de":"die Generation","ar":"الجيل"},{"de":"die Eltern","ar":"الوالدان"},{"de":"die Großeltern","ar":"الأجداد"},{"de":"das Kind","ar":"الطفل"},{"de":"die Mahlzeit","ar":"وجبة الطعام"},{"de":"gemeinsam essen","ar":"الأكل معًا"},{"de":"die Unterstützung","ar":"الدعم"},{"de":"die Kommunikation","ar":"التواصل"},{"de":"die Beziehung","ar":"العلاقة"},{"de":"die Verantwortung","ar":"المسؤولية"},{"de":"Zeit verbringen","ar":"قضاء الوقت"},{"de":"harmonisch","ar":"منسجم"},{"de":"respektvoll","ar":"باحترام"},{"de":"sich kümmern um","ar":"الاعتناء بـ"}],"sentences":[{"de":"Ich habe mich für dieses Bild entschieden, weil es für mich Familie, Nähe und Zusammenhalt symbolisiert.","ar":"اخترت هذه الصورة لأنها ترمز بالنسبة لي إلى العائلة والقرب والترابط."},{"de":"Auf dem Bild sehe ich eine Familie, die gemeinsam an einem Tisch sitzt und zusammen isst. Es sind mehrere Generationen zu sehen: Kinder, Eltern und Großeltern.","ar":"أرى في الصورة عائلة تجلس معًا حول مائدة وتتناول الطعام. نرى عدة أجيال: الأطفال والآباء والأجداد."},{"de":"Alle wirken freundlich und entspannt. Auf dem Tisch stehen verschiedene Speisen und Getränke. Die Atmosphäre sieht warm und harmonisch aus.","ar":"يبدو الجميع ودودين ومرتاحين. على المائدة أطعمة ومشروبات متنوعة، والأجواء دافئة ومنسجمة."},{"de":"Das Bild passt gut zum Thema „Familie und Zusammenleben“. Es zeigt, wie wichtig gemeinsame Zeit, Kommunikation und gegenseitige Unterstützung im Familienleben sind.","ar":"تتناسب الصورة مع موضوع العائلة والعيش المشترك؛ فهي تبرز أهمية الوقت المشترك والتواصل والدعم المتبادل داخل الأسرة."},{"de":"Meiner Meinung nach ist es sehr wichtig, regelmäßig Zeit mit der Familie zu verbringen, weil man dadurch stärkere Beziehungen aufbaut und sich emotional unterstützt fühlt.","ar":"في رأيي من المهم جدًا قضاء الوقت بانتظام مع العائلة، لأن ذلك يقوي العلاقات ويوفر الدعم العاطفي."},{"de":"Ich denke, dass gemeinsame Mahlzeiten im Alltag eine gute Möglichkeit sind, näher zusammenzukommen und Probleme offen zu besprechen.","ar":"أعتقد أن تناول الوجبات معًا في الحياة اليومية فرصة جيدة للتقارب ومناقشة المشكلات بصراحة."}],"questions":[{"de":"Verbringen Sie gern Zeit mit Ihrer Familie?","ar":"هل تحب قضاء الوقت مع عائلتك؟","answer":"Ja, sehr gern. Ich finde, dass gemeinsame Zeit mit der Familie wichtig ist, weil sie Sicherheit und Unterstützung gibt.","answerAr":"نعم، بكل سرور. أرى أن الوقت مع العائلة مهم لأنه يوفر الأمان والدعم."},{"de":"Warum sind gemeinsame Mahlzeiten wichtig?","ar":"لماذا الوجبات العائلية المشتركة مهمة؟","answer":"Gemeinsame Mahlzeiten fördern die Kommunikation. Man kann über den Tag sprechen und die Beziehung zueinander stärken.","answerAr":"تشجع الوجبات المشتركة على التواصل؛ يمكن الحديث عن اليوم وتقوية العلاقات بين أفراد العائلة."},{"de":"Gibt es heute weniger Familienzeit als früher?","ar":"هل أصبح وقت العائلة اليوم أقل من السابق؟","answer":"Ja, oft schon, weil viele Menschen viel arbeiten und im Alltag wenig Zeit haben. Deshalb muss man Familienzeit bewusst planen.","answerAr":"نعم، غالبًا لأن كثيرًا من الناس يعملون كثيرًا وليس لديهم وقت كافٍ؛ لذلك يجب التخطيط لوقت العائلة بوعي."},{"de":"Welche Rolle spielen Großeltern in der Familie?","ar":"ما دور الأجداد في العائلة؟","answer":"Großeltern spielen oft eine wichtige Rolle. Sie geben Erfahrung weiter, helfen den Eltern und verbringen gerne Zeit mit den Kindern.","answerAr":"للأجداد غالبًا دور مهم؛ ينقلون خبراتهم ويساعدون الوالدين ويقضون وقتًا مع الأطفال."}],"expressions":[{"de":"Ich habe mich für dieses Bild entschieden, weil ...","ar":"اخترت هذه الصورة لأن ..."},{"de":"Auf dem Bild sehe ich ...","ar":"أرى في الصورة ..."},{"de":"Im Vordergrund / Im Hintergrund sieht man ...","ar":"في مقدمة الصورة / خلفيتها نرى ..."},{"de":"Das Bild passt zum Thema ..., weil ...","ar":"تتناسب الصورة مع الموضوع ... لأن ..."},{"de":"Meiner Meinung nach ... / Ich finde, dass ...","ar":"في رأيي ... / أرى أن ..."},{"de":"Aus eigener Erfahrung kann ich sagen, dass ...","ar":"أستطيع أن أقول من تجربتي الشخصية إن ..."},{"de":"Ich denke, dass ...","ar":"أعتقد أن ..."}],"prompts":[{"de":"Sehen Sie sich die drei Bilder an und wählen Sie eines aus.","ar":"انظر إلى الصور الثلاث واختر صورة واحدة."},{"de":"Beschreiben Sie das Bild.","ar":"صف الصورة."},{"de":"Sagen Sie, was das Bild mit dem Thema zu tun hat.","ar":"وضح علاقة الصورة بالموضوع."},{"de":"Äußern Sie Ihre Meinung und begründen Sie sie.","ar":"عبّر عن رأيك وعلّله."},{"de":"Reagieren Sie anschließend auf die Fragen der Prüferin / des Prüfers.","ar":"أجب بعد ذلك عن أسئلة الممتحِنة أو الممتحِن."}]},"studium":{"title":"Studium und Lernen","arabic":"الدراسة والتعلّم","words":[{"de":"das Studium","ar":"الدراسة الجامعية"},{"de":"das Lernen","ar":"التعلّم"},{"de":"die Prüfung","ar":"الامتحان"},{"de":"das Buch","ar":"الكتاب"},{"de":"der Laptop","ar":"الحاسوب المحمول"},{"de":"die Bibliothek","ar":"المكتبة"},{"de":"sich konzentrieren","ar":"يركّز"},{"de":"gemeinsam lernen","ar":"يتعلّم معًا"},{"de":"die Motivation","ar":"الدافعية"},{"de":"die Bildung","ar":"التعليم"},{"de":"das Ziel","ar":"الهدف"},{"de":"der Erfolg","ar":"النجاح"},{"de":"der Stress","ar":"الضغط"},{"de":"die Unterstützung","ar":"الدعم"},{"de":"die Teamarbeit","ar":"العمل الجماعي"},{"de":"sich vorbereiten","ar":"يستعد"}],"sentences":[{"de":"Ich habe mich für dieses Bild entschieden, weil es für mich Lernen, Motivation und Zusammenarbeit symbolisiert.","ar":"اخترت هذه الصورة لأنها ترمز بالنسبة لي إلى التعلّم والدافعية والتعاون."},{"de":"Auf dem Bild sehe ich zwei junge Menschen, die zusammen lernen. Sie sitzen an einem Tisch, vor ihnen liegen Bücher und ein Laptop. Beide wirken konzentriert und interessiert.","ar":"أرى في الصورة شابين يتعلّمان معًا. يجلسان إلى طاولة، وأمامهُما كتب وحاسوب محمول. كلاهما يبدو مركزًا ومهتمًا."},{"de":"Die beiden scheinen sich auf eine Prüfung oder ein gemeinsames Projekt vorzubereiten. Die Atmosphäre wirkt ruhig, freundlich und produktiv. Im Hintergrund sieht man Regale mit Büchern.","ar":"يبدو أن الاثنين يستعدان لامتحان أو لمشروع مشترك. الأجواء تبدو هادئة وودية ومنتجة. وفي الخلفية نرى رفوفًا من الكتب."},{"de":"Das Bild passt gut zum Thema „Studium und Lernen“. Es zeigt, wie wichtig Bildung, Konzentration und gegenseitige Unterstützung beim Lernen sind.","ar":"تتناسب الصورة جيدًا مع موضوع الدراسة والتعلّم. فهي تُظهر مدى أهمية التعليم والتركيز والدعم المتبادل أثناء التعلّم."},{"de":"Meiner Meinung nach ist gemeinsames Lernen sehr hilfreich, weil man sich austauschen, Fragen stellen und sich gegenseitig motivieren kann.","ar":"في رأيي، التعلّم الجماعي مفيد جدًا، لأنه يسمح بتبادل الأفكار وطرح الأسئلة وتحفيز بعضنا البعض."},{"de":"Ich denke, dass gute Lerngewohnheiten und Teamarbeit im Studium sehr wichtig sind, um erfolgreich zu sein und seine Ziele zu erreichen.","ar":"أعتقد أن العادات الدراسية الجيدة والعمل الجماعي في الدراسة مهمان جدًا من أجل النجاح وتحقيق الأهداف."}],"questions":[{"de":"Lernen Sie lieber allein oder mit anderen zusammen?","ar":"هل تفضّل التعلّم وحدك أم مع الآخرين؟","answer":"Meistens lerne ich gern mit anderen zusammen, weil man sich gegenseitig unterstützen und schwierige Themen besser verstehen kann.","answerAr":"غالبًا أحب أن أتعلم مع الآخرين، لأننا نستطيع أن ندعم بعضنا البعض ونفهم المواضيع الصعبة بشكل أفضل."},{"de":"Warum ist Bildung heute so wichtig?","ar":"لماذا التعليم مهم جدًا اليوم؟","answer":"Bildung ist wichtig, weil sie bessere berufliche Chancen bietet und dabei hilft, sich persönlich weiterzuentwickeln.","answerAr":"التعليم مهم لأنه يوفّر فرصًا مهنية أفضل ويساعد أيضًا على التطور الشخصي."},{"de":"Was motiviert Sie beim Lernen?","ar":"ما الذي يحفزك أثناء التعلّم؟","answer":"Mich motivieren meine Ziele und der Wunsch, später einen guten Beruf zu haben. Außerdem freue ich mich, wenn ich Fortschritte mache.","answerAr":"تحفزني أهدافي ورغبتي في الحصول على مهنة جيدة مستقبلًا. كما أنني أفرح عندما أحقق تقدّمًا."},{"de":"Welche Schwierigkeiten gibt es beim Lernen?","ar":"ما الصعوبات التي توجد أثناء التعلّم؟","answer":"Manchmal fehlt die Konzentration oder die Zeit. Auch Prüfungsstress kann ein Problem sein, aber mit guter Planung kann man vieles besser schaffen.","answerAr":"أحيانًا ينقص التركيز أو الوقت. كما أن ضغط الامتحانات قد يكون مشكلة، لكن بالتخطيط الجيد يمكن تجاوز الكثير بشكل أفضل."}],"expressions":[{"de":"Ich habe mich für dieses Bild entschieden, weil ...","ar":"اخترت هذه الصورة لأن ..."},{"de":"Auf dem Bild sehe ich ...","ar":"أرى في الصورة ..."},{"de":"Im Vordergrund / Im Hintergrund sieht man ...","ar":"في مقدمة الصورة / في خلفيتها نرى ..."},{"de":"Das Bild passt zum Thema ..., weil ...","ar":"تناسب الصورة الموضوع ... لأن ..."},{"de":"Meiner Meinung nach ... / Ich finde, dass ...","ar":"في رأيي ... / أرى أن ..."},{"de":"Aus eigener Erfahrung kann ich sagen, dass ...","ar":"من تجربتي الشخصية أستطيع أن أقول إن ..."},{"de":"Ich denke, dass ...","ar":"أعتقد أن ..."}],"prompts":[{"de":"Sehen Sie sich die drei Bilder an und wählen Sie eines aus.","ar":"انظر إلى الصور الثلاث واختر واحدة منها."},{"de":"Beschreiben Sie das Bild.","ar":"صف الصورة."},{"de":"Sagen Sie, was das Bild mit dem Thema zu tun hat.","ar":"قل ما علاقة الصورة بالموضوع."},{"de":"Äußern Sie Ihre Meinung und begründen Sie sie.","ar":"عبّر عن رأيك وعلّله."},{"de":"Reagieren Sie anschließend auf die Fragen der Prüferin / des Prüfers.","ar":"بعد ذلك أجب عن أسئلة الممتحِنة / الممتحِن."}]},"reisen":{"title":"Reisen und Tourismus","arabic":"السفر والسياحة","words":[{"de":"die Reise","ar":"الرحلة"},{"de":"der Tourismus","ar":"السياحة"},{"de":"der Urlaub","ar":"العطلة"},{"de":"der Koffer","ar":"حقيبة السفر"},{"de":"das Reiseziel","ar":"وجهة السفر"},{"de":"das Hotel","ar":"الفندق"},{"de":"die Kultur","ar":"الثقافة"},{"de":"die Erfahrung","ar":"التجربة"},{"de":"unterwegs sein","ar":"في طريق السفر"},{"de":"buchen","ar":"يحجز"},{"de":"entdecken","ar":"يكتشف"},{"de":"sich erholen","ar":"يستريح"},{"de":"neugierig","ar":"فضولي"},{"de":"umweltfreundlich","ar":"مراعٍ للبيئة"},{"de":"das Verkehrsmittel","ar":"وسيلة النقل"},{"de":"der Massentourismus","ar":"السياحة الجماعية"}],"sentences":[{"de":"Ich habe mich für dieses Bild entschieden, weil es für mich Entdeckung, Erholung und neue Erfahrungen symbolisiert.","ar":"اخترت هذه الصورة لأنها ترمز بالنسبة لي إلى الاكتشاف والاستراحة والتجارب الجديدة."},{"de":"Auf dem Bild sehe ich Menschen, die unterwegs sind. Sie reisen mit Koffern und wirken neugierig und gut gelaunt.","ar":"أرى في الصورة أشخاصًا في طريقهم للسفر. يسافرون بحقائب ويبدون فضوليين وفي مزاج جيد."},{"de":"Die Personen scheinen eine Reise zu planen oder gerade angekommen zu sein. Die Atmosphäre wirkt lebendig und interessant.","ar":"يبدو أن الأشخاص يخططون لرحلة أو وصلوا للتو. الأجواء تبدو حيوية ومثيرة للاهتمام."},{"de":"Das Bild passt gut zum Thema „Reisen und Tourismus“. Es zeigt, dass Reisen eine Möglichkeit ist, andere Kulturen kennenzulernen und den Horizont zu erweitern.","ar":"تتناسب الصورة مع موضوع السفر والسياحة. فهي تبيّن أن السفر فرصة للتعرّف إلى ثقافات أخرى وتوسيع الآفاق."},{"de":"Meiner Meinung nach ist Reisen sehr bereichernd, weil man neue Orte entdeckt, andere Menschen trifft und viel lernt.","ar":"في رأيي السفر تجربة ثرية جدًا؛ لأن المرء يكتشف أماكن جديدة ويلتقي أشخاصًا آخرين ويتعلم الكثير."},{"de":"Ich denke, dass Reisen auch in Zukunft für viele Menschen wichtig bleiben wird, obwohl man dabei auf Kosten und Umwelt achten sollte.","ar":"أعتقد أن السفر سيظل مهمًا لكثير من الناس في المستقبل أيضًا، رغم ضرورة الانتباه للتكاليف والبيئة."}],"questions":[{"de":"Reisen Sie gern?","ar":"هل تحب السفر؟","answer":"Ja, sehr gern. Reisen hilft mir, mich zu erholen und neue Eindrücke zu sammeln.","answerAr":"نعم، كثيرًا. يساعدني السفر على الاستراحة وجمع انطباعات جديدة."},{"de":"Was sind die Vorteile des Reisens?","ar":"ما فوائد السفر؟","answer":"Man lernt neue Kulturen kennen, sammelt Erfahrungen und kann dem Alltag entkommen.","answerAr":"يتعرف المرء إلى ثقافات جديدة ويكتسب تجارب ويبتعد عن الروتين اليومي."},{"de":"Welche Verkehrsmittel benutzen Sie am liebsten?","ar":"ما وسيلة النقل التي تفضّل استعمالها؟","answer":"Ich fahre am liebsten mit dem Zug, weil es bequem und oft umweltfreundlicher ist.","answerAr":"أفضّل السفر بالقطار لأنه مريح وغالبًا أكثر مراعاة للبيئة."},{"de":"Hat Massentourismus auch Nachteile?","ar":"هل للسياحة الجماعية سلبيات أيضًا؟","answer":"Ja, natürlich. Er kann die Umwelt belasten und historische Orte überfüllen.","answerAr":"نعم بالتأكيد، فقد يضر بالبيئة ويتسبب في ازدحام الأماكن التاريخية."}],"expressions":[{"de":"Ich habe mich für dieses Bild entschieden, weil ...","ar":"اخترت هذه الصورة لأن ..."},{"de":"Auf dem Bild sehe ich ...","ar":"أرى في الصورة ..."},{"de":"Im Vordergrund / Im Hintergrund sieht man ...","ar":"في مقدمة الصورة / خلفيتها نرى ..."},{"de":"Das Bild passt zum Thema ..., weil ...","ar":"تتناسب الصورة مع الموضوع ... لأن ..."},{"de":"Meiner Meinung nach ... / Ich finde, dass ...","ar":"في رأيي ... / أرى أن ..."},{"de":"Aus eigener Erfahrung kann ich sagen, dass ...","ar":"من تجربتي الشخصية أستطيع أن أقول إن ..."},{"de":"Ich denke, dass ...","ar":"أعتقد أن ..."}],"prompts":[{"de":"Sehen Sie sich die drei Bilder an und wählen Sie eines aus.","ar":"انظر إلى الصور الثلاث واختر واحدة منها."},{"de":"Beschreiben Sie das Bild.","ar":"صف الصورة."},{"de":"Sagen Sie, was das Bild mit dem Thema zu tun hat.","ar":"وضّح علاقة الصورة بالموضوع."},{"de":"Äußern Sie Ihre Meinung und begründen Sie sie.","ar":"عبّر عن رأيك وعلّل رأيك."},{"de":"Reagieren Sie anschließend auf die Fragen der Prüferin / des Prüfers.","ar":"أجب بعد ذلك عن أسئلة الممتحِنة أو الممتحِن."}]},"gesundheit":{"title":"Gesundheit und Sport","arabic":"الصحة والرياضة","words":[{"de":"die Gesundheit","ar":"الصحة"},{"de":"der Sport","ar":"الرياضة"},{"de":"die Bewegung","ar":"الحركة"},{"de":"das Training","ar":"التدريب"},{"de":"die Ernährung","ar":"التغذية"},{"de":"fit bleiben","ar":"البقاء في لياقة جيدة"},{"de":"sich erholen","ar":"يستريح"},{"de":"die Kondition","ar":"اللياقة"},{"de":"das Wohlbefinden","ar":"العافية"},{"de":"Stress abbauen","ar":"تخفيف التوتر"},{"de":"regelmäßig","ar":"بانتظام"},{"de":"gesund","ar":"صحي"},{"de":"aktiv","ar":"نشيط"},{"de":"motiviert","ar":"متحمس"},{"de":"an der frischen Luft","ar":"في الهواء الطلق"},{"de":"sich bewegen","ar":"يتحرك"}],"sentences":[{"de":"Ich habe mich für dieses Bild entschieden, weil es für mich Gesundheit, Bewegung und Lebensqualität symbolisiert.","ar":"اخترت هذه الصورة لأنها ترمز بالنسبة لي إلى الصحة والحركة وجودة الحياة."},{"de":"Auf dem Bild sehe ich Menschen, die Sport treiben. Sie bewegen sich an der frischen Luft und tragen bequeme Sportkleidung.","ar":"أرى في الصورة أشخاصًا يمارسون الرياضة. إنهم يتحركون في الهواء الطلق ويرتدون ملابس رياضية مريحة."},{"de":"Alle wirken aktiv und motiviert. Die Umgebung sieht freundlich und gesund aus. Wahrscheinlich möchten sie fit bleiben und etwas für ihren Körper tun.","ar":"يبدو الجميع نشيطين ومتحمسين. تبدو البيئة مريحة وصحية. وعلى الأرجح يريدون الحفاظ على لياقتهم وفعل شيء جيد لأجسامهم."},{"de":"Das Bild passt gut zum Thema „Gesundheit und Sport“. Es zeigt, dass regelmäßige Bewegung ein wichtiger Teil eines gesunden Lebensstils ist.","ar":"تتناسب الصورة جيدًا مع موضوع الصحة والرياضة. فهي تُظهر أن الحركة المنتظمة جزء مهم من أسلوب حياة صحي."},{"de":"Meiner Meinung nach ist Sport sehr wichtig, weil er die Gesundheit verbessert, Stress abbaut und gute Laune macht.","ar":"في رأيي، الرياضة مهمة جدًا لأنها تحسن الصحة وتخفف التوتر وتمنح مزاجًا جيدًا."},{"de":"Ich denke, dass mehr Menschen Sport treiben sollten, um körperlich und mental fit zu bleiben.","ar":"أعتقد أن المزيد من الناس يجب أن يمارسوا الرياضة من أجل البقاء في لياقة بدنية ونفسية جيدة."}],"questions":[{"de":"Treiben Sie regelmäßig Sport?","ar":"هل تمارس الرياضة بانتظام؟","answer":"Ja, ich versuche regelmäßig Sport zu treiben, weil ich mich danach fitter und entspannter fühle.","answerAr":"نعم، أحاول ممارسة الرياضة بانتظام، لأنني أشعر بعدها بمزيد من اللياقة والاسترخاء."},{"de":"Warum ist Bewegung wichtig?","ar":"لماذا الحركة مهمة؟","answer":"Bewegung stärkt den Körper, verbessert die Kondition und hilft gegen Stress.","answerAr":"الحركة تقوي الجسم وتحسن اللياقة وتساعد ضد التوتر."},{"de":"Was kann man tun, um gesund zu leben?","ar":"ماذا يمكن أن يفعل الإنسان ليعيش بصحة جيدة؟","answer":"Man sollte sich gesund ernähren, genug schlafen und sich regelmäßig bewegen.","answerAr":"ينبغي أن يتغذى الإنسان تغذية صحية، وينام بما يكفي، ويتحرك بانتظام."},{"de":"Ist Sport in der Schule wichtig?","ar":"هل الرياضة في المدرسة مهمة؟","answer":"Ja, auf jeden Fall, weil Kinder dadurch früh lernen, wie wichtig Gesundheit und Aktivität sind.","answerAr":"نعم، بالتأكيد، لأن الأطفال يتعلمون من خلالها مبكرًا مدى أهمية الصحة والنشاط."}],"expressions":[{"de":"Ich habe mich für dieses Bild entschieden, weil ...","ar":"اخترت هذه الصورة لأن ..."},{"de":"Auf dem Bild sehe ich ...","ar":"أرى في الصورة ..."},{"de":"Im Vordergrund / Im Hintergrund sieht man ...","ar":"في مقدمة الصورة / في الخلفية نرى ..."},{"de":"Das Bild passt zum Thema ..., weil ...","ar":"تناسب الصورة الموضوع ... لأن ..."},{"de":"Meiner Meinung nach ... / Ich finde, dass ...","ar":"في رأيي ... / أرى أن ..."},{"de":"Aus eigener Erfahrung kann ich sagen, dass ...","ar":"من تجربتي الشخصية أستطيع أن أقول إن ..."},{"de":"Ich denke, dass ...","ar":"أعتقد أن ..."}],"prompts":[{"de":"Sehen Sie sich die drei Bilder an und wählen Sie eines aus.","ar":"انظر إلى الصور الثلاث واختر واحدة منها."},{"de":"Beschreiben Sie das Bild.","ar":"صف الصورة."},{"de":"Sagen Sie, was das Bild mit dem Thema zu tun hat.","ar":"قل ما علاقة الصورة بالموضوع."},{"de":"Äußern Sie Ihre Meinung und begründen Sie sie.","ar":"عبّر عن رأيك وعلّله."},{"de":"Reagieren Sie anschließend auf die Fragen der Prüferin / des Prüfers.","ar":"بعد ذلك أجب عن أسئلة الممتحِنة / الممتحِن."}]},"umwelt":{"title":"Umwelt und Klimaschutz","arabic":"البيئة وحماية المناخ","words":[{"de":"die Umwelt","ar":"البيئة"},{"de":"der Klimaschutz","ar":"حماية المناخ"},{"de":"die Natur","ar":"الطبيعة"},{"de":"die Zukunft","ar":"المستقبل"},{"de":"der Müll","ar":"النفايات"},{"de":"recyceln","ar":"يعيد التدوير"},{"de":"Energie sparen","ar":"توفير الطاقة"},{"de":"nachhaltig","ar":"مستدام"},{"de":"umweltfreundlich","ar":"صديق للبيئة"},{"de":"die Verantwortung","ar":"المسؤولية"},{"de":"das Engagement","ar":"الالتزام والمشاركة"},{"de":"der Baum","ar":"الشجرة"},{"de":"die Verschmutzung","ar":"التلوث"},{"de":"öffentliche Verkehrsmittel","ar":"وسائل النقل العمومي"},{"de":"Plastik vermeiden","ar":"تجنب البلاستيك"},{"de":"bewusst","ar":"واعٍ"}],"sentences":[{"de":"Ich habe mich für dieses Bild entschieden, weil es für mich Verantwortung, Natur und Zukunft symbolisiert.","ar":"اخترت هذه الصورة لأنها ترمز بالنسبة لي إلى المسؤولية والطبيعة والمستقبل."},{"de":"Auf dem Bild sehe ich Menschen, die etwas für die Umwelt tun. Sie pflanzen Bäume oder sammeln Müll und arbeiten gemeinsam.","ar":"أرى في الصورة أشخاصًا يقومون بشيء من أجل البيئة؛ يغرسون الأشجار أو يجمعون النفايات ويعملون معًا."},{"de":"Alle wirken engagiert und bewusst. Die Szene zeigt, dass schon kleine Aktionen einen positiven Unterschied machen können.","ar":"يبدو الجميع ملتزمين وواعين؛ ويُظهر المشهد أن حتى الأعمال الصغيرة يمكن أن تُحدث فرقًا إيجابيًا."},{"de":"Das Bild passt gut zum Thema „Umwelt und Klimaschutz“. Es zeigt, wie wichtig nachhaltiges Verhalten und gemeinsames Engagement für unsere Zukunft sind.","ar":"تتناسب الصورة مع موضوع البيئة وحماية المناخ؛ وتُظهر أهمية السلوك المستدام والمشاركة الجماعية لمستقبلنا."},{"de":"Meiner Meinung nach sollte jeder Mensch im Alltag mehr auf die Umwelt achten, zum Beispiel weniger Plastik benutzen und Energie sparen.","ar":"في رأيي ينبغي لكل شخص أن يهتم أكثر بالبيئة في الحياة اليومية، مثل استعمال كمية أقل من البلاستيك وتوفير الطاقة."},{"de":"Ich denke, dass Umweltbewusstsein in Zukunft noch wichtiger wird und schon in der Schule stärker gefördert werden sollte.","ar":"أعتقد أن الوعي البيئي سيصبح أكثر أهمية في المستقبل، وأنه ينبغي تعزيزه منذ المدرسة."}],"questions":[{"de":"Was tun Sie persönlich für die Umwelt?","ar":"ماذا تفعل شخصيًا من أجل البيئة؟","answer":"Ich versuche, Müll zu trennen, Energie zu sparen und möglichst oft öffentliche Verkehrsmittel zu benutzen.","answerAr":"أحاول فرز النفايات وتوفير الطاقة واستخدام وسائل النقل العمومي قدر الإمكان."},{"de":"Warum ist Klimaschutz so wichtig?","ar":"لماذا تُعتبر حماية المناخ مهمة جدًا؟","answer":"Klimaschutz ist wichtig, weil er unsere Lebensgrundlagen schützt und zukünftigen Generationen hilft.","answerAr":"حماية المناخ مهمة لأنها تحمي أسس حياتنا وتساعد الأجيال القادمة."},{"de":"Was können Schulen für den Umweltschutz tun?","ar":"ماذا يمكن للمدارس أن تفعل لحماية البيئة؟","answer":"Schulen können Umweltprojekte organisieren und Schülerinnen und Schüler über nachhaltiges Verhalten informieren.","answerAr":"يمكن للمدارس تنظيم مشاريع بيئية وتوعية التلميذات والتلاميذ بالسلوك المستدام."},{"de":"Sollten Produkte mit viel Verpackung teurer sein?","ar":"هل ينبغي أن تكون المنتجات ذات التغليف الكثير أغلى ثمنًا؟","answer":"Ja, das wäre sinnvoll, weil es Menschen motivieren könnte, umweltfreundlichere Produkte zu wählen.","answerAr":"نعم، سيكون ذلك منطقيًا لأنه قد يشجع الناس على اختيار منتجات أكثر مراعاة للبيئة."}],"expressions":[{"de":"Ich habe mich für dieses Bild entschieden, weil ...","ar":"اخترت هذه الصورة لأن ..."},{"de":"Auf dem Bild sehe ich ...","ar":"أرى في الصورة ..."},{"de":"Im Vordergrund / Im Hintergrund sieht man ...","ar":"في مقدمة الصورة / في الخلفية نرى ..."},{"de":"Das Bild passt zum Thema ..., weil ...","ar":"تتناسب الصورة مع الموضوع ... لأن ..."},{"de":"Meiner Meinung nach ... / Ich finde, dass ...","ar":"في رأيي ... / أرى أن ..."},{"de":"Aus eigener Erfahrung kann ich sagen, dass ...","ar":"يمكنني القول من تجربتي الشخصية إن ..."},{"de":"Ich denke, dass ...","ar":"أعتقد أن ..."}],"prompts":[{"de":"Sehen Sie sich die drei Bilder an und wählen Sie eines aus.","ar":"انظر إلى الصور الثلاث واختر صورة واحدة."},{"de":"Beschreiben Sie das Bild.","ar":"صف الصورة."},{"de":"Sagen Sie, was das Bild mit dem Thema zu tun hat.","ar":"اشرح ما علاقة الصورة بالموضوع."},{"de":"Äußern Sie Ihre Meinung und begründen Sie sie.","ar":"عبّر عن رأيك وقدّم مبرراتك."},{"de":"Reagieren Sie anschließend auf die Fragen der Prüferin / des Prüfers.","ar":"بعد ذلك أجب عن أسئلة الممتحِنة أو الممتحِن."}]},"arbeit":{"title":"Arbeit und Beruf","arabic":"العمل والمهنة","words":[{"de":"die Arbeit","ar":"العمل"},{"de":"der Beruf","ar":"المهنة"},{"de":"das Büro","ar":"المكتب"},{"de":"der Kollege","ar":"زميل العمل"},{"de":"die Besprechung","ar":"الاجتماع"},{"de":"die Aufgabe","ar":"المهمة"},{"de":"das Gehalt","ar":"الراتب"},{"de":"die Erfahrung","ar":"التجربة"},{"de":"die Teamarbeit","ar":"العمل الجماعي"},{"de":"die Verantwortung","ar":"المسؤولية"},{"de":"motiviert","ar":"متحمس"},{"de":"selbstständig","ar":"مستقل"},{"de":"sich bewerben","ar":"يتقدم بطلب وظيفة"},{"de":"zusammenarbeiten","ar":"يتعاون"},{"de":"organisiert","ar":"منظم"},{"de":"produktiv","ar":"منتج"}],"sentences":[{"de":"Ich habe mich für dieses Bild entschieden, weil es für mich Arbeit, Verantwortung und Teamarbeit symbolisiert.","ar":"اخترت هذه الصورة لأنها ترمز بالنسبة لي إلى العمل والمسؤولية والعمل الجماعي."},{"de":"Auf dem Bild sehe ich mehrere Personen, die in einem Büro zusammenarbeiten. Sie sitzen an einem Tisch, sprechen miteinander und benutzen einen Laptop sowie Unterlagen.","ar":"أرى في الصورة عدة أشخاص يتعاونون داخل مكتب. يجلسون حول طاولة ويتحدثون مع بعضهم ويستخدمون حاسوبًا محمولًا ووثائق."},{"de":"Alle wirken konzentriert und professionell. Die Atmosphäre sieht ruhig und produktiv aus. Wahrscheinlich planen sie ein Projekt oder besprechen wichtige Aufgaben.","ar":"يبدو الجميع مركزين ومحترفين. الأجواء تبدو هادئة ومنتجة. وعلى الأرجح يخططون لمشروع أو يناقشون مهام مهمة."},{"de":"Das Bild passt gut zum Thema „Arbeit und Beruf“. Es zeigt, wie wichtig Kommunikation, Zusammenarbeit und Organisation im Berufsleben sind.","ar":"تتناسب الصورة جيدًا مع موضوع العمل والمهنة، وتُظهر أهمية التواصل والتعاون والتنظيم في الحياة المهنية."},{"de":"Meiner Meinung nach ist ein guter Beruf sehr wichtig, weil Arbeit nicht nur Geld bringt, sondern auch persönliche Entwicklung und Selbstständigkeit fördert.","ar":"في رأيي المهنة الجيدة مهمة جدًا، لأن العمل لا يجلب المال فقط بل يدعم التطور الشخصي والاستقلالية أيضًا."},{"de":"Ich denke, dass Teamarbeit und gute Arbeitsbedingungen in Zukunft immer wichtiger werden.","ar":"أعتقد أن العمل الجماعي وظروف العمل الجيدة سيصبحان أكثر أهمية في المستقبل."}],"questions":[{"de":"Arbeiten Sie lieber allein oder im Team?","ar":"هل تفضّل العمل وحدك أم ضمن فريق؟","answer":"Ich arbeite lieber im Team, weil man Ideen austauschen und sich gegenseitig unterstützen kann.","answerAr":"أفضل العمل في فريق لأننا نستطيع تبادل الأفكار ودعم بعضنا البعض."},{"de":"Was ist Ihnen in einem Beruf besonders wichtig?","ar":"ما الشيء المهم جدًا بالنسبة لك في المهنة؟","answer":"Mir sind ein gutes Arbeitsklima, faire Bezahlung und Entwicklungsmöglichkeiten wichtig.","answerAr":"تهمّني بيئة عمل جيدة وأجرة عادلة وفرص التطور."},{"de":"Sollte man den Beruf nach Interesse oder nach Gehalt wählen?","ar":"هل ينبغي اختيار المهنة حسب الاهتمام أم حسب الراتب؟","answer":"Am besten sollte man beides berücksichtigen, aber Interesse ist besonders wichtig, damit man motiviert bleibt.","answerAr":"من الأفضل أخذ الأمرين في الاعتبار، لكن الاهتمام مهم بشكل خاص للحفاظ على الحافز."},{"de":"Welche Rolle spielt Stress im Berufsleben?","ar":"ما دور التوتر في الحياة المهنية؟","answer":"Stress gehört oft dazu, aber man sollte lernen, gut damit umzugehen und Pausen zu machen.","answerAr":"التوتر غالبًا جزء من العمل، لكن ينبغي تعلّم التعامل معه جيدًا وأخذ فترات راحة."}],"expressions":[{"de":"Ich habe mich für dieses Bild entschieden, weil ...","ar":"اخترت هذه الصورة لأن ..."},{"de":"Auf dem Bild sehe ich ...","ar":"أرى في الصورة ..."},{"de":"Im Vordergrund / Im Hintergrund sieht man ...","ar":"في مقدمة الصورة / خلفيتها نرى ..."},{"de":"Das Bild passt zum Thema ..., weil ...","ar":"تتناسب الصورة مع الموضوع ... لأن ..."},{"de":"Meiner Meinung nach ... / Ich finde, dass ...","ar":"في رأيي ... / أرى أن ..."},{"de":"Aus eigener Erfahrung kann ich sagen, dass ...","ar":"أستطيع القول من تجربتي الشخصية إن ..."},{"de":"Ich denke, dass ...","ar":"أعتقد أن ..."}],"prompts":[{"de":"Sehen Sie sich die drei Bilder an und wählen Sie eines aus.","ar":"انظر إلى الصور الثلاث واختر صورة واحدة منها."},{"de":"Beschreiben Sie das Bild.","ar":"صِف الصورة."},{"de":"Sagen Sie, was das Bild mit dem Thema zu tun hat.","ar":"وضّح علاقة الصورة بالموضوع."},{"de":"Äußern Sie Ihre Meinung und begründen Sie sie.","ar":"عبّر عن رأيك وعلّله."},{"de":"Reagieren Sie anschließend auf die Fragen der Prüferin / des Prüfers.","ar":"أجب بعد ذلك عن أسئلة الممتحِنة أو الممتحِن."}]}};
+const MODES=[
+ {id:'words',de:'Wörter',ar:'تكرار الكلمات',icon:'🔤',kind:'repeat'},
+ {id:'sentences',de:'Sätze',ar:'تكرار الجمل',icon:'💬',kind:'repeat'},
+ {id:'dialogue',de:'Dialog',ar:'تكرار إجابة نموذجية',icon:'🗣️',kind:'repeat'},
+ {id:'questions',de:'Fragen',ar:'جاوب على أسئلة شفوية',icon:'❓',kind:'free'},
+ {id:'prompts',de:'Vortrag',ar:'تدرّب على العرض الشفهي',icon:'🎤',kind:'free'},
+ {id:'expressions',de:'Redemittel',ar:'تعبيرات للنقاش',icon:'✨',kind:'free'}
+];
+const $=id=>document.getElementById(id);
+const topicIDs=Object.keys(TOPICS);
+let topic=topicIDs[0],mode='words',idx=0,recognition=null,recording=false,currentText='',attempts={},lastAudioText='';
+const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+let speechSessionId=0,speechRestartTimer=null,speechFinishTimer=null,activeSpeechSession=null,micStarting=false,microphoneClock=null,lastRecordingUrl=null;
+function htmlEscape(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function normalize(s){return String(s||'').toLocaleLowerCase('de-DE').normalize('NFKC').replace(/ß/g,'ss').replace(/[.,!?;:()«»„“”"']/g,' ').replace(/[^\p{L}\p{N}]+/gu,' ').trim().replace(/\s+/g,' ')}
+function wordSimilarity(a,b){const x=normalize(a).split(' ').filter(Boolean),y=normalize(b).split(' ').filter(Boolean);if(!x.length||!y.length)return 0;let prev=Array.from({length:y.length+1},(_,i)=>i);for(let i=1;i<=x.length;i++){let row=[i];for(let j=1;j<=y.length;j++){row[j]=Math.min(prev[j]+1,row[j-1]+1,prev[j-1]+(x[i-1]===y[j-1]?0:1));}prev=row;}return Math.round(100*(1-prev[y.length]/Math.max(x.length,y.length)))}
+function currentItems(){const d=TOPICS[topic],key=mode;if(mode==='dialogue')return d.questions.map(o=>({de:o.answer,ar:o.answerAr,question:o.de,questionAr:o.ar})).filter(o=>o.de);return d[key]||[];}
+function currentItem(){const arr=currentItems();return arr.length?arr[Math.max(0,Math.min(idx,arr.length-1))]:null;}
+function clearSpeech(){
+  speechSessionId++;
+  recording=false;
+  micStarting=false;
+  if(speechRestartTimer){clearTimeout(speechRestartTimer);speechRestartTimer=null;}
+  if(speechFinishTimer){clearTimeout(speechFinishTimer);speechFinishTimer=null;}
+  if(microphoneClock){clearInterval(microphoneClock);microphoneClock=null;}
+  const session=activeSpeechSession;
+  activeSpeechSession=null;
+  if(recognition){
+    const rec=recognition;recognition=null;
+    try{rec.onresult=null;rec.onerror=null;rec.onend=null;rec.abort();}catch(e){}
+  }
+  if(session?.recorder){try{session.recorder.onstop=null;session.recorder.ondataavailable=null;if(session.recorder.state!=='inactive')session.recorder.stop();}catch(e){}}
+  if(session?.stream){session.stream.getTracks().forEach(track=>{try{track.stop()}catch(e){}});}
+  if(lastRecordingUrl){URL.revokeObjectURL(lastRecordingUrl);lastRecordingUrl=null;}
+  $('recordingPlayback').hidden=true;
+  $('recordedAudio').removeAttribute('src');$('recordedAudio').load();
+  if(window.speechSynthesis)window.speechSynthesis.cancel();
+  $('micBtn').disabled=false;$('micBtn').classList.remove('active');$('micBtn').textContent='🎤 ابدأ التسجيل';$('recState').textContent='جاهز';
+}
+function say(text){if(!('speechSynthesis' in window)){setStatus('المتصفح ما كيدعمش قراءة النصوص صوتياً.');return;}window.speechSynthesis.cancel();const utter=new SpeechSynthesisUtterance(String(text||''));utter.lang='de-DE';utter.rate=.86;utter.pitch=1;window.speechSynthesis.speak(utter)}
+function setStatus(text){$('status').textContent=text||''}
+function setFeedback(heading,description,tone){$('feedback').hidden=false;$('feedback').className='feedback '+tone;$('feedback').innerHTML='<h3>'+htmlEscape(heading)+'</h3><p>'+htmlEscape(description)+'</p>'}
+function clearResult(){currentText='';$('transcript').textContent='اضغط على الميكروفون وبدا تكلم بالألمانية...';$('transcript').className='live-text placeholder';$('feedback').hidden=true;$('manualText').value='';setStatus('');}
+function updateStats(){const key=topic+':'+mode;const count=(attempts[key]||0);$('counter').textContent=count+' محاولة في هاد التدريب';const arr=currentItems();$('position').textContent=(arr.length?idx+1:0)+' / '+arr.length;$('progressBar').style.width=(arr.length?(idx/arr.length*100):0)+'%';}
+function render(){clearSpeech();clearResult();const act=MODES.find(m=>m.id===mode),item=currentItem();$('trainingTitle').textContent=act.de+' · '+act.ar;$('kindIcon').textContent=act.icon;$('topicLabel').textContent=TOPICS[topic].title; if(!item){$('targetText').textContent='لا توجد تمارين لهذا الموضوع';$('translation').textContent='';$('hintText').textContent='';return;}
+  const isFree=act.kind==='free';$('sampleBtn').hidden=!(['dialogue','questions'].includes(mode));$('targetText').textContent=mode==='dialogue'?item.question:item.de;$('translation').textContent=mode==='dialogue'?item.questionAr:(item.ar||'');$('hintText').textContent=isFree?'جاوب بالألمانية بحرّية، وشوف النص الذي التقطه الميكروفون.':mode==='dialogue'?'سمع السؤال، ثم حاول تكرار الجواب النموذجي بالألمانية.':'اسمع النموذج وعاود نطق نفس الكلمات بالألمانية.';
+  $('prev').disabled=idx===0;$('next').textContent=idx+1>=currentItems().length?'↺ إعادة من الأول':'← التالي';updateStats();}
+function setTopic(v){if(!TOPICS[v])return;topic=v;idx=0;render()}
+function setMode(v){if(!MODES.some(x=>x.id===v))return;mode=v;idx=0;for(const btn of document.querySelectorAll('.activity-tab'))btn.setAttribute('aria-selected',String(btn.dataset.mode===mode));$('modeSelect').value=mode;render()}
+function evaluate(text,manually=false){const item=currentItem();if(!item)return;const actual=String(text||'').trim();if(!actual){setStatus('ما التقطنا حتى نص، عاود المحاولة.');return}const key=topic+':'+mode;attempts[key]=(attempts[key]||0)+1;updateStats();const kind=MODES.find(m=>m.id===mode).kind;
+  if(kind==='free'){
+    const words=normalize(actual).split(' ').filter(Boolean);
+    const sentenceCount=(actual.match(/[.!?]/g)||[]).length;
+    const tip=words.length<8?'حاول توسّع الجواب بجمل إضافية، وتعطي سبباً أو مثالاً.':'مزيان، كتبت جواباً أطول. راجع الكلمات وتركيب الجمل وقارنها مع الأمثلة الموجودة في نموذج الموضوع.';
+    setFeedback('تم تفريغ كلامك إلى نص','عدد الكلمات المتعرّف عليها: '+words.length+'. '+tip+' هاد التمرين مفتوح وما يمكنش تحديد صحة المعنى آلياً.','neutral');return;
+  }
+  const target=String(item.de||'');const similarity=wordSimilarity(target,actual),good=similarity>=80;
+  setFeedback((good?'مطابقة نصية جيدة':'النص مختلف على النموذج')+' · '+similarity+'%',(manually?'مقارنة النص المكتوب':'مقارنة التفريغ الصوتي')+' بالنص المطلوب: '+target+(good?' — حاول من جديد لتحسين الثبات.':' — استمع للنموذج وعاود ببطء.')+' هادي مقارنة كلمات فقط وماشي حكم نهائي على جودة النطق.',good?'good':'retry');
+}
+function transcribe(text){
+  currentText=String(text||'').trim();
+  $('transcript').className='live-text'+(!currentText?' placeholder':'');
+  $('transcript').textContent=currentText||'باقي ما تعرفنا على نص. التسجيل الصوتي كيستمر حتى توقفو أنت.';
+}
+function joinSpeechText(...items){return items.map(x=>String(x||'').trim()).filter(Boolean).join(' ').replace(/\s+/g,' ').trim();}
+function micErrorMessage(error){
+  const name=String(error?.name||'');
+  if(name==='NotAllowedError'||name==='PermissionDeniedError'||name==='SecurityError')return 'المتصفح منع الميكروفون. سمح ليه من رمز القفل بجانب عنوان الموقع، وجرب تفتح التدريب مباشرة من الرابط اللي فوق. خاص الموقع HTTPS أو localhost.';
+  if(name==='NotFoundError'||name==='DevicesNotFoundError')return 'ما لقيناش ميكروفون فالجهاز. تأكد من ربطو ومن إعدادات الصوت.';
+  if(name==='NotReadableError'||name==='TrackStartError')return 'الميكروفون مشغول أو ممنوع من النظام. سدّ أي تطبيق كيستعملو وحاول من جديد.';
+  if(name==='TypeError'||name==='NotSupportedError')return 'هاد الصفحة ما عندهاش صلاحية استعمال الميكروفون. افتح التدريب مباشرة فتبويب جديد على HTTPS أو localhost.';
+  return 'تعذر فتح الميكروفون: '+name+'. جرّب تعطي الإذن وفتح التدريب مباشرة.';
+}
+function resetMicButton(){
+  micStarting=false;
+  $('micBtn').disabled=false;
+  $('micBtn').classList.toggle('active',recording);
+  $('micBtn').textContent=recording?'⏹ إيقاف التسجيل':'🎤 ابدأ التسجيل';
+}
+function finishSpeechSession(session){
+  if(!session||session.finalized||activeSpeechSession!==session||session.id!==speechSessionId)return;
+  session.finalized=true;
+  recording=false;
+  micStarting=false;
+  if(speechRestartTimer){clearTimeout(speechRestartTimer);speechRestartTimer=null;}
+  if(speechFinishTimer){clearTimeout(speechFinishTimer);speechFinishTimer=null;}
+  if(microphoneClock){clearInterval(microphoneClock);microphoneClock=null;}
+  if(recognition){const rec=recognition;recognition=null;try{rec.onresult=null;rec.onerror=null;rec.onend=null;rec.abort()}catch(e){}}
+  if(session.stream){session.stream.getTracks().forEach(track=>{try{track.stop()}catch(e){}});}
+  activeSpeechSession=null;
+  if(session.chunks.length){
+    const mime=session.recorder?.mimeType||session.chunks[0].type||'audio/webm';
+    const audioBlob=new Blob(session.chunks,{type:mime});
+    if(audioBlob.size){
+      if(lastRecordingUrl)URL.revokeObjectURL(lastRecordingUrl);
+      lastRecordingUrl=URL.createObjectURL(audioBlob);
+      $('recordedAudio').src=lastRecordingUrl;
+      const ext=mime.includes('mp4')?'mp4':mime.includes('ogg')?'ogg':'webm';
+      $('recordingDownload').href=lastRecordingUrl;
+      $('recordingDownload').download='B2-Sprechen-'+new Date().toISOString().replace(/[:.]/g,'-')+'.'+ext;
+      $('recordingPlayback').hidden=false;
+    }
+  }
+  transcribe(joinSpeechText(session.finalText,session.lastInterim));
+  resetMicButton();
+  $('recState').textContent='توقف';
+  if(currentText){
+    evaluate(currentText);
+    setStatus('توقف التسجيل بطلب منك. راجع النص والنتيجة، وتقدر تسمع التسجيل وتحملو.');
+  }else{
+    $('manualBox').hidden=false;
+    setStatus('توقف التسجيل بطلب منك. '+($('recordingPlayback').hidden?'':'تقدر تسمع الصوت ديالك تحت.')+' ما توفرش تفريغ نصي؛ كتابة الجواب كتخليك تدرب على المطابقة.');
+  }
+}
+function startRecognitionRun(session){
+  if(!Recognition||!recording||session.recognitionDisabled||activeSpeechSession!==session||session.id!==speechSessionId)return;
+  let finalInRun='',interimInRun='';
+  try{
+    const rec=new Recognition();
+    recognition=rec;
+    rec.lang='de-DE';rec.interimResults=true;rec.continuous=true;rec.maxAlternatives=1;
+    rec.onresult=e=>{
+      if(activeSpeechSession!==session||session.id!==speechSessionId)return;
+      const finals=[],interims=[];
+      for(let i=0;i<e.results.length;i++){
+        const item=e.results[i];const spoken=item?.[0]?.transcript||'';
+        if(item.isFinal)finals.push(spoken);else interims.push(spoken);
+      }
+      finalInRun=finals.join(' ').trim();interimInRun=interims.join(' ').trim();
+      session.lastInterim=interimInRun;
+      transcribe(joinSpeechText(session.finalText,finalInRun,interimInRun));
+    };
+    rec.onerror=e=>{
+      if(activeSpeechSession!==session||session.id!==speechSessionId)return;
+      const code=String(e.error||'');
+      if(['not-allowed','service-not-allowed','language-not-supported','audio-capture'].includes(code)){
+        session.recognitionDisabled=true;
+        $('manualBox').hidden=false;
+        setStatus('التسجيل الصوتي مازال خدام، ولكن المتصفح رفض تحويل الكلام إلى نص ('+code+'). تقدر توقف التسجيل بنفسك وتسمعو، وتكتب النص يدوياً.');
+      }else if(code==='network'){
+        session.networkErrors=(session.networkErrors||0)+1;
+        if(session.networkErrors>=3){session.recognitionDisabled=true;$('manualBox').hidden=false;setStatus('التسجيل الصوتي مازال خدام، ولكن خدمة التفريغ النصي ما متصلةش. كمل التسجيل ووقفو ملي تبغي.');}
+      }
+      // no-speech never stops MediaRecorder and does not end the user recording session.
+    };
+    rec.onend=()=>{
+      if(activeSpeechSession!==session||session.id!==speechSessionId)return;
+      session.finalText=joinSpeechText(session.finalText,finalInRun);
+      session.lastInterim=interimInRun&&!finalInRun?interimInRun:'';
+      if(recognition===rec)recognition=null;
+      transcribe(joinSpeechText(session.finalText,session.lastInterim));
+      if(recording&&!session.recognitionDisabled){
+        session.retries++;
+        if(speechRestartTimer)clearTimeout(speechRestartTimer);
+        speechRestartTimer=setTimeout(()=>startRecognitionRun(session),Math.min(1800,400+session.retries*200));
+      }
+    };
+    rec.start();
+  }catch(error){
+    session.recognitionDisabled=true;
+    $('manualBox').hidden=false;
+    setStatus('المايك مسجّل الصوت، ولكن التفريغ النصي غير متاح هنا. وقف التسجيل ملي تبغي واستمع ليه، أو كتب جوابك.');
+  }
+}
+function stopMic(){
+  if(!recording)return;
+  recording=false;
+  const session=activeSpeechSession;
+  if(!session)return;
+  if(speechRestartTimer){clearTimeout(speechRestartTimer);speechRestartTimer=null;}
+  if(microphoneClock){clearInterval(microphoneClock);microphoneClock=null;}
+  $('recState').textContent='جاري إيقاف التسجيل...';
+  $('micBtn').disabled=true;$('micBtn').textContent='⏳ جاري الحفظ...';
+  if(recognition){try{recognition.stop();}catch(e){}}
+  const mr=session.recorder;
+  if(mr&&mr.state!=='inactive'){
+    try{mr.stop();}catch(error){finishSpeechSession(session);}
+  }else finishSpeechSession(session);
+  if(session.stream){session.stream.getTracks().forEach(track=>{try{track.stop()}catch(e){}});}
+  // Guard against missing MediaRecorder onstop on some devices.
+  if(!session.finalized) speechFinishTimer=setTimeout(()=>finishSpeechSession(session),1900);
+}
+async function startMic(){
+  if(recording){stopMic();return;}
+  if(micStarting)return;
+  clearResult();
+  if(!navigator.mediaDevices?.getUserMedia){
+    $('manualBox').hidden=false;
+    $('recState').textContent='الميكروفون غير متاح';
+    setStatus('المتصفح ما كيدعمش الميكروفون فهاد الصفحة. خاص HTTPS أو localhost. جرّب الرابط «فتح التدريب مباشرة» اللي فوق.');
+    return;
+  }
+  const session={id:++speechSessionId,stream:null,recorder:null,chunks:[],finalText:'',lastInterim:'',recognitionDisabled:!Recognition,retries:0,networkErrors:0,finalized:false,startedAt:0};
+  activeSpeechSession=session;
+  micStarting=true;
+  $('micBtn').disabled=true;$('micBtn').textContent='⌛ جاري طلب إذن الميكروفون...';
+  $('recState').textContent='طلب الإذن';
+  setStatus('سمح للمتصفح باستعمال الميكروفون باش يبدأ التسجيل.');
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+    if(activeSpeechSession!==session||session.id!==speechSessionId){stream.getTracks().forEach(t=>t.stop());return;}
+    session.stream=stream;
+    if(typeof MediaRecorder==='function'){
+      const mime=typeof MediaRecorder.isTypeSupported==='function'
+        ?(['audio/webm;codecs=opus','audio/mp4','audio/webm','audio/ogg'].find(type=>MediaRecorder.isTypeSupported(type))||'') : '';
+      try{
+        const mr=mime?new MediaRecorder(stream,{mimeType:mime}):new MediaRecorder(stream);
+        session.recorder=mr;
+        mr.ondataavailable=e=>{if(e.data?.size)session.chunks.push(e.data);};
+        mr.onerror=e=>setStatus('وقع مشكل في حفظ الصوت؛ وقف التسجيل وحاول من جديد.');
+        mr.onstop=()=>finishSpeechSession(session);
+        mr.start(1000);
+      }catch(error){
+        session.recorder=null;
+        $('manualBox').hidden=false;
+        setStatus('الميكروفون متاح ولكن حفظ ملف الصوت غير مدعوم. تحويل الصوت إلى نص غادي يخدم إلا كان المتصفح كيدعمو.');
+      }
+    }
+    recording=true;
+    micStarting=false;
+    session.startedAt=Date.now();
+    resetMicButton();
+    $('recState').textContent='● تسجيل · 00:00';
+    setStatus(Recognition?'التسجيل الصوتي بدأ. كمل تكلم ووقفو أنت من نفس الزر.':'التسجيل الصوتي بدأ. هاد المتصفح ما كيدعمش التفريغ المباشر؛ تقدر تسمع التسجيل بعد الإيقاف.');
+    microphoneClock=setInterval(()=>{
+      if(!recording||activeSpeechSession!==session)return;
+      const seconds=Math.floor((Date.now()-session.startedAt)/1000);
+      $('recState').textContent='● تسجيل · '+String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');
+    },500);
+    if(Recognition)startRecognitionRun(session);else $('manualBox').hidden=false;
+  }catch(error){
+    if(activeSpeechSession!==session)return;
+    activeSpeechSession=null;
+    micStarting=false;recording=false;
+    $('manualBox').hidden=false;
+    $('recState').textContent='تعذر التشغيل';
+    resetMicButton();
+    setStatus(micErrorMessage(error));
+  }
+}
+function init(){$('standaloneLink').href=window.location.href;$('directMicLink').href=window.location.href;const topicSelect=$('topic');for(const id of topicIDs){const opt=document.createElement('option');opt.value=id;opt.textContent=TOPICS[id].title+' — '+TOPICS[id].arabic;topicSelect.appendChild(opt)}for(const m of MODES){const option=document.createElement('option');option.value=m.id;option.textContent=m.de+' — '+m.ar;$('modeSelect').appendChild(option);const b=document.createElement('button');b.type='button';b.className='activity-tab';b.textContent=m.icon+' '+m.de;b.dataset.mode=m.id;b.addEventListener('click',()=>setMode(m.id));$('activityTabs').appendChild(b)}$('modeSelect').addEventListener('change',e=>setMode(e.target.value));topicSelect.addEventListener('change',e=>setTopic(e.target.value));$('listenBtn').addEventListener('click',()=>{const item=currentItem();if(item)say(mode==='dialogue'?(item.question+' '+item.de):item.de)});$('sampleBtn').addEventListener('click',()=>{const item=currentItem();if(!item)return;const de=mode==='dialogue'?item.de:item.answer;const ar=mode==='dialogue'?item.ar:item.answerAr;if(!de)return;setFeedback('مثال على الجواب بالألمانية',de+(ar?' — '+ar:''),'neutral');say(de)});$('micBtn').addEventListener('click',startMic);$('repeatBtn').addEventListener('click',render);$('prev').addEventListener('click',()=>{idx=Math.max(0,idx-1);render()});$('next').addEventListener('click',()=>{idx=(idx+1)%Math.max(1,currentItems().length);render()});$('manualCheck').addEventListener('click',()=>{const value=$('manualText').value.trim();if(!value){setStatus('كتب النص أولاً.');return}transcribe(value,false);evaluate(value,true)});window.addEventListener('pagehide',clearSpeech);setMode('words');}
+init();
+</script>
+</body>
+</html>
