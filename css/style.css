@@ -1430,10 +1430,6 @@ button,input,textarea,select{font-family:inherit}
 .auth-submit{width:100%;margin-top:10px;border-radius:14px;padding:14px;background:linear-gradient(110deg,#2d58d0,#5c43d4)}
 .auth-message{min-height:17px;text-align:center;color:#b6425d;font-size:11px}
 .auth-help{text-align:center;color:#8791a5;font-size:10px}
-.auth-divider{display:flex;align-items:center;gap:10px;margin:18px 0;color:#a0a9ba;font-size:10px}
-.auth-divider:before,.auth-divider:after{content:"";height:1px;background:#e9edf4;flex:1}
-.demo-login-btn{width:100%;border:1px solid #dce4ff;background:#f4f6ff;color:#3558c7;border-radius:13px;padding:12px;font-size:12px;font-weight:900}
-.auth-demo-caption{display:block;text-align:center;color:#9aa3b3;font-size:9px;margin-top:9px}
 .student-app .hero{padding:0}
 .student-app .shell{max-width:none;padding:0}
 .student-app .footer{display:none}

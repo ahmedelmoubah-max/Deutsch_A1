@@ -1893,7 +1893,6 @@ function renderHome(){
       <button type="button" class="quick-action-card" data-action="student-nav" data-tab="sessions"><span class="quick-action-icon green">👥</span><strong>جلسات مباشرة</strong><small>تدرّب مع متعلمين</small></button>
       <button type="button" class="quick-action-card" data-action="student-nav" data-tab="community"><span class="quick-action-icon blue">💬</span><strong>مجتمع المتعلمين</strong><small>تبادل الأسئلة والأفكار</small></button>
     </section>
-    ${demoMode?`<p class="demo-mode-note">أنت الآن في وضع معاينة الواجهة. البيانات المعروضة تجريبية ومحفوظة محلياً فقط.</p>`:""}
   `;
   app.innerHTML = studentLayout(content,"home");
 }
@@ -5366,9 +5365,6 @@ function renderLogin(){
       </form>
       <p id="loginMessage" class="auth-message" role="status"></p>
       <div class="auth-help">حساب المتعلّم يتم إنشاؤه من طرف الإدارة.</div>
-      <div class="auth-divider"><span>أو</span></div>
-      <button type="button" class="demo-login-btn" data-action="demo-login">استكشف التصميم · معاينة تجريبية</button>
-      <small class="auth-demo-caption">المعاينة لا تحتاج حساباً ولا تحفظ بياناتك على الخادم.</small>
     </section>
   </main>`;
 }
@@ -11505,10 +11501,6 @@ document.addEventListener("click",function(event){
     return;
   }
   else if(action==="student-notifications"){showToast("ما كايناش إشعارات جديدة حالياً.");return;}
-  else if(action==="demo-login"){
-    startDemoSession();
-    return;
-  }
   else if(action==="home-start-lesson"){
     currentLesson=getHomeLessonIndex();rememberHomeLesson(currentLesson);selectedLevel=currentLesson<5?"A1.1":"A1.2";
     if(!getStudentLessonAccess(currentLesson)){showToast("Diese Lektion wurde vom Administrator gesperrt.");return;}
@@ -12642,38 +12634,11 @@ window.addEventListener("storage",function(event){
 window.addEventListener("resize",refreshUiTextBaselines);
 document.addEventListener("load",event=>{if(event.target?.tagName==="IFRAME")broadcastSettingsTranslationLanguage();},true);
 
-function startDemoSession(){
-  stopStudentGroupTasksRealtimeSync();
-  demoMode=true;
-  currentStudentProfile={name:"Sara",email:"sara@example.com",active:true,lessonAccess:{}};
-  currentStudentGroup=null;
-  cloudTaskProgress={};
-  currentUser={id:"demo-student",role:"student",name:"Sara",email:"sara@example.com"};
-  selectedLevel="A1.1";
-  currentLesson=0;
-  currentA2LessonNo=2;
-  tutorLessonIndex=0;
-  tutorTool="conversation";
-  page="home";
-  tutorScenario="cafe";
-  tutorMessages=[];
-  communityRoom=null;
-  applyTabFromHash();
-  render();
-}
-
 async function bootDeutschA1(){
-  // Opening index.html directly from the extracted folder is a local preview.
-  // It must not depend on Firebase Authentication or an internet connection.
-  const localPreview = window.location.protocol === "file:" ||
-    new URLSearchParams(window.location.search).get("preview") === "1";
-  if(localPreview){
-    startDemoSession();
-    return;
-  }
+  // All access now requires a real Firebase-authenticated student or administrator account.
+  // Local file previews and the former Sara demo account are intentionally disabled.
   if (!firebaseReady) { renderLogin(); setLoginMessage("Firebase konnte nicht initialisiert werden."); return; }
   firebaseAuth.onAuthStateChanged(async authUser => {
-    if (demoMode) return;
     if (!authUser) {
       stopAdminResultsRealtimeSync();
       currentUser = null; page = "login"; render(); return;
