@@ -362,6 +362,7 @@ let cloudResults = {};
 let cloudGroups = {};
 let cloudActivity = {};
 let cloudCourseProgress = {};
+let cloudTaskProgress = {};
 let adminResultsRealtimeRef = null;
 let adminResultsRealtimeHandler = null;
 let adminResultsRealtimeSignature = "";
@@ -371,6 +372,11 @@ let adminCourseProgressRealtimeSignature = "";
 let adminActivityRealtimeRef = null;
 let adminActivityRealtimeHandler = null;
 let adminActivityRealtimeSignature = "";
+let adminTaskProgressRealtimeRef = null;
+let adminTaskProgressRealtimeHandler = null;
+let adminTaskProgressRealtimeSignature = "";
+let studentGroupTasksRealtimeRef = null;
+let studentGroupTasksRealtimeHandler = null;
 let currentStudentProfile = null;
 let currentStudentGroup = null;
 let adminStudentFilter = "all";
@@ -378,6 +384,9 @@ let adminGroupFilter = "all";
 let adminAnalyticsGroupFilter = "all";
 let adminAnalyticsStudentFilter = "all";
 let adminSection = "home";
+let adminTaskGroupId = "";
+let adminEditingTaskId = null;
+let adminTaskDetailId = "";
 let adminContentMeta = {};
 let adminPagesRootDirectoryHandle = null;
 const ADMIN_LOCAL_HTML_PAGES_KEY = "deutsch_a1_admin_local_html_pages_v1";
@@ -489,12 +498,21 @@ async function loadDeutschA1Data(){
     cloudUsers = [{id:uid, ...(currentStudentProfile || {})}];
     cloudResults = {[uid]: ownResultsSnap.val() || {}};
     cloudActivity = {[uid]: ownActivitySnap.val() || {}};
+    try{
+      const ownTaskProgressSnap=await firebaseDb.ref(`${DEUTSCH_A1_PATH}/taskProgress/${uid}`).once("value");
+      cloudTaskProgress = {[uid]: ownTaskProgressSnap.val() || {}};
+    }catch(taskProgressReadError){
+      cloudTaskProgress = {[uid]:{}};
+      console.warn("Student task progress could not be read. Check Firebase taskProgress rules:",taskProgressReadError);
+    }
     currentStudentGroup = null;
     if (currentStudentProfile.groupId) {
       const groupSnap = await firebaseDb.ref(`${DEUTSCH_A1_PATH}/groups/${currentStudentProfile.groupId}`).once("value");
       currentStudentGroup = groupSnap.val() || null;
-    }
+      startStudentGroupTasksRealtimeSync(currentStudentProfile.groupId);
+    }else stopStudentGroupTasksRealtimeSync();
   } else {
+    stopStudentGroupTasksRealtimeSync();
     const [usersSnap, resultsSnap, groupsSnap, activitySnap] = await Promise.all([
       firebaseDb.ref(`${DEUTSCH_A1_PATH}/users`).once("value"),
       firebaseDb.ref(`${DEUTSCH_A1_PATH}/results`).once("value"),
@@ -513,6 +531,13 @@ async function loadDeutschA1Data(){
     });
     cloudGroups = groupsSnap.val() || {};
     cloudActivity = activitySnap.val() || {};
+    try{
+      const taskProgressSnap=await firebaseDb.ref(`${DEUTSCH_A1_PATH}/taskProgress`).once("value");
+      cloudTaskProgress=taskProgressSnap.val()||{};
+    }catch(taskProgressReadError){
+      cloudTaskProgress={};
+      console.warn("Admin task progress could not be read. Check Firebase taskProgress rules:",taskProgressReadError);
+    }
   }
   if(currentUser?.role==="admin"){
     try{
@@ -707,6 +732,33 @@ function refreshAdminResultsViewFromRealtime(){
     if(typeof window.scrollTo==="function") window.scrollTo(0,scrollTop);
   }
 }
+function refreshAdminTaskViewFromRealtime(){
+  if(page==="admin" && adminSection==="tasks"){
+    const scrollTop=window.scrollY||0;
+    render();
+    if(typeof window.scrollTo==="function") window.scrollTo(0,scrollTop);
+  }
+}
+function stopStudentGroupTasksRealtimeSync(){
+  if(studentGroupTasksRealtimeRef && studentGroupTasksRealtimeHandler){
+    try{studentGroupTasksRealtimeRef.off("value",studentGroupTasksRealtimeHandler);}catch(error){console.warn(error);}
+  }
+  studentGroupTasksRealtimeRef=null;studentGroupTasksRealtimeHandler=null;
+}
+function startStudentGroupTasksRealtimeSync(groupId){
+  stopStudentGroupTasksRealtimeSync();
+  if(!firebaseReady||!firebaseDb||!groupId||!currentUser||currentUser.role!=="student")return;
+  studentGroupTasksRealtimeRef=firebaseDb.ref(`${DEUTSCH_A1_PATH}/groups/${groupId}/dailyTasks`);
+  studentGroupTasksRealtimeHandler=snapshot=>{
+    if(!currentUser||currentUser.role!=="student"||currentStudentProfile?.groupId!==groupId)return;
+    if(!currentStudentGroup)currentStudentGroup={};
+    currentStudentGroup.dailyTasks=snapshot.val()||{};
+    if(page==="home")renderHome();
+  };
+  studentGroupTasksRealtimeRef.on("value",studentGroupTasksRealtimeHandler,error=>{
+    console.warn("Student group tasks live sync unavailable:",error);
+  });
+}
 function startAdminResultsRealtimeSync(){
   if(!firebaseReady || !firebaseDb || !currentUser || currentUser.role!=="admin") return;
   stopAdminResultsRealtimeSync();
@@ -758,6 +810,20 @@ function startAdminResultsRealtimeSync(){
   adminActivityRealtimeRef.on("value",adminActivityRealtimeHandler,error=>{
     console.warn("Admin activity live sync unavailable:",error);
   });
+
+  adminTaskProgressRealtimeRef=firebaseDb.ref(`${DEUTSCH_A1_PATH}/taskProgress`);
+  adminTaskProgressRealtimeHandler=snapshot=>{
+    if(!currentUser || currentUser.role!=="admin") return;
+    const raw=snapshot.val()||{};
+    const signature=JSON.stringify(raw);
+    if(signature===adminTaskProgressRealtimeSignature) return;
+    adminTaskProgressRealtimeSignature=signature;
+    cloudTaskProgress=raw;
+    refreshAdminTaskViewFromRealtime();
+  };
+  adminTaskProgressRealtimeRef.on("value",adminTaskProgressRealtimeHandler,error=>{
+    console.warn("Admin task progress live sync unavailable:",error);
+  });
 }
 function stopAdminResultsRealtimeSync(){
   if(adminResultsRealtimeRef && adminResultsRealtimeHandler){
@@ -769,6 +835,9 @@ function stopAdminResultsRealtimeSync(){
   if(adminActivityRealtimeRef && adminActivityRealtimeHandler){
     try{adminActivityRealtimeRef.off("value",adminActivityRealtimeHandler);}catch(error){console.warn(error);}
   }
+  if(adminTaskProgressRealtimeRef && adminTaskProgressRealtimeHandler){
+    try{adminTaskProgressRealtimeRef.off("value",adminTaskProgressRealtimeHandler);}catch(error){console.warn(error);}
+  }
   adminResultsRealtimeRef=null;
   adminResultsRealtimeHandler=null;
   adminResultsRealtimeSignature="";
@@ -778,6 +847,9 @@ function stopAdminResultsRealtimeSync(){
   adminActivityRealtimeRef=null;
   adminActivityRealtimeHandler=null;
   adminActivityRealtimeSignature="";
+  adminTaskProgressRealtimeRef=null;
+  adminTaskProgressRealtimeHandler=null;
+  adminTaskProgressRealtimeSignature="";
 }
 
 function slugify(value){
@@ -1202,6 +1274,22 @@ let competitionBusy = false;
 let competitionCreateMessage = "";
 let competitionCreateMessageIsError = false;
 let competitionGlobalStats = [];
+let competitionPersonalRecords = [];
+let competitionSelfChallengeId = "";
+let competitionSelfChallengeData = null;
+let competitionSelfFeedback = null;
+let competitionSelfSubmitting = false;
+function competitionSelfStorageKey(){
+  const uid=competitionAuthenticatedUid();
+  return uid?`deutsch_a1_self_challenge_v1_${uid}`:"";
+}
+function competitionActiveQuizData(){
+  return competitionSelfChallengeId?competitionSelfChallengeData:competitionRoomData;
+}
+function renderActiveCompetitionQuiz(){
+  if(competitionSelfChallengeId)renderCompetitionSelfChallenge();
+  else renderCompetitionRoom();
+}
 
 const app = document.getElementById("app");
 const toast = document.getElementById("toast");
@@ -1542,6 +1630,156 @@ function openDailyTask(taskId){
   render();
 }
 
+function dailyTaskStageMeta(stage){
+  const map={
+    kurs:{icon:"📚",label:"Kurs · الدروس"},
+    vocabulary:{icon:"📖",label:"Wortschatz · المفردات"},
+    grammar:{icon:"📐",label:"Grammatik · القواعد"},
+    teste:{icon:"📝",label:"Teste · الاختبارات"},
+    "training-lesen":{icon:"📖",label:"Training Prüfung · Lesen"},
+    "training-schreiben":{icon:"✍️",label:"Training Prüfung · Schreiben"},
+    "training-hoeren":{icon:"🎧",label:"Training Prüfung · Hören"},
+    "training-muendlich":{icon:"💬",label:"Training Prüfung · Mündlich"},
+    pruefungen:{icon:"🏆",label:"Prüfungen · نماذج الامتحان"},
+    general:{icon:"📌",label:"Aufgabe · مهمة عامة"}
+  };
+  return map[String(stage||"general")]||map.general;
+}
+function getStudentAssignedDailyTasksForToday(){
+  if(!currentUser || currentUser.role!=="student" || !currentStudentGroup || demoMode)return [];
+  const today=localDateKey();
+  return Object.entries(currentStudentGroup.dailyTasks||{}).map(([id,task])=>({id,...(task||{})}))
+    .filter(task=>{
+      if(!task.id || task.published!==true)return false;
+      const start=String(task.startDate||"").trim();
+      const end=String(task.dueDate||"").trim();
+      if(task.schedule==="daily"){
+        if(start && today<start)return false;
+        if(end && today>end)return false;
+      }else{
+        const visibleDate=start||end;
+        if(visibleDate && visibleDate!==today)return false;
+        if(end && today>end)return false;
+      }
+      if(task.targetMode==="students"){
+        const targets=task.targetStudents||{};
+        const assigned=Array.isArray(targets)?targets.includes(currentUser.id):targets[currentUser.id]===true;
+        if(!assigned)return false;
+      }
+      return true;
+    })
+    .sort((a,b)=>({high:0,normal:1,low:2}[a.priority]??1)-({high:0,normal:1,low:2}[b.priority]??1)||String(a.dueDate||"9999-99-99").localeCompare(String(b.dueDate||"9999-99-99")));
+}
+function assignedTaskProgressKey(taskId,task){
+  return task?.schedule==="daily"?`${taskId}_${localDateKey()}`:taskId;
+}
+function getStudentAssignedTaskProgress(taskId,task=null){
+  const assigned=task||getStudentAssignedDailyTasksForToday().find(item=>item.id===taskId);
+  const key=assignedTaskProgressKey(taskId,assigned);
+  return cloudTaskProgress?.[currentUser?.id]?.[key]||{};
+}
+async function markStudentAssignedTaskStarted(taskId){
+  if(!currentUser || currentUser.role!=="student" || !firebaseReady || demoMode)return;
+  const task=getStudentAssignedDailyTasksForToday().find(item=>item.id===taskId);
+  const progressKey=assignedTaskProgressKey(taskId,task);
+  const previous=getStudentAssignedTaskProgress(taskId,task);
+  const now=new Date().toISOString();
+  const patch={startedAt:previous.startedAt||now,lastOpenedAt:now};
+  await firebaseDb.ref(`${DEUTSCH_A1_PATH}/taskProgress/${currentUser.id}/${progressKey}`).update(patch);
+  if(!cloudTaskProgress[currentUser.id])cloudTaskProgress[currentUser.id]={};
+  cloudTaskProgress[currentUser.id][progressKey]={...previous,...patch};
+}
+async function completeStudentAssignedTask(taskId){
+  if(!currentUser || currentUser.role!=="student" || !firebaseReady || demoMode){showToast("خاصك تكون داخل بحساب تلميذ باش يتسجل الإنجاز.");return;}
+  const task=getStudentAssignedDailyTasksForToday().find(item=>item.id===taskId);
+  if(!task)return;
+  const progressKey=assignedTaskProgressKey(taskId,task);
+  const now=new Date().toISOString();
+  const previous=getStudentAssignedTaskProgress(taskId,task);
+  const patch={startedAt:previous.startedAt||now,done:true,completedAt:now,updatedAt:now};
+  try{
+    await firebaseDb.ref(`${DEUTSCH_A1_PATH}/taskProgress/${currentUser.id}/${progressKey}`).update(patch);
+    if(!cloudTaskProgress[currentUser.id])cloudTaskProgress[currentUser.id]={};
+    cloudTaskProgress[currentUser.id][progressKey]={...previous,...patch};
+    showToast("تسجلات المهمة كمكتملة. أحسنت!");
+    renderHome();
+  }catch(error){
+    console.error("Assigned task completion could not be saved:",error);
+    showToast("ما قدرناش نسجلو إنجاز المهمة. تحقق من Firebase Rules.");
+  }
+}
+function openAssignedDailyTaskDefault(task){
+  const level=normalizeGroupCourseLevel(currentStudentGroup?.level||"A1");
+  const lessonNo=Math.max(1,Math.min(10,Number(task.lessonNo)||1));
+  const stage=String(task.stage||"general");
+  if(stage==="kurs"){
+    if(level==="A1"){
+      currentLesson=Math.max(0,Math.min(lessons.length-1,lessonNo-1));
+      rememberHomeLesson(currentLesson);
+      selectedLevel=currentLesson<5?"A1.1":"A1.2";
+      lessonHubReturnPage="home";page="lesson-hub";
+    }else if(level==="A2"){
+      currentA2LessonNo=lessonNo;page="a2-lesson-html";
+    }else{
+      upperLevelSelected=level;upperLevelSelectedLessonNo=lessonNo;page="upper-level-course-lesson";
+    }
+  }else if(stage==="vocabulary"){
+    if(level==="B1"||level==="B2"){
+      showToast("باش تفتح مفردات B1/B2، زيد رابط المحتوى فإعداد المهمة.");
+      return;
+    }
+    studentVocabularyReviewLevel=level;studentVocabularyReviewLesson=lessonNo;
+    studentResultsReturnPage="home";studentResultsActiveTool="resultsVocabulary";studentResultsActiveSkill="vocab";studentResultsSkillDetailOpen=false;page="student-results";
+  }else if(stage==="grammar" || stage==="teste"){
+    if(level==="B1"||level==="B2"){
+      upperLevelSelected=level;upperLevelSelectedSection="teste";page="upper-level-section";
+    }else if(level==="A2"){
+      currentA2LessonNo=lessonNo;
+      if(stage==="teste" && a2CourseLessons.find(item=>item.number===lessonNo)?.test){currentA2TestNo=lessonNo;a2TestReturnPage="a2-lesson-html";page="a2-test-html";}
+      else page="a2-lesson-html";
+    }else if(stage==="grammar"){
+      selectedLevel="A1.1";currentLesson=lessonNo-1;currentCategory="Grammatik";page="category";
+    }else{
+      selectedLevel="A1.1";currentLesson=lessonNo-1;page="tests";
+    }
+  }else if(stage.startsWith("training-")){
+    const skill=stage.replace("training-","");
+    if(level==="B1"||level==="B2"){
+      upperLevelSelected=level;upperLevelSelectedSection="training";upperLevelSelectedTrainingSkill=skill;page="upper-level-training-skill";
+    }else if(skill==="lesen"){
+      showToast("باش تفتح تدريب Lesen فـ A1/A2، زيد رابط ملف القراءة فإعداد المهمة.");
+      return;
+    }else{
+      const skillMap={schreiben:"writing",hoeren:"listening",muendlich:"speaking"};
+      studentResultsReturnPage="home";studentResultsActiveTool="resultsSkills";studentResultsActiveSkill=skillMap[skill]||"sentences";studentResultsSkillDetailOpen=true;
+      studentSkillLearningLesson=lessonNo;studentSkillLearningMode="browse";studentSkillResetPractice();page="student-results";
+    }
+  }else if(stage==="pruefungen"){
+    if(level==="B1"||level==="B2"){
+      upperLevelSelected=level;upperLevelSelectedSection="pruefungen";page="upper-level-section";
+    }else if(level==="A2"){
+      showToast("باش تفتح نموذج امتحان A2، زيد رابط النموذج فإعداد المهمة.");
+      return;
+    }else page="tests";
+  }else if(stage==="general"){
+    showToast(task.description||"راجع تعليمات المهمة، وإذا كان عندها رابط افتحو من بطاقة المهمة.");
+    return;
+  }
+  render();
+}
+async function openAssignedDailyTask(taskId){
+  const task=getStudentAssignedDailyTasksForToday().find(item=>item.id===taskId);
+  if(!task)return;
+  try{await markStudentAssignedTaskStarted(taskId);}catch(error){console.warn("Could not save assigned task start:",error);}
+  const path=String(task.path||"").trim();
+  if(path){
+    if(/^https?:\/\//i.test(path))window.location.href=path;
+    else window.location.href=path.replace(/^\/+/,"");
+    return;
+  }
+  openAssignedDailyTaskDefault(task);
+}
+
 function renderHome(){
   const lessonIndex = getHomeLessonIndex();
   rememberHomeLesson(lessonIndex);
@@ -1550,15 +1788,24 @@ function renderHome(){
   selectedLevel = todayLevel;
 
   const plan = readDailyPlan();
-  const taskMeta = [
-    {id:"vocab",icon:"🔁",title:"مراجعة 9 كلمات",time:"6 د",detail:`راجع مفردات ${todayLesson.name}`},
-    {id:"listening",icon:"👂",title:"تدريب الاستماع",time:"18 د",detail:"استمع إلى حوار ألماني قصير"},
-    {id:"grammar",icon:"📐",title:"تمرين القواعد",time:"13 د",detail:`اختبر فهمك لقواعد ${todayLevel}`}
-  ];
-  const doneCount = Object.values(plan.tasks).filter(Boolean).length;
+  const adminAssignedTasks = getStudentAssignedDailyTasksForToday();
+  const adminControlsPlan = Boolean(currentStudentGroup && !demoMode);
+  const taskMeta = adminControlsPlan
+    ? adminAssignedTasks.map(task=>{
+        const meta=dailyTaskStageMeta(task.stage);
+        return {id:task.id,icon:task.icon||meta.icon,title:task.title||meta.label,detail:task.description||meta.label,time:`${Math.max(0,Number(task.durationMinutes)||0)} د`,assigned:true,dueDate:task.dueDate||""};
+      })
+    : [
+        {id:"vocab",icon:"🔁",title:"مراجعة 9 كلمات",time:"6 د",detail:`راجع مفردات ${todayLesson.name}`},
+        {id:"listening",icon:"👂",title:"تدريب الاستماع",time:"18 د",detail:"استمع إلى حوار ألماني قصير"},
+        {id:"grammar",icon:"📐",title:"تمرين القواعد",time:"13 د",detail:`اختبر فهمك لقواعد ${todayLevel}`}
+      ];
+  const isTaskDone = task => task.assigned ? Boolean(getStudentAssignedTaskProgress(task.id).done) : Boolean(plan.tasks[task.id]);
+  const doneCount = taskMeta.filter(isTaskDone).length;
+  const totalDailyTasks = taskMeta.length;
   const dailyPlanCount = Number(Boolean(plan.goals.lesson)) + Number(Boolean(plan.goals.practice));
   const lessonProgress = lessonIndex + 1;
-  const dailyPercent = Math.round(doneCount/3*100);
+  const dailyPercent = totalDailyTasks ? Math.round(doneCount/totalDailyTasks*100) : 0;
   const planPercent = Math.round(dailyPlanCount/2*100);
   const unitPercent = Math.round(lessonProgress/lessons.length*100);
   const circumference = radius => 2*Math.PI*radius;
@@ -1573,15 +1820,20 @@ function renderHome(){
   const tests = results.filter(item=>adminResultType(item)==="test" || adminResultPercent(item)!==null);
   const average = tests.length ? Math.round(tests.reduce((sum,item)=>sum+(adminResultPercent(item)||0),0)/tests.length)+"%" : "—";
 
-  const taskRows = taskMeta.map(task=>`
-    <article class="daily-task-row ${plan.tasks[task.id]?"is-done":""}">
+  const taskRows = taskMeta.length ? taskMeta.map(task=>{
+    const done=isTaskDone(task);
+    const openAction=task.assigned?"daily-open-assigned":"daily-open";
+    const completeAction=task.assigned?"daily-complete-assigned":"daily-complete";
+    const taskData=task.assigned?`data-task-id="${escapeHtml(task.id)}"`:`data-task="${escapeHtml(task.id)}"`;
+    return `<article class="daily-task-row ${done?"is-done":""}">
       <span class="daily-task-icon">${task.icon}</span>
-      <div class="daily-task-copy"><strong>${task.title}</strong><small>${task.detail}</small></div>
-      <span class="daily-task-time">${task.time}</span>
-      ${plan.tasks[task.id]
+      <div class="daily-task-copy"><strong>${escapeHtml(task.title)}</strong><small>${escapeHtml(task.detail)}${task.dueDate?` · آخر أجل ${escapeHtml(task.dueDate)}`:""}</small></div>
+      <span class="daily-task-time">${escapeHtml(task.time)}</span>
+      ${done
         ? `<span class="daily-task-done">✓ تم</span>`
-        : `<button type="button" class="daily-task-start" data-action="daily-open" data-task="${task.id}">ابدأ</button><button type="button" class="daily-task-check" data-action="daily-complete" data-task="${task.id}" aria-label="تحديد المهمة كمكتملة">✓</button>`}
-    </article>`).join("");
+        : `<button type="button" class="daily-task-start" data-action="${openAction}" ${taskData}>ابدأ</button><button type="button" class="daily-task-check" data-action="${completeAction}" ${taskData} aria-label="تحديد المهمة كمكتملة">✓</button>`}
+    </article>`;
+  }).join("") : `<div class="daily-task-empty"><span>📋</span><strong>ما تحددات حتى مهمة لليوم</strong><small>المشرف ديال المجموعة غادي يضيف المهام هنا منين يجهز خطة اليوم.</small></div>`;
 
   const content = `
     <section class="daily-lesson-hero">
@@ -1603,7 +1855,7 @@ function renderHome(){
     </section>
 
     <section class="daily-progress-panel">
-      <div class="daily-progress-rings" role="img" aria-label="تقدم اليوم: ${doneCount} من 3 دروس، ${dailyPlanCount} من 2 من خطة اليوم، ${lessonProgress} من 10 في الوحدة">
+      <div class="daily-progress-rings" role="img" aria-label="تقدم اليوم: ${doneCount} من ${totalDailyTasks} مهمة، ${dailyPlanCount} من 2 من خطة اليوم، ${lessonProgress} من 10 في الوحدة">
         <svg viewBox="0 0 120 120" aria-hidden="true">
           <circle cx="60" cy="60" r="49" class="daily-ring-track"/>
           <circle cx="60" cy="60" r="49" class="daily-ring-blue" transform="rotate(-90 60 60)" stroke-dasharray="${dash(49,unitPercent)}"/>
@@ -1618,7 +1870,7 @@ function renderHome(){
         <span class="daily-progress-overline">متابعة التقدّم</span>
         <h3>خطواتك اليوم</h3>
         <div class="daily-progress-legend">
-          <div class="daily-progress-item"><span class="daily-progress-dot red"></span><span>دروس اليوم</span><strong>${doneCount}/3</strong></div>
+          <div class="daily-progress-item"><span class="daily-progress-dot red"></span><span>مهام اليوم</span><strong>${doneCount}/${totalDailyTasks}</strong></div>
           <div class="daily-progress-item"><span class="daily-progress-dot green"></span><span>خطة اليوم</span><strong>${dailyPlanCount}/2</strong></div>
           <div class="daily-progress-item"><span class="daily-progress-dot blue"></span><span>الوحدة</span><strong>${lessonProgress}/${lessons.length}</strong></div>
         </div>
@@ -3746,7 +3998,7 @@ async function competitionCallable(name,payload){
   const idToken=await firebaseAuth.currentUser.getIdToken();
   // A stalled network request must not block room polling or starting a game forever.
   const controller=new AbortController();
-  const timeout=setTimeout(()=>controller.abort(),name==="createCompetitionRoom"?30000:18000);
+  const timeout=setTimeout(()=>controller.abort(),name==="createCompetitionRoom"||name==="createSelfChallenge"?30000:18000);
   let response,responseText;
   try{
     response=await fetch(`${supabaseUrl}/functions/v1/competition`,{
@@ -3781,6 +4033,9 @@ async function competitionCallable(name,payload){
 function competitionCreationMessageText(error){
   const msg=String(error?.message||"تعذر إنشاء الغرفة.");
   const status=Number(error?.status||0);
+  if(/competition_self_challenges|competition_personal_records|42P01|does not exist/i.test(msg)){
+    return "خاصك تشغّل ملف SQL ديال تحدّي النفس فـ Supabase SQL Editor قبل استعمال هاد الخاصية. "+msg;
+  }
   if(status===401)return "خدمة المنافسة رفضت التحقق من الحساب (401). خاص مراجعة إعدادات Edge Function والتحقق من Firebase token. " + msg;
   if(status===403)return "ليس عند الحساب صلاحية إنشاء الغرفة (403). " + msg;
   if(status===404)return "خدمة competition غير موجودة على Supabase (404). خاص نشر Edge Function قبل إنشاء الغرف.";
@@ -3800,12 +4055,14 @@ function competitionCreateFeedback(message,isError=false){
     box.style.borderColor=isError?"#f7b8c8":"#bccfff";
   }
 }
-function competitionCreateBusyUI(busy){
-  const button=document.querySelector('[data-action="competition-create"]');
+function competitionCreateBusyUI(busy,action="competition-create"){
+  const button=document.querySelector(`[data-action="${action}"]`);
   if(!button)return;
   button.disabled=busy;
   button.setAttribute("aria-busy",busy?"true":"false");
-  button.textContent=busy?"جاري الاتصال وإنشاء غرفة المنافسة…":"🏆 إنشاء غرفة المنافسة";
+  button.textContent=busy
+    ?(action==="competition-self-create"?"كنوجدّو تحدي نفسك…":"جاري الاتصال وإنشاء غرفة المنافسة…")
+    :(action==="competition-self-create"?"ابدأ تحدّي نفسك":"🏆 إنشاء غرفة المنافسة");
 }
 
 function competitionAuthenticatedUid(){
@@ -3832,6 +4089,14 @@ function competitionLeaderboardMarkup(members){
     </div>`).join("")}</div>`;
 }
 function renderCompetition(){
+  if(competitionSelfChallengeId){
+    if(!competitionSelfChallengeData){
+      app.innerHTML=pageShell("المنافسة","كنوجدّو تحدي نفسك…","لحظة، كنجيبو التحدي ديالك.",`<div class="competition-loading">🎯 جاري تحميل التحدي الشخصي…</div>`);
+      return;
+    }
+    renderCompetitionSelfChallenge();
+    return;
+  }
   if(competitionRoomId){
     if(!competitionRoomData){
       app.innerHTML=pageShell("المنافسة","كنوجدّو الغرفة…","لحظة، كنجيبو معلومات المنافسة.",`<div class="competition-loading">🏆 جاري الاتصال بالغرفة…</div>`);
@@ -3885,19 +4150,30 @@ function renderCompetition(){
       <strong>${escapeHtml(item.name||"متعلّم")}</strong>
       <b>${Number(item.totalPoints)||0} نقطة</b>
     </div>`).join("");
+  const personalRecordsMarkup=competitionPersonalRecords.slice(0,5).map((record,index)=>`
+    <div class="competition-self-record-row">
+      <div><strong>${escapeHtml((record.lessonNames||[]).join(" · ")||"اختبار شخصي")}</strong><small>${Number(record.attempts)||0} محاولات · ${Number(record.totalQuestions)||Number(record.questionCount)||0} سؤال</small></div>
+      <b>${Number(record.bestScore)||0} نقطة</b>
+    </div>`).join("");
+  const selfInfoCard=`
+    <section class="competition-card competition-self-info-card">
+      <div class="competition-card-heading"><span>🎯</span><div><h3>أفضل نتائجك</h3><p>تتسجل تلقائياً وكتقدر تحسنها فكل محاولة</p></div></div>
+      ${personalRecordsMarkup?`<div class="competition-self-record-list">${personalRecordsMarkup}</div>`:`<div class="competition-empty">مازال ما عندك حتى نتيجة شخصية. اختار الدروس وبدا أول تحدي ديالك!</div>`}
+    </section>`;
   const content=`
     <section class="competition-hero">
       <div class="competition-hero-icon">🏆</div>
-      <div><span>تحدّى أصحابك</span><h2>كل جواب صحيح يقرّبك للصدارة!</h2><p>اختار الدرس، جمع النقاط، وطلع فلوحة المتصدرين.</p></div>
-      <div class="competition-my-points"><strong>${Number(myStats.totalPoints)||0}</strong><small>مجموع نقاطك</small></div>
+      <div><span>تحدّى أصحابك أو نافس نفسك</span><h2>كل محاولة فرصة باش تطوّر مستواك!</h2><p>تنافس مع التلاميذ أو قارن نتيجتك الحالية بأفضل نتيجة شخصية.</p></div>
+      <div class="competition-my-points"><strong>${Number(myStats.totalPoints)||0}</strong><small>${competitionMode==="self"?"نقاط الغرف الجماعية":"مجموع نقاطك"}</small></div>
     </section>
 
     <div class="competition-create-grid">
       <section class="competition-card">
-        <div class="competition-card-heading"><span>⚡</span><div><h3>أنشئ منافسة</h3><p>صايب غرفة وشارك الرمز مع صحابك</p></div></div>
+        <div class="competition-card-heading"><span>${competitionMode==="self"?"🎯":"⚡"}</span><div><h3>${competitionMode==="self"?"تحدّي شخصي":"أنشئ منافسة"}</h3><p>${competitionMode==="self"?"اختبر مستواك وسجّل أفضل نتيجة":"صايب غرفة وشارك الرمز مع صحابك"}</p></div></div>
         <div class="competition-mode-picker">
-          <button type="button" class="${competitionMode==="duel"?"active":""}" data-action="competition-mode" data-mode="duel"><strong>👤 1 ضد 1</strong><small>صاحب الغرفة هو اللي كيبدأ المنافسة</small></button>
+          <button type="button" class="${competitionMode==="duel"?"active":""}" data-action="competition-mode" data-mode="duel"><strong>👤 1 ضد 1</strong><small>تنافس مع تلميذ آخر</small></button>
           <button type="button" class="${competitionMode==="group"?"active":""}" data-action="competition-mode" data-mode="group"><strong>👥 مجموعة</strong><small>حتى 20 تلميذ</small></button>
+          <button type="button" class="${competitionMode==="self"?"active":""}" data-action="competition-mode" data-mode="self"><strong>🎯 نافس نفسك</strong><small>قارن محاولاتك السابقة</small></button>
         </div>
         <div class="competition-field-head"><strong>اختار الدروس</strong><small>ضغط مرة باش تختار، ومرة ثانية باش تحيد المارك</small></div>
         <div class="competition-lesson-grid">${lessonsMarkup}</div>
@@ -3919,11 +4195,12 @@ function renderCompetition(){
         ${competitionWholeExercises?"":`<div class="competition-count-picker">
           ${[5,10,15].map(count=>`<button type="button" class="${competitionQuestionCount===count?"active":""}" data-action="competition-count" data-count="${count}" ${count>availableQuestions?"disabled":""}>${count} أسئلة</button>`).join("")}
         </div>`}
-        <button type="button" class="competition-primary-btn" data-action="competition-create" aria-describedby="competitionCreationStatus" ${competitionBusy?"disabled":""}>${competitionBusy?"كنوجدّو المنافسة…":"🏆 إنشاء غرفة المنافسة"}</button>
+        <button type="button" class="competition-primary-btn" data-action="${competitionMode==="self"?"competition-self-create":"competition-create"}" aria-describedby="competitionCreationStatus" ${competitionBusy?"disabled":""}>${competitionBusy?(competitionMode==="self"?"كنوجدّو تحدي نفسك…":"كنوجدّو المنافسة…"):(competitionMode==="self"?"🎯 ابدأ تحدّي نفسك":"🏆 إنشاء غرفة المنافسة")}</button>
         <p id="competitionCreationStatus" role="status" aria-live="polite" ${competitionCreateMessage?"":"hidden"} style="margin:9px 0;padding:11px 12px;border:1px solid ${competitionCreateMessageIsError?"#f7b8c8":"#bccfff"};border-radius:12px;line-height:1.7;font-size:12px;font-weight:800;color:${competitionCreateMessageIsError?"#972c49":"#2052aa"};background:${competitionCreateMessageIsError?"#fff1f4":"#eaf2ff"};">${escapeHtml(competitionCreateMessage)}</p>
-        <p class="competition-hint">غادي يتولد رمز خاص بالغرفة. صيفطو للتلميذ أو للمجموعة باش ينضمو.</p>
+        <p class="competition-hint">${competitionMode==="self"?"غادي تلعب بوحدك، وتتسجل أفضل نتيجة ديالك باش تقارنها مع المحاولات الجاية.":"غادي يتولد رمز خاص بالغرفة. صيفطو للتلميذ أو للمجموعة باش ينضمو."}</p>
       </section>
 
+      ${competitionMode==="self"?selfInfoCard:`
       <section class="competition-card competition-join-card">
         <div class="competition-card-heading"><span>🔑</span><div><h3>انضم لمنافسة</h3><p>دخل الرمز اللي عطاك صاحبك</p></div></div>
         <form id="competitionJoinForm" class="competition-join-form">
@@ -3932,7 +4209,7 @@ function renderCompetition(){
           <button type="submit" class="competition-secondary-btn" ${competitionBusy?"disabled":""}>انضم للغرفة ←</button>
         </form>
         <div class="competition-howto"><strong>كيفاش كتخدم؟</strong><p>دخل للغرفة، تسنّى حتى يكونو جوج لاعبين على الأقل، ومن بعد غير صاحب الغرفة اللي يضغط Start باش تبدا المنافسة عند الجميع.</p></div>
-      </section>
+      </section>`}
     </div>
 
     <section class="competition-card competition-global-card">
@@ -3972,10 +4249,10 @@ function competitionResolveExerciseText(question,value){
   return Number.isInteger(invalid)&&invalid>=0&&invalid<options.length?invalid:0;
 }
 function competitionUpdateExerciseSubmitButton(){
-  const submit=app.querySelector('[data-action="competition-submit-uebung"]');
+  const submit=app.querySelector('[data-action="competition-submit-uebung"],[data-action="competition-self-submit-uebung"]');
   if(!submit)return;
   const cards=[...app.querySelectorAll(".competition-uebung-item[data-question-index]:not(.submitted)")];
-  submit.disabled=competitionSubmitting||cards.some(card=>{
+  submit.disabled=competitionSubmitting||competitionSelfSubmitting||cards.some(card=>{
     const index=Number(card.dataset.questionIndex);
     return !Number.isInteger(competitionExerciseSelections[index]);
   });
@@ -4147,6 +4424,129 @@ function renderCompetitionRoom(){
     app.innerHTML=pageShell("المنافسة","غرفة "+roomCode,"تنافس مع زملائك واجمع أكبر عدد من النقاط.",`<div class="competition-room-view">${content}</div>`);
   }
 }
+function renderCompetitionSelfChallenge(){
+  const challenge=competitionSelfChallengeData;
+  if(!challenge){renderCompetition();return;}
+  const questions=Array.isArray(challenge.questions)?challenge.questions:[];
+  const total=questions.length;
+  const answered=Math.min(Number(challenge.answeredCount)||0,total);
+  const score=Number(challenge.score)||0;
+  const correctCount=Number(challenge.correctCount)||0;
+  const question=questions[competitionQuestionIndex];
+  const lessonNames=(challenge.lessonNames||[]).map(escapeHtml).join(" · ");
+  const progress=Math.round(answered/Math.max(total,1)*100);
+  const previousBest=Number(challenge.previousBestScore)||0;
+  const currentBest=Math.max(previousBest,Number(challenge.personalRecord?.bestScore)||0);
+  let quizMarkup="";
+  if(challenge.status==="completed"||answered>=total){
+    const newRecord=score>previousBest;
+    const difference=score-previousBest;
+    const resultLine=newRecord
+      ?`رقم قياسي شخصي جديد! زدت ${difference} نقطة على أفضل نتيجة سابقة.`
+      :difference===0&&previousBest>0
+        ?"حافظتي على أفضل نتيجة شخصية ديالك. حاول تزيد عليها فالمحاولة الجاية."
+        :previousBest>0
+          ?`باقي ليك ${Math.abs(difference)} نقطة باش ترجع لأفضل نتيجة ديالك.`
+          :"بداية موفقة! عاود التحدي وحاول تحسن النتيجة ديالك.";
+    quizMarkup=`
+      <section class="competition-self-result">
+        <span class="competition-self-result-icon">${newRecord?"🏆":"🎯"}</span>
+        <p class="competition-self-result-kicker">نتيجة التحدي الشخصي</p>
+        <h3>${score} / ${total*10} نقطة</h3>
+        <div class="competition-self-result-stats">
+          <div><strong>${correctCount}</strong><small>أجوبة صحيحة</small></div>
+          <div><strong>${total-correctCount}</strong><small>أجوبة خاطئة</small></div>
+          <div><strong>${Math.round(correctCount/Math.max(total,1)*100)}%</strong><small>النسبة</small></div>
+        </div>
+        <p class="competition-self-result-message">${resultLine}</p>
+        <div class="competition-self-best-row"><span>أفضل نتيجة محفوظة</span><strong>${currentBest} نقطة</strong></div>
+        <div class="competition-self-best-row"><span>عدد المحاولات</span><strong>${Number(challenge.personalRecord?.attempts)||1}</strong></div>
+        <div class="competition-self-result-actions">
+          <button type="button" class="competition-primary-btn" data-action="competition-self-retry">عاود نفس التحدي</button>
+          <button type="button" class="competition-secondary-btn" data-action="competition-self-leave">رجوع للمنافسة</button>
+        </div>
+      </section>`;
+  }else if(!total){
+    quizMarkup=`<div class="competition-loading">ما لقايناش أسئلة فهاد التحدي.</div>`;
+  }else if(question?.groupId){
+    const stageId=String(question.groupId);
+    let start=competitionQuestionIndex;
+    while(start>0&&questions[start-1]?.groupId===stageId)start--;
+    let end=competitionQuestionIndex;
+    while(end<total&&questions[end]?.groupId===stageId)end++;
+    const stageQuestions=questions.slice(start,end);
+    const groupFinished=competitionSelfFeedback?.groupEnd===end;
+    const panels=stageQuestions.map((item,offset)=>{
+      const idx=start+offset;
+      return competitionRenderExerciseItem(item,idx,idx<answered,competitionSelfSubmitting||groupFinished);
+    }).join("");
+    const pending=stageQuestions.some((_,offset)=>{
+      const idx=start+offset;
+      return idx>=answered&&!Number.isInteger(competitionExerciseSelections[idx]);
+    });
+    const heading=escapeHtml(question.groupTitle||question.category||"Übung");
+    const instruction=question.exerciseInstruction
+      ?`<p class="competition-uebung-instruction">${escapeHtml(question.exerciseInstruction)}</p>`
+      :`<p class="competition-uebung-instruction">حلّ التمرين، وكل جواب صحيح كيزيدك 10 نقاط.</p>`;
+    const result=groupFinished
+      ?`<div class="competition-uebung-result">✓ تصحّح التمرين: ${competitionSelfFeedback.correctCount} من ${competitionSelfFeedback.answeredCount} أجوبة صحيحة (+${competitionSelfFeedback.pointsAwarded} نقطة)</div>
+        <button type="button" class="competition-primary-btn" data-action="competition-next">${end>=total?"عرض النتيجة النهائية":"التمرين التالي ←"}</button>`
+      :`<button type="button" class="competition-primary-btn competition-uebung-submit" data-action="competition-self-submit-uebung" ${pending||competitionSelfSubmitting?"disabled":""}>${competitionSelfSubmitting?"كنصححو الأجوبة…":"تصحيح التمرين كامل"}</button>`;
+    quizMarkup=`
+      <div class="competition-question-top"><span>${start+1}–${end} من ${total} سؤال</span><span>${escapeHtml(question.lessonName||"الدرس")}</span></div>
+      <div class="competition-question-progress"><span style="width:${progress}%"></span></div>
+      <div class="competition-uebung-heading"><h3>${heading}</h3><span>${question.exerciseNumber?`ÜBUNG ${question.exerciseNumber}`:"ÜBUNG"}</span></div>
+      ${instruction}
+      <div class="competition-uebung-grid">${panels}</div>
+      ${result}`;
+  }else if(question){
+    const options=(question.options||[]).map((option,index)=>{
+      const chosen=competitionSelfFeedback?.selectedIndex===index;
+      return `<button type="button" class="competition-answer-option ${chosen?"chosen":""}" data-action="competition-self-answer" data-option="${index}" ${competitionSelfFeedback||competitionSelfSubmitting?"disabled":""}><span>${String.fromCharCode(65+index)}</span>${escapeHtml(option)}</button>`;
+    }).join("");
+    const feedback=competitionSelfFeedback?`<div class="competition-answer-feedback ${competitionSelfFeedback.correct?"correct":"wrong"}">${competitionSelfFeedback.correct?"إجابة صحيحة! +10 نقاط":"ماشي هادي الإجابة الصحيحة. حاول فالسؤال الجاي."}</div>`:"";
+    const next=competitionSelfFeedback?`<button type="button" class="competition-primary-btn" data-action="competition-next">${competitionQuestionIndex+1>=total?"عرض النتيجة النهائية":"السؤال التالي ←"}</button>`:"";
+    quizMarkup=`
+      <div class="competition-question-top"><span>السؤال ${competitionQuestionIndex+1} من ${total}</span><span>${escapeHtml(question.lessonName||"الدرس")}</span></div>
+      <div class="competition-question-progress"><span style="width:${progress}%"></span></div>
+      <h3 class="competition-question-title" dir="ltr">${escapeHtml(question.prompt)}</h3>
+      <div class="competition-answer-grid">${options}</div>
+      ${feedback}${next}`;
+  }
+  const sideCard=`
+    <section class="competition-card competition-score-card competition-self-progress-card">
+      <div class="competition-card-heading"><span>📈</span><div><h3>التقدم ديالك</h3><p>هاد التحدي ضد أفضل نسخة منك</p></div></div>
+      <div class="competition-self-live-score"><strong>${score}</strong><small>نقطة حالياً</small></div>
+      <div class="competition-self-progress-line"><span style="width:${progress}%"></span></div>
+      <div class="competition-self-progress-meta"><span>${answered} / ${total} سؤال</span><strong>${progress}%</strong></div>
+      <div class="competition-self-best-row"><span>أفضل نتيجة سابقة</span><strong>${previousBest} نقطة</strong></div>
+      <div class="competition-self-best-row"><span>الأجوبة الصحيحة</span><strong>${correctCount}</strong></div>
+      <p class="competition-hint">كل جواب صحيح = 10 نقاط. النتيجة كتتحفظ فحسابك باش تقارنها مع المحاولات المقبلة.</p>
+    </section>`;
+  const content=`
+    <section class="competition-room-banner active competition-self-banner">
+      <div><span>تحدّي شخصي</span><h2>نافس نفسك</h2><p>${lessonNames||"اختبار ألماني"}</p></div>
+      <span class="competition-status live">● ${challenge.status==="completed"?"مكتمل":"مباشر"}</span>
+    </section>
+    <div class="competition-live-layout">
+      <section class="competition-card competition-quiz-card">${quizMarkup}</section>
+      ${sideCard}
+    </div>
+    ${challenge.status==="completed"?"":`<button type="button" class="competition-text-btn" data-action="competition-self-leave">إيقاف التحدي والرجوع</button>`}
+  `;
+  const existing=page==="competition"?app.querySelector(".competition-self-view"):null;
+  if(existing){
+    const main=app.querySelector(".student-main");
+    const scrollTop=main?.scrollTop||0;
+    const windowTop=window.scrollY||0;
+    existing.innerHTML=content;
+    if(main&&Math.abs(main.scrollTop-scrollTop)>1)main.scrollTop=scrollTop;
+    if(Math.abs((window.scrollY||0)-windowTop)>1)window.scrollTo({top:windowTop,behavior:"instant"});
+  }else{
+    app.innerHTML=pageShell("تحدّى وتعلّم","تحدّي نفسك","جاوب على الأسئلة، جمع النقاط، وحاول تحطم أفضل نتيجة شخصية ديالك.",`<div class="competition-self-view">${content}</div>`);
+  }
+}
+
 function competitionRoomSignature(room){
   if(!room)return "";
   const members=Object.entries(room.members||{})
@@ -4240,9 +4640,31 @@ async function loadCompetitionStats(){
   try{
     const result=await competitionCallable("getCompetitionStats",{});
     const nextStats=Array.isArray(result.data?.stats)?result.data.stats:[];
-    const changed=JSON.stringify(nextStats)!==JSON.stringify(competitionGlobalStats);
+    const nextRecords=Array.isArray(result.data?.personalRecords)?result.data.personalRecords:[];
+    const changed=JSON.stringify(nextStats)!==JSON.stringify(competitionGlobalStats)||JSON.stringify(nextRecords)!==JSON.stringify(competitionPersonalRecords);
     competitionGlobalStats=nextStats;
-    if(changed&&page==="competition"&&!competitionRoomId)renderCompetition();
+    competitionPersonalRecords=nextRecords;
+    const storageKey=competitionSelfStorageKey();
+    const savedChallengeId=storageKey?localStorage.getItem(storageKey):"";
+    let restoredChallenge=false;
+    if(savedChallengeId&&!competitionSelfChallengeId&&!competitionRoomId){
+      try{
+        const saved=await competitionCallable("getSelfChallenge",{challengeId:savedChallengeId});
+        const challenge=saved.data?.challenge;
+        if(challenge&&challenge.status!=="abandoned"){
+          competitionSelfChallengeId=challenge.id;
+          competitionSelfChallengeData=challenge;
+          restoredChallenge=true;
+          competitionQuestionIndex=Number(challenge.answeredCount)||0;
+          competitionSelfFeedback=null;competitionSelfSubmitting=false;
+          competitionExerciseSelections={};competitionExerciseDrafts={};competitionExerciseTileDrafts={};
+        }else if(storageKey)localStorage.removeItem(storageKey);
+      }catch(error){
+        if(Number(error?.status)===404&&storageKey)localStorage.removeItem(storageKey);
+        else console.warn("Self competition restore unavailable:",error);
+      }
+    }
+    if((changed||restoredChallenge)&&page==="competition"&&!competitionRoomId)renderCompetition();
   }catch(error){console.warn("Competition stats unavailable:",error);}
 }
 
@@ -4375,6 +4797,177 @@ async function createCompetition(){
     if(page==="competition"&&!competitionRoomId)competitionCreateBusyUI(false);
   }
 }
+async function createSelfCompetition(){
+  if(competitionBusy)return;
+  if(window.location.protocol==="file:"||demoMode){
+    competitionCreateFeedback("تحدّي النفس الحقيقي كيحتاج حساب تلميذ مسجّل وفتح الموقع عبر HTTPS.",true);
+    return;
+  }
+  if(!firebaseReady||!firebaseAuth?.currentUser){
+    competitionCreateFeedback("سجّل الدخول بحساب التلميذ باش تحفظ أفضل نتيجة ديالك.",true);
+    return;
+  }
+  const selected=competitionSelectedLessons.filter(index=>(index===10?getStudentLessonAccess(6):getStudentLessonAccess(index)));
+  if(!selected.length){competitionCreateFeedback("اختار درساً واحداً على الأقل باش تبدا تحدي نفسك.",true);return;}
+  const countField=document.getElementById("competitionCustomCount");
+  const available=competitionAvailableQuestionCount();
+  const requestedCount=competitionWholeExercises?available:Number(countField?.value??competitionQuestionCount);
+  if(!Number.isInteger(requestedCount)||requestedCount<1||requestedCount>available){
+    competitionCreateFeedback(`اختار عدد الأسئلة بين 1 و ${available}.`,true);return;
+  }
+  const testTypes=competitionSelectedTypePayload();
+  if(selected.some(index=>!testTypes[String(index)]?.length)){
+    competitionCreateFeedback("اختار نوع تمرين واحد على الأقل لكل درس.",true);return;
+  }
+  competitionQuestionCount=requestedCount;
+  competitionBusy=true;
+  competitionCreateBusyUI(true,"competition-self-create");
+  competitionCreateFeedback("كنحضّرو التحدي الشخصي وكنجيبو الأسئلة…");
+  try{
+    const result=await competitionCallable("createSelfChallenge",{
+      lessonIndices:selected,questionCount:requestedCount,testTypes,wholeExercises:competitionWholeExercises
+    });
+    const challenge=result.data?.challenge;
+    if(!challenge?.id||!Array.isArray(challenge.questions)||!challenge.questions.length){
+      throw new Error("ما وصلاتناش أسئلة التحدي من الخادم.");
+    }
+    competitionRoomId=null;competitionRoomData=null;
+    competitionSelfChallengeId=String(challenge.id);
+    competitionSelfChallengeData=challenge;
+    competitionSelfFeedback=null;competitionSelfSubmitting=false;
+    competitionQuestionIndex=0;
+    competitionExerciseSelections={};competitionExerciseDrafts={};competitionExerciseTileDrafts={};
+    competitionCreateMessage="";competitionCreateMessageIsError=false;
+    const storageKey=competitionSelfStorageKey();
+    if(storageKey)localStorage.setItem(storageKey,competitionSelfChallengeId);
+    renderCompetitionSelfChallenge();
+  }catch(error){
+    console.error("Create self competition failed:",error);
+    const message=competitionCreationMessageText(error);
+    competitionCreateFeedback("⚠️ "+message,true);
+    showToast(message);
+  }finally{
+    competitionBusy=false;
+    if(page==="competition"&&!competitionSelfChallengeId)competitionCreateBusyUI(false,"competition-self-create");
+  }
+}
+function competitionApplySelfAnswerResult(result){
+  if(!competitionSelfChallengeData)return;
+  competitionSelfChallengeData.score=Number(result.score)||0;
+  competitionSelfChallengeData.correctCount=Number(result.correctCount)||0;
+  competitionSelfChallengeData.answeredCount=Number(result.answeredCount)||0;
+  competitionSelfChallengeData.status=result.finished?"completed":"active";
+  if(result.previousBestScore!==undefined)competitionSelfChallengeData.previousBestScore=Number(result.previousBestScore)||0;
+  if(result.personalRecord){
+    competitionSelfChallengeData.personalRecord=result.personalRecord;
+    const key=result.personalRecord.challengeKey;
+    competitionPersonalRecords=[result.personalRecord,...competitionPersonalRecords.filter(item=>item.challengeKey!==key)]
+      .sort((a,b)=>(Number(b.updatedAt?Date.parse(b.updatedAt):0)||0)-(Number(a.updatedAt?Date.parse(a.updatedAt):0)||0));
+  }
+}
+async function submitSelfCompetitionChoice(selectedIndex){
+  if(competitionSelfSubmitting||competitionSelfFeedback||!competitionSelfChallengeId||!competitionSelfChallengeData)return;
+  const questionIndex=competitionQuestionIndex;
+  const question=competitionSelfChallengeData.questions?.[questionIndex];
+  if(!question||!Number.isInteger(selectedIndex)||selectedIndex<0||selectedIndex>=(question.options||[]).length)return;
+  competitionSelfSubmitting=true;renderCompetitionSelfChallenge();
+  try{
+    const result=await competitionCallable("submitSelfChallengeAnswer",{
+      challengeId:competitionSelfChallengeId,questionIndex,selectedIndex
+    });
+    competitionApplySelfAnswerResult(result.data||{});
+    competitionSelfFeedback={qIndex:questionIndex,selectedIndex,correct:Boolean(result.data?.correct),pointsAwarded:Number(result.data?.pointsAwarded)||0};
+  }catch(error){
+    showToast(error.message||"ما قدرناش نسجلو الجواب.");
+    try{
+      const refreshed=await competitionCallable("getSelfChallenge",{challengeId:competitionSelfChallengeId});
+      if(refreshed.data?.challenge){
+        competitionSelfChallengeData=refreshed.data.challenge;
+        competitionQuestionIndex=Number(competitionSelfChallengeData.answeredCount)||0;
+        competitionSelfFeedback=null;
+      }
+    }catch(_refreshError){}
+  }finally{
+    competitionSelfSubmitting=false;
+    renderCompetitionSelfChallenge();
+  }
+}
+async function submitSelfCompetitionUebung(){
+  if(competitionSelfSubmitting||competitionSelfFeedback||!competitionSelfChallengeId||!competitionSelfChallengeData)return;
+  const questions=competitionSelfChallengeData.questions||[];
+  const question=questions[competitionQuestionIndex];
+  if(!question?.groupId)return;
+  let groupStart=competitionQuestionIndex,groupEnd=competitionQuestionIndex;
+  while(groupStart>0&&questions[groupStart-1]?.groupId===question.groupId)groupStart--;
+  while(groupEnd<questions.length&&questions[groupEnd]?.groupId===question.groupId)groupEnd++;
+  const serverCount=Number(competitionSelfChallengeData.answeredCount)||0;
+  for(let index=Math.max(serverCount,groupStart);index<groupEnd;index++){
+    if(!Number.isInteger(competitionExerciseSelections[index])){
+      showToast("جاوب على جميع جمل Übung قبل التصحيح.");return;
+    }
+  }
+  competitionSelfSubmitting=true;renderCompetitionSelfChallenge();
+  let right=0,scored=0,submitted=0;
+  try{
+    for(let index=Math.max(serverCount,groupStart);index<groupEnd;index++){
+      const result=await competitionCallable("submitSelfChallengeAnswer",{
+        challengeId:competitionSelfChallengeId,questionIndex:index,selectedIndex:competitionExerciseSelections[index]
+      });
+      competitionApplySelfAnswerResult(result.data||{});
+      right+=result.data?.correct?1:0;
+      scored+=Number(result.data?.pointsAwarded)||0;
+      submitted++;
+    }
+    if(competitionSelfChallengeData.status!=="completed"){
+      competitionSelfFeedback={groupEnd,correctCount:right,answeredCount:submitted,pointsAwarded:scored};
+    }
+  }catch(error){
+    showToast(error.message||"ما قدرناش نسجلو شي جواب. الأجوبة اللي تسجلات ما تضيعش.");
+    try{
+      const refreshed=await competitionCallable("getSelfChallenge",{challengeId:competitionSelfChallengeId});
+      if(refreshed.data?.challenge){
+        competitionSelfChallengeData=refreshed.data.challenge;
+        competitionQuestionIndex=Number(competitionSelfChallengeData.answeredCount)||0;
+        competitionSelfFeedback=null;
+      }
+    }catch(_refreshError){}
+  }finally{
+    competitionSelfSubmitting=false;
+    renderCompetitionSelfChallenge();
+  }
+}
+async function leaveSelfCompetition(){
+  const challengeId=competitionSelfChallengeId;
+  if(challengeId&&competitionSelfChallengeData?.status==="active"){
+    try{await competitionCallable("abandonSelfChallenge",{challengeId});}
+    catch(error){console.warn("Abandon self challenge:",error);}
+  }
+  const storageKey=competitionSelfStorageKey();
+  if(storageKey)localStorage.removeItem(storageKey);
+  competitionSelfChallengeId="";competitionSelfChallengeData=null;competitionSelfFeedback=null;competitionSelfSubmitting=false;
+  competitionQuestionIndex=0;
+  competitionExerciseSelections={};competitionExerciseDrafts={};competitionExerciseTileDrafts={};
+  await loadCompetitionStats();
+  if(page==="competition")renderCompetition();
+}
+function retrySelfCompetition(){
+  const challenge=competitionSelfChallengeData;
+  if(!challenge)return;
+  competitionSelectedLessons=(challenge.lessonIndices||[]).slice();
+  competitionSelectedTestTypes={...(challenge.testTypes||{})};
+  competitionWholeExercises=challenge.wholeExercises===true;
+  competitionQuestionCount=Number(challenge.questionCount)||10;
+  competitionExpandedLesson=competitionSelectedLessons[0]??null;
+  const storageKey=competitionSelfStorageKey();
+  if(storageKey)localStorage.removeItem(storageKey);
+  competitionSelfChallengeId="";competitionSelfChallengeData=null;competitionSelfFeedback=null;
+  competitionQuestionIndex=0;
+  competitionExerciseSelections={};competitionExerciseDrafts={};competitionExerciseTileDrafts={};
+  competitionMode="self";
+  renderCompetition();
+  createSelfCompetition();
+}
+
 async function joinCompetition(event){
   if(event)event.preventDefault();
   if(competitionBusy)return;
@@ -6069,6 +6662,179 @@ function adminProgressDashboardForGroup(groupName,groupUsers,embeddedFilters="")
   return adminProgressDashboardMarkup(aggregate,groupName,"متوسطات وإجماليات أعضاء المجموعة",true,embeddedFilters);
 }
 
+const ADMIN_DAILY_TASK_STAGES=[
+  {id:"kurs",label:"Kurs · الدروس",icon:"📚"},
+  {id:"vocabulary",label:"Wortschatz · المفردات",icon:"📖"},
+  {id:"grammar",label:"Grammatik · القواعد",icon:"📐"},
+  {id:"teste",label:"Teste · الاختبارات",icon:"📝"},
+  {id:"training-lesen",label:"Training Prüfung · Lesen",icon:"📖"},
+  {id:"training-schreiben",label:"Training Prüfung · Schreiben",icon:"✍️"},
+  {id:"training-hoeren",label:"Training Prüfung · Hören",icon:"🎧"},
+  {id:"training-muendlich",label:"Training Prüfung · Mündlich",icon:"💬"},
+  {id:"pruefungen",label:"Prüfungen · نماذج الامتحان",icon:"🏆"},
+  {id:"general",label:"Aufgabe · مهمة عامة",icon:"📌"}
+];
+function adminTaskStageLabel(stage){return ADMIN_DAILY_TASK_STAGES.find(item=>item.id===stage)?.label||"مهمة عامة";}
+function adminTaskStageIcon(stage){return ADMIN_DAILY_TASK_STAGES.find(item=>item.id===stage)?.icon||"📌";}
+function adminTaskTargetUsers(task,groupUsers){
+  if(task?.targetMode!=="students")return groupUsers;
+  const targets=task.targetStudents||{};
+  return groupUsers.filter(user=>Array.isArray(targets)?targets.includes(user.id):targets[user.id]===true);
+}
+function safeAssignedTaskPath(value){
+  const raw=String(value||"").trim();
+  if(!raw)return "";
+  if(/^https?:\/\//i.test(raw)){
+    try{const url=new URL(raw);return ["http:","https:"].includes(url.protocol)?url.href:"";}catch(error){return "";}
+  }
+  const normalized=raw.replace(/\\/g,"/").replace(/^\/+/,"");
+  if(!normalized.startsWith("pages/")||normalized.split("/").includes(".."))return "";
+  return normalized;
+}
+function renderAdminDailyTasksSection(realGroups,users,today){
+  if(!adminTaskGroupId||!cloudGroups[adminTaskGroupId])adminTaskGroupId=realGroups[0]?.[0]||"";
+  const group=adminTaskGroupId?cloudGroups[adminTaskGroupId]:null;
+  const groupUsers=group?users.filter(user=>user.groupId===adminTaskGroupId):[];
+  const tasks=group?Object.entries(group.dailyTasks||{}).map(([id,task])=>({id,...(task||{})})).sort((a,b)=>String(b.updatedAt||b.createdAt||"").localeCompare(String(a.updatedAt||a.createdAt||""))):[];
+  const editing=adminEditingTaskId?tasks.find(task=>task.id===adminEditingTaskId):null;
+  if(adminEditingTaskId&&!editing)adminEditingTaskId=null;
+  const current=editing||{};
+  const publishedCount=tasks.filter(task=>task.published===true).length;
+  const completedTotal=tasks.reduce((sum,task)=>{
+    const targets=adminTaskTargetUsers(task,groupUsers);
+    return sum+targets.filter(user=>cloudTaskProgress?.[user.id]?.[task.id]?.done).length;
+  },0);
+  const assignedTotal=tasks.reduce((sum,task)=>sum+adminTaskTargetUsers(task,groupUsers).length,0);
+  const completionPercent=assignedTotal?Math.round(completedTotal/assignedTotal*100):0;
+  const groupOptions=realGroups.map(([id,item])=>`<option value="${escapeHtml(id)}" ${id===adminTaskGroupId?"selected":""}>${escapeHtml(item.name||id)} · ${normalizeGroupCourseLevel(item.level)}</option>`).join("");
+  const taskOptions=ADMIN_DAILY_TASK_STAGES.map(item=>`<option value="${item.id}" ${current.stage===item.id?"selected":""}>${item.icon} ${item.label}</option>`).join("");
+  const studentChecks=groupUsers.length?groupUsers.map(user=>{
+    const checked=current.targetMode==="students" && (Array.isArray(current.targetStudents)?current.targetStudents.includes(user.id):current.targetStudents?.[user.id]===true);
+    return `<label class="admin-task-student-option"><input type="checkbox" name="adminTaskStudent" value="${escapeHtml(user.id)}" ${checked?"checked":""}><span><strong>${escapeHtml(user.name||"طالب")}</strong><small>${escapeHtml(user.email||"")}</small></span></label>`;
+  }).join(""):`<p class="admin-empty-note">ما كاين حتى تلميذ فهاد المجموعة حالياً.</p>`;
+  const taskCards=tasks.length?tasks.map(task=>{
+    const targets=adminTaskTargetUsers(task,groupUsers);
+    const progressKey=assignedTaskProgressKey(task.id,task);
+    const done=targets.filter(user=>cloudTaskProgress?.[user.id]?.[progressKey]?.done).length;
+    const started=targets.filter(user=>cloudTaskProgress?.[user.id]?.[progressKey]?.startedAt&&!cloudTaskProgress?.[user.id]?.[progressKey]?.done).length;
+    const due=task.dueDate?`آخر أجل: ${escapeHtml(task.dueDate)}`:"بدون أجل محدد";
+    return `<article class="admin-task-card ${task.published===true?"is-published":"is-draft"}">
+      <div class="admin-task-card-main"><span class="admin-task-card-icon">${escapeHtml(task.icon||adminTaskStageIcon(task.stage))}</span><div class="admin-task-card-copy"><div class="admin-task-card-meta"><span>${escapeHtml(adminTaskStageLabel(task.stage))}</span><span class="${task.published===true?"published":"draft"}">${task.published===true?"منشورة":"مسودة / متوقفة"}</span></div><h3>${escapeHtml(task.title||"مهمة بدون عنوان")}</h3><p>${escapeHtml(task.description||"بدون وصف")}</p><small>${due} · ${Math.max(0,Number(task.durationMinutes)||0)} دقيقة · ${task.schedule==="daily"?"تظهر يومياً داخل الفترة":"مرة واحدة"}</small></div></div>
+      <div class="admin-task-card-progress"><strong>${done}/${targets.length}</strong><span>أكملوا المهمة</span><i><b style="width:${targets.length?Math.round(done/targets.length*100):0}%"></b></i><small>${started} قيد الإنجاز · ${targets.length-done-started} لم يبدأوا</small></div>
+      <div class="admin-task-card-actions"><button type="button" class="tiny-btn" data-action="admin-task-details" data-id="${escapeHtml(task.id)}">متابعة التلاميذ</button><button type="button" class="tiny-btn" data-action="admin-task-edit" data-id="${escapeHtml(task.id)}">تعديل</button><button type="button" class="tiny-btn" data-action="admin-task-toggle-published" data-id="${escapeHtml(task.id)}">${task.published===true?"إيقاف النشر":"نشر"}</button><button type="button" class="tiny-btn danger" data-action="admin-task-delete" data-id="${escapeHtml(task.id)}">حذف</button></div>
+    </article>`;
+  }).join(""):`<div class="admin-task-empty"><span>🗓️</span><h3>مازال ما تحددات حتى مهمة لهاد المجموعة</h3><p>أنشئ أول مهمة، اختار المرحلة والموعد، ومن بعد انشرها للتلاميذ.</p></div>`;
+  let detailMarkup="";
+  if(adminTaskDetailId){
+    const task=tasks.find(item=>item.id===adminTaskDetailId);
+    if(task){
+      const targets=adminTaskTargetUsers(task,groupUsers);
+      const progressKey=assignedTaskProgressKey(task.id,task);
+      detailMarkup=`<section class="admin-panel admin-task-detail-panel"><div class="admin-section-head"><div><p class="admin-eyebrow">متابعة الإنجاز</p><h2>${escapeHtml(task.title||"المهمة")}</h2><p>${escapeHtml(adminTaskStageLabel(task.stage))} · ${targets.length} تلميذ مستهدف</p></div><button type="button" class="outline-btn" data-action="admin-task-close-details">إغلاق</button></div><div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>التلميذ</th><th>الحالة</th><th>بدأ في</th><th>أكمل في</th><th>إجراء</th></tr></thead><tbody>${targets.map(user=>{const progress=cloudTaskProgress?.[user.id]?.[progressKey]||{};const status=progress.done?'<span class="status-pill active">مكتملة</span>':progress.startedAt?'<span class="status-pill warning">قيد الإنجاز</span>':'<span class="status-pill inactive">لم تبدأ</span>';return `<tr><td><strong>${escapeHtml(user.name||"—")}</strong><small>${escapeHtml(user.email||"")}</small></td><td>${status}</td><td>${progress.startedAt?escapeHtml(new Date(progress.startedAt).toLocaleString("ar-MA")):"—"}</td><td>${progress.completedAt?escapeHtml(new Date(progress.completedAt).toLocaleString("ar-MA")):"—"}</td><td><button type="button" class="tiny-btn" data-action="admin-task-student-progress-toggle" data-id="${escapeHtml(user.id)}" data-task-id="${escapeHtml(task.id)}">${progress.done?"إعادة فتح":"تحديد كمكتملة"}</button></td></tr>`;}).join("")||'<tr><td colspan="5" class="empty-cell">لا يوجد تلاميذ مستهدفون.</td></tr>'}</tbody></table></div></section>`;
+    }
+  }
+  if(!realGroups.length)return `<section class="admin-welcome"><div><p class="admin-eyebrow">Aufgabenverwaltung</p><h1>إدارة المهام اليومية</h1><p>أنشئ خططاً مختلفة لكل مجموعة وتابع إنجاز التلاميذ.</p></div></section><section class="admin-panel admin-task-empty"><span>👥</span><h2>خاصك تنشئ مجموعة أولاً</h2><p>المهام كتترتب حسب المجموعة. أنشئ مجموعة وأضف ليها التلاميذ، ومن بعد رجع لهنا.</p><button type="button" class="primary-btn" data-action="admin-nav" data-section="groups">فتح إدارة المجموعات</button></section>`;
+  return `<section class="admin-welcome admin-task-welcome"><div><p class="admin-eyebrow">Aufgabenverwaltung · خطة التعلم</p><h1>إدارة المهام اليومية</h1><p>حدد شنو خاص كل مجموعة تدير، فاش تبدا المهمة، آخر أجل، والمرحلة التعليمية. تقدر تعيّنها للمجموعة كاملة أو لتلاميذ تختارهم.</p></div><div class="admin-task-welcome-actions"><span class="admin-task-welcome-icon">🗓️</span><button type="button" class="primary-btn" data-action="admin-task-new">＋ مهمة جديدة</button></div></section>
+    <section class="admin-task-summary-grid"><article><span>👥</span><strong>${groupUsers.length}</strong><small>تلاميذ فالمجموعة</small></article><article><span>📋</span><strong>${tasks.length}</strong><small>مجموع المهام</small></article><article><span>🚀</span><strong>${publishedCount}</strong><small>مهام منشورة</small></article><article><span>✓</span><strong>${completionPercent}%</strong><small>نسبة الإنجاز</small></article></section>
+    <section class="admin-panel admin-task-group-select-panel"><label for="adminTaskGroupSelect">اختار المجموعة</label><select id="adminTaskGroupSelect">${groupOptions}</select><span class="admin-task-level-chip">المستوى: ${normalizeGroupCourseLevel(group?.level||"A1")}</span><small>كل مجموعة عندها خطة مهام مستقلة.</small></section>
+    <section class="admin-panel admin-task-form-panel"><div class="admin-section-head"><div><p class="admin-eyebrow">${editing?"تعديل المهمة":"مهمة جديدة"}</p><h2>${editing?"تعديل إعدادات المهمة":"إنشاء مهمة للتلاميذ"}</h2><p>المجموعة المختارة: ${escapeHtml(group?.name||"")} · ${normalizeGroupCourseLevel(group?.level||"A1")}</p></div><span class="admin-task-form-mark">＋</span></div>
+      <div class="admin-task-form-grid">
+        <label class="admin-task-field"><span>عنوان المهمة *</span><input id="adminTaskTitle" type="text" maxlength="100" value="${escapeHtml(current.title||"")}" placeholder="مثلاً: مراجعة مفردات Lektion 6"></label>
+        <label class="admin-task-field"><span>المرحلة / القسم *</span><select id="adminTaskStage">${taskOptions}</select></label>
+        <label class="admin-task-field"><span>رقم الدرس (اختياري)</span><select id="adminTaskLessonNo"><option value="">بدون درس محدد</option>${Array.from({length:10},(_,i)=>`<option value="${i+1}" ${Number(current.lessonNo)===i+1?"selected":""}>Lektion ${i+1}</option>`).join("")}</select></label>
+        <label class="admin-task-field"><span>المدة المتوقعة بالدقائق</span><input id="adminTaskDuration" type="number" min="0" max="600" value="${Number(current.durationMinutes)||15}"></label>
+        <label class="admin-task-field"><span>تاريخ البداية / يوم المهمة</span><input id="adminTaskStartDate" type="date" value="${escapeHtml(current.startDate||today)}"></label>
+        <label class="admin-task-field"><span>آخر أجل</span><input id="adminTaskDueDate" type="date" value="${escapeHtml(current.dueDate||today)}"></label>
+        <label class="admin-task-field"><span>طريقة العرض</span><select id="adminTaskSchedule"><option value="once" ${current.schedule!=="daily"?"selected":""}>مرة واحدة في التاريخ المحدد</option><option value="daily" ${current.schedule==="daily"?"selected":""}>كل يوم داخل الفترة</option></select></label>
+        <label class="admin-task-field"><span>الأولوية</span><select id="adminTaskPriority"><option value="normal" ${!current.priority||current.priority==="normal"?"selected":""}>عادية</option><option value="high" ${current.priority==="high"?"selected":""}>مهمة جداً</option><option value="low" ${current.priority==="low"?"selected":""}>منخفضة</option></select></label>
+        <label class="admin-task-field admin-task-field-wide"><span>الوصف والتعليمات للتلميذ</span><textarea id="adminTaskDescription" rows="3" maxlength="1200" placeholder="شرح المطلوب، عدد الكلمات أو الأسئلة، وطريقة الإنجاز...">${escapeHtml(current.description||"")}</textarea></label>
+        <label class="admin-task-field admin-task-field-wide"><span>رابط المحتوى (اختياري)</span><input id="adminTaskPath" type="text" value="${escapeHtml(current.path||"")}" placeholder="pages/B2/training/... أو رابط https://..."><small>إلا حطيتي رابط، زر «ابدأ» غادي يفتح المحتوى مباشرة. خليه فارغ باش المنصة تفتح المرحلة المناسبة تلقائياً.</small></label>
+        <label class="admin-task-field"><span>لمن نرسل المهمة؟</span><select id="adminTaskTargetMode"><option value="group" ${current.targetMode!=="students"?"selected":""}>جميع تلاميذ المجموعة</option><option value="students" ${current.targetMode==="students"?"selected":""}>تلاميذ محددون فقط</option></select></label>
+        <label class="admin-task-field"><span>حالة المهمة</span><select id="adminTaskPublished"><option value="true" ${current.published!==false?"selected":""}>نشر للتلاميذ مباشرة</option><option value="false" ${current.published===false?"selected":""}>حفظ كمسودة</option></select></label>
+      </div>
+      <div class="admin-task-student-picker" id="adminTaskStudentPicker" ${current.targetMode==="students"?"":"hidden"}><div class="admin-task-student-picker-head"><strong>اختار التلاميذ المستهدفين</strong><div><button type="button" class="tiny-btn" data-action="admin-task-target-all" data-select="all">تحديد الكل</button><button type="button" class="tiny-btn" data-action="admin-task-target-all" data-select="none">إلغاء الكل</button></div></div><div class="admin-task-student-list" id="adminTaskStudentList">${studentChecks}</div></div>
+      <div class="admin-form-actions"><button type="button" class="primary-btn" data-action="admin-task-save">${editing?"حفظ التعديلات":"إنشاء ونشر المهمة"}</button>${editing?'<button type="button" class="outline-btn" data-action="admin-task-cancel-edit">إلغاء التعديل</button>':""}</div>
+    </section>
+    <section class="admin-panel admin-task-list-panel"><div class="admin-section-head"><div><p class="admin-eyebrow">خطة المجموعة</p><h2>المهام المحددة</h2><p>تابع النشر والإنجاز وعدّل أي مهمة في أي وقت.</p></div><span class="admin-count">${tasks.length} مهمة</span></div><div class="admin-task-list">${taskCards}</div></section>
+    ${detailMarkup}`;
+}
+async function saveAdminDailyTask(){
+  if(!currentUser||currentUser.role!=="admin"||!firebaseReady){showToast("خاص صلاحية الأدمن واتصال Firebase.");return;}
+  const groupId=document.getElementById("adminTaskGroupSelect")?.value||adminTaskGroupId;
+  const group=cloudGroups[groupId];
+  if(!group){showToast("اختار مجموعة صحيحة أولاً.");return;}
+  const title=String(document.getElementById("adminTaskTitle")?.value||"").trim();
+  const stage=String(document.getElementById("adminTaskStage")?.value||"general");
+  const description=String(document.getElementById("adminTaskDescription")?.value||"").trim();
+  const lessonRaw=document.getElementById("adminTaskLessonNo")?.value||"";
+  const durationMinutes=Math.max(0,Math.min(600,Number(document.getElementById("adminTaskDuration")?.value)||0));
+  const startDate=String(document.getElementById("adminTaskStartDate")?.value||localDateKey());
+  const dueDate=String(document.getElementById("adminTaskDueDate")?.value||"");
+  const schedule=document.getElementById("adminTaskSchedule")?.value==="daily"?"daily":"once";
+  const priority=["high","normal","low"].includes(document.getElementById("adminTaskPriority")?.value)?document.getElementById("adminTaskPriority").value:"normal";
+  const targetMode=document.getElementById("adminTaskTargetMode")?.value==="students"?"students":"group";
+  const published=document.getElementById("adminTaskPublished")?.value!=="false";
+  const pathRaw=document.getElementById("adminTaskPath")?.value||"";
+  const path=safeAssignedTaskPath(pathRaw);
+  if(!title){showToast("كتب عنوان المهمة أولاً.");return;}
+  if(pathRaw.trim()&&!path){showToast("الرابط خاصو يكون رابط https أو مسار داخل pages/ بلا ../.");return;}
+  if(dueDate&&startDate&&dueDate<startDate){showToast("آخر أجل ما يمكنش يكون قبل تاريخ البداية.");return;}
+  const selectedIds=Array.from(document.querySelectorAll('input[name="adminTaskStudent"]:checked')).map(input=>input.value);
+  if(targetMode==="students"&&!selectedIds.length){showToast("اختار تلميذ واحد على الأقل أو عيّن المهمة للمجموعة كاملة.");return;}
+  const taskRef=firebaseDb.ref(`${DEUTSCH_A1_PATH}/groups/${groupId}/dailyTasks`);
+  const taskId=adminEditingTaskId||taskRef.push().key;
+  const old=group.dailyTasks?.[taskId]||{};
+  const now=new Date().toISOString();
+  const task={...old,id:taskId,title,description,stage,lessonNo:lessonRaw?Number(lessonRaw):null,durationMinutes,startDate,dueDate,schedule,priority,targetMode,targetStudents:targetMode==="students"?Object.fromEntries(selectedIds.map(id=>[id,true])):{},path,published,icon:adminTaskStageIcon(stage),createdAt:old.createdAt||now,updatedAt:now,createdBy:old.createdBy||currentUser.id};
+  try{
+    await taskRef.child(taskId).set(task);
+    adminTaskGroupId=groupId;adminEditingTaskId=null;adminTaskDetailId=taskId;
+    await loadDeutschA1Data();
+    adminSection="tasks";render();
+    showToast(published?"تنشرات المهمة وتعيّنات للتلاميذ.":"تحفظات المهمة كمسودة.");
+  }catch(error){
+    console.error("Daily task save failed:",error);
+    showToast("ما قدرناش نحفظو المهمة. تحقق من صلاحيات Firebase Rules.");
+  }
+}
+async function toggleAdminDailyTaskPublication(taskId){
+  if(!currentUser||currentUser.role!=="admin")return;
+  const group=cloudGroups[adminTaskGroupId];const task=group?.dailyTasks?.[taskId];if(!task)return;
+  const published=task.published!==true;
+  try{
+    await firebaseDb.ref(`${DEUTSCH_A1_PATH}/groups/${adminTaskGroupId}/dailyTasks/${taskId}`).update({published,status:published?"published":"draft",updatedAt:new Date().toISOString()});
+    await loadDeutschA1Data();render();showToast(published?"المهمة ولات منشورة للتلاميذ.":"توقف نشر المهمة.");
+  }catch(error){console.error(error);showToast("تعذر تغيير حالة نشر المهمة: "+(error.message||"Firebase Rules"));}
+}
+async function deleteAdminDailyTask(taskId){
+  if(!currentUser||currentUser.role!=="admin")return;
+  const task=cloudGroups[adminTaskGroupId]?.dailyTasks?.[taskId];if(!task)return;
+  if(!window.confirm(`واش متأكد بغيتي تحذف المهمة «${task.title||"بدون عنوان"}» من هاد المجموعة؟`))return;
+  try{
+    await firebaseDb.ref(`${DEUTSCH_A1_PATH}/groups/${adminTaskGroupId}/dailyTasks/${taskId}`).remove();
+    if(adminTaskDetailId===taskId)adminTaskDetailId="";
+    if(adminEditingTaskId===taskId)adminEditingTaskId=null;
+    await loadDeutschA1Data();render();showToast("تحذفات المهمة من المجموعة.");
+  }catch(error){console.error(error);showToast("تعذر حذف المهمة: "+(error.message||"Firebase Rules"));}
+}
+async function toggleAdminStudentTaskProgress(taskId,studentId){
+  if(!currentUser||currentUser.role!=="admin")return;
+  const task=cloudGroups[adminTaskGroupId]?.dailyTasks?.[taskId];
+  const student=readUsers().find(user=>user.id===studentId&&user.groupId===adminTaskGroupId);
+  if(!task||!student)return;
+  const progressKey=assignedTaskProgressKey(taskId,task);
+  const previous=cloudTaskProgress?.[studentId]?.[progressKey]||{};
+  const now=new Date().toISOString();
+  const patch=previous.done?{done:false,completedAt:null,updatedAt:now}:{done:true,startedAt:previous.startedAt||now,completedAt:now,updatedAt:now,markedByAdmin:true};
+  try{
+    await firebaseDb.ref(`${DEUTSCH_A1_PATH}/taskProgress/${studentId}/${progressKey}`).update(patch);
+    if(!cloudTaskProgress[studentId])cloudTaskProgress[studentId]={};
+    cloudTaskProgress[studentId][progressKey]={...previous,...patch};
+    render();
+    showToast(patch.done?"تسجلت المهمة كمكتملة لهذا التلميذ.":"ترجعات المهمة لقيد الإنجاز.");
+  }catch(error){console.error(error);showToast("تعذر تحديث إنجاز التلميذ. تحقق من Firebase Rules.");}
+}
+
 function renderAdmin(){
   if(!currentUser || currentUser.role!=="admin"){page="home";return renderHome();}
   const users=readUsers();
@@ -6077,6 +6843,7 @@ function renderAdmin(){
   const groupOptions=(selected)=>`<option value="">Ohne Gruppe</option>`+Object.entries(cloudGroups).filter(([id,g])=>g&&g._systemPlaceholder!==true&&!String(id).startsWith("__system_")).map(([id,g])=>`<option value="${escapeHtml(id)}" ${selected===id?"selected":""}>${escapeHtml(g.name||id)}</option>`).join("");
   const studentGroupFilterOptions=`<option value="all" ${adminGroupFilter==="all"?"selected":""}>Alle Gruppen</option><option value="__ungrouped__" ${adminGroupFilter==="__ungrouped__"?"selected":""}>Ohne Gruppe</option>`+Object.entries(cloudGroups).filter(([id,g])=>g&&g._systemPlaceholder!==true&&!String(id).startsWith("__system_")).map(([id,g])=>`<option value="${escapeHtml(id)}" ${adminGroupFilter===id?"selected":""}>${escapeHtml(g.name||id)}</option>`).join("");
   const realGroups=Object.entries(cloudGroups).filter(([id,g])=>g&&g._systemPlaceholder!==true&&!String(id).startsWith("__system_"));
+  if(!adminTaskGroupId||!cloudGroups[adminTaskGroupId])adminTaskGroupId=realGroups[0]?.[0]||"";
   const analyticsGroupOptions=`<option value="all" ${adminAnalyticsGroupFilter==="all"?"selected":""}>Alle Gruppen</option>`+realGroups.map(([id,g])=>`<option value="${escapeHtml(id)}" ${adminAnalyticsGroupFilter===id?"selected":""}>${escapeHtml(g.name||id)}</option>`).join("")+`<option value="__ungrouped__" ${adminAnalyticsGroupFilter==="__ungrouped__"?"selected":""}>Ohne Gruppe</option>`;
   const analyticsStudentOptions=`<option value="all" ${adminAnalyticsStudentFilter==="all"?"selected":""}>Alle Schüler</option>`+users.map(user=>`<option value="${escapeHtml(user.id)}" ${adminAnalyticsStudentFilter===user.id?"selected":""}>${escapeHtml(user.name||user.email||user.id)}</option>`).join("");
   const ungroupedExists=users.some(user=>!user.groupId);
@@ -6144,7 +6911,8 @@ function renderAdmin(){
     const count=groupUsers.length;
     const groupSeconds=groupUsers.reduce((sum,u)=>sum+Number((((cloudActivity[u.id]||{})[today]||{}).totalSeconds)||0),0);
     const groupLogins=groupUsers.reduce((sum,u)=>sum+Number((((cloudActivity[u.id]||{})[today]||{}).loginCount)||0),0);
-    return `<div class="admin-group-row"><div><strong>${escapeHtml(g.name||id)}</strong><small>${escapeHtml(enabledLabel)} · ${count} طالب · ${allowed}/10 دروس في ${groupLevel} · ${Number(g.requiredDailyMinutes)||0} دقيقة/اليوم · اليوم: ${formatDuration(groupSeconds)}، ${groupLogins} دخول</small></div><div class="admin-group-row-actions"><button class="tiny-btn primary" data-action="admin-open-group" data-id="${escapeHtml(id)}">فتح المجموعة</button><button class="tiny-btn" data-action="admin-edit-group" data-id="${escapeHtml(id)}">تعديل</button><button class="tiny-btn danger" data-action="admin-delete-group" data-id="${escapeHtml(id)}">حذف</button></div></div>`;
+    const dailyTaskCount=Object.values(g.dailyTasks||{}).filter(task=>task&&task.published===true).length;
+    return `<div class="admin-group-row"><div><strong>${escapeHtml(g.name||id)}</strong><small>${escapeHtml(enabledLabel)} · ${count} طالب · ${allowed}/10 دروس في ${groupLevel} · ${dailyTaskCount} مهام منشورة · ${Number(g.requiredDailyMinutes)||0} دقيقة/اليوم · اليوم: ${formatDuration(groupSeconds)}، ${groupLogins} دخول</small></div><div class="admin-group-row-actions"><button class="tiny-btn primary" data-action="admin-open-group" data-id="${escapeHtml(id)}">فتح المجموعة</button><button class="tiny-btn" data-action="admin-open-group-tasks" data-id="${escapeHtml(id)}">المهام اليومية</button><button class="tiny-btn" data-action="admin-edit-group" data-id="${escapeHtml(id)}">تعديل</button><button class="tiny-btn danger" data-action="admin-delete-group" data-id="${escapeHtml(id)}">حذف</button></div></div>`;
   }).join(""):`<p class="admin-empty-note">مازال ما كاينة حتى مجموعة. زِد أول مجموعة من النموذج أعلاه.</p>`;
   const editing=editingGroupId && cloudGroups[editingGroupId] ? cloudGroups[editingGroupId] : {};
   const currentGroupLevel=normalizeGroupCourseLevel(adminGroupLevelDraft||editing.level||"A1");
@@ -6513,6 +7281,7 @@ function renderAdmin(){
 
   const contentLibraryMarkup = renderAdminContentSection();
   const pagesManagerMarkup = renderAdminPagesSection();
+  const adminDailyTasksMarkup = adminSection==="tasks" ? renderAdminDailyTasksSection(realGroups,users,today) : "";
   const adminV31StudentSection=`<section class="admin-welcome"><div><p class="admin-eyebrow">إدارة المتعلمين</p><h1>التلاميذ</h1><p>متابعة الحسابات، النشاط، المجموعات وصلاحيات الوصول إلى الدروس.</p></div><button type="button" class="primary-btn" data-action="admin-nav" data-section="groups">＋ إضافة تلميذ داخل مجموعة</button></section>
     <section class="admin-stats admin-v31-student-stats"><article><span>👨‍🎓</span><div><small>عدد التلاميذ</small><strong>${users.length}</strong></div></article><article><span>🟢</span><div><small>نشطوا خلال 7 أيام</small><strong>${adminV31ActiveStudents.length}</strong></div></article><article><span>👥</span><div><small>بدون مجموعة</small><strong>${unassignedCount}</strong></div></article></section>
     <section class="admin-panel"><div class="admin-section-head"><div><p class="admin-eyebrow">الحسابات المسجلة</p><h2>قائمة التلاميذ</h2><p>اضغط على اسم التلميذ لعرض التفاصيل أو استخدم أزرار الإدارة.</p></div><span class="admin-count">${filteredUsers.length} / ${users.length}</span></div>
@@ -6544,8 +7313,8 @@ function renderAdmin(){
       </main>
     </section>` : "";
 
-  const adminMainContent = adminSection==="students" ? adminV31StudentSection : adminSection==="teachers" ? adminV31TeacherSection : adminSection==="settings" ? adminV31SettingsSection : adminSection==="groups" ? groupsMarkupPage : adminSection==="results" ? resultsMarkupPage : adminSection==="content" ? contentLibraryMarkup : adminSection==="pages" ? pagesManagerMarkup : homeMarkup;
-  const adminTitles={home:"لوحة الإدارة",students:"التلاميذ",teachers:"المعلمون",groups:"المجموعات",results:"التقارير",content:"الدروس",settings:"الإعدادات",pages:"محرر HTML"};
+  const adminMainContent = adminSection==="students" ? adminV31StudentSection : adminSection==="teachers" ? adminV31TeacherSection : adminSection==="settings" ? adminV31SettingsSection : adminSection==="groups" ? groupsMarkupPage : adminSection==="tasks" ? adminDailyTasksMarkup : adminSection==="results" ? resultsMarkupPage : adminSection==="content" ? contentLibraryMarkup : adminSection==="pages" ? pagesManagerMarkup : homeMarkup;
+  const adminTitles={home:"لوحة الإدارة",students:"التلاميذ",teachers:"المعلمون",groups:"المجموعات",tasks:"المهام اليومية",results:"التقارير",content:"الدروس",settings:"الإعدادات",pages:"محرر HTML"};
   const adminTitle=adminTitles[adminSection]||"لوحة الإدارة";
 
   app.innerHTML=`<div class="admin-page admin-layout-page admin-v31">
@@ -6557,6 +7326,7 @@ function renderAdmin(){
           <button class="${adminSection==="students"?"active":""}" data-action="admin-nav" data-section="students"><span>👩🏻‍🎓</span> التلاميذ</button>
           <button class="${adminSection==="content"?"active":""}" data-action="admin-nav" data-section="content"><span>📖</span> الدروس</button>
           <button class="${adminSection==="groups"?"active":""}" data-action="admin-nav" data-section="groups"><span>👥</span> المجموعات</button>
+          <button class="${adminSection==="tasks"?"active":""}" data-action="admin-nav" data-section="tasks"><span>🗓️</span> المهام اليومية</button>
           <button class="${adminSection==="teachers"?"active":""}" data-action="admin-nav" data-section="teachers"><span>👩🏻‍🏫</span> المعلمون</button>
           <button class="${adminSection==="results"?"active":""}" data-action="admin-nav" data-section="results"><span>📊</span> التقارير</button>
           <button class="${adminSection==="settings"?"active":""}" data-action="admin-nav" data-section="settings"><span>⚙️</span> الإعدادات</button>
@@ -8045,6 +8815,7 @@ function renderStudentResults(){
 function logout(){
   demoMode = false;
   stopAdminResultsRealtimeSync();
+  stopStudentGroupTasksRealtimeSync();
   if (firebaseReady) firebaseAuth.signOut().catch(console.error);
   localStorage.removeItem(AUTH_SESSION_KEY);localStorage.removeItem("deutsch_a1_session_v1");if(activityTimer)window.clearInterval(activityTimer);currentUser=null;currentStudentProfile=null;currentStudentGroup=null;page="login";
   if("speechSynthesis" in window) window.speechSynthesis.cancel();
@@ -8078,7 +8849,7 @@ async function resetStudentPassword(id){
   } catch(error) { showToast("Passwort-Link konnte nicht gesendet werden: "+error.message); }
 }
 function exportAdminBackup(){
-  const payload={exportedAt:new Date().toISOString(),users:readUsers(),results:readAllResults(),groups:cloudGroups,activity:cloudActivity,contentMeta:adminContentMeta};
+  const payload={exportedAt:new Date().toISOString(),users:readUsers(),results:readAllResults(),groups:cloudGroups,activity:cloudActivity,taskProgress:cloudTaskProgress,contentMeta:adminContentMeta};
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
   const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="deutsch-a1-backup.json";a.click();URL.revokeObjectURL(url);
 }
@@ -10287,6 +11058,18 @@ document.addEventListener("keydown",function(event){
     }
   }
 });
+document.addEventListener("change",function(event){
+  const target=event.target;
+  if(!target)return;
+  if(target.id==="adminTaskGroupSelect"){
+    adminTaskGroupId=target.value||"";adminEditingTaskId=null;adminTaskDetailId="";render();return;
+  }
+  if(target.id==="adminTaskTargetMode"){
+    const picker=document.getElementById("adminTaskStudentPicker");
+    if(picker)picker.hidden=target.value!=="students";
+  }
+});
+
 document.addEventListener("click",function(event){
   if(event.target && event.target.id==="adminStudentDetailsModal") closeAdminStudentDetails();
 });
@@ -10515,7 +11298,7 @@ document.addEventListener("input",function(event){
   }
   if(target.matches("[data-competition-text-question]")){
     const index=Number(target.dataset.competitionTextQuestion);
-    const question=competitionRoomData?.questions?.[index];
+    const question=competitionActiveQuizData()?.questions?.[index];
     if(Number.isInteger(index)&&question){
       competitionExerciseDrafts[index]=target.value;
       const resolved=competitionResolveExerciseText(question,target.value);
@@ -10580,7 +11363,9 @@ document.addEventListener("click",function(event){
     render();return;
   }
   else if(action==="competition-mode"){
-    competitionMode=el.dataset.mode==="group"?"group":"duel";renderCompetition();return;
+    competitionMode=["duel","group","self"].includes(el.dataset.mode)?el.dataset.mode:"duel";
+    competitionCreateMessage="";competitionCreateMessageIsError=false;
+    renderCompetition();return;
   }
   else if(action==="competition-lesson"){
     const idx=Number(el.dataset.lesson);
@@ -10638,6 +11423,11 @@ document.addEventListener("click",function(event){
     renderCompetition();return;
   }
   else if(action==="competition-create"){createCompetition();return;}
+  else if(action==="competition-self-create"){createSelfCompetition();return;}
+  else if(action==="competition-self-answer"){submitSelfCompetitionChoice(Number(el.dataset.option));return;}
+  else if(action==="competition-self-submit-uebung"){submitSelfCompetitionUebung();return;}
+  else if(action==="competition-self-leave"){leaveSelfCompetition();return;}
+  else if(action==="competition-self-retry"){retrySelfCompetition();return;}
   else if(action==="competition-copy-code"){copyCompetitionCode();return;}
   else if(action==="competition-share-code"){shareCompetitionCode();return;}
   else if(action==="competition-start"){startCompetition();return;}
@@ -10653,16 +11443,16 @@ document.addEventListener("click",function(event){
   else if(action==="competition-answer"){submitCompetitionChoice(Number(el.dataset.option));return;}
   else if(action==="competition-exercise-choice"){
     const index=Number(el.dataset.questionIndex),option=Number(el.dataset.option);
-    const question=competitionRoomData?.questions?.[index];
+    const question=competitionActiveQuizData()?.questions?.[index];
     if(!question||!Number.isInteger(option)||option<0||option>3||option>=(question.options||[]).length)return;
     competitionExerciseSelections[index]=option;
-    renderCompetitionRoom();
+    renderActiveCompetitionQuiz();
     competitionUpdateExerciseSubmitButton();
     return;
   }
   else if(action==="competition-exercise-tile"){
     const index=Number(el.dataset.questionIndex),tileIndex=Number(el.dataset.tileIndex);
-    const question=competitionRoomData?.questions?.[index];
+    const question=competitionActiveQuizData()?.questions?.[index];
     if(!question||!Number.isInteger(tileIndex))return;
     const kind=el.dataset.tileKind==="letters"?"letters":"words";
     const tiles=kind==="letters"?(question.letters||Array.from(String(question.scramble||"").replace(/\s+/g,""))):(question.tiles||[]);
@@ -10676,11 +11466,22 @@ document.addEventListener("click",function(event){
       const resolved=competitionResolveExerciseText(question,answer);
       competitionExerciseSelections[index]=resolved===null?Number(question.invalidIndex)||0:resolved;
     }else delete competitionExerciseSelections[index];
-    renderCompetitionRoom();
+    renderActiveCompetitionQuiz();
     competitionUpdateExerciseSubmitButton();
     return;
   }
   else if(action==="competition-next"){
+    if(competitionSelfChallengeId){
+      const questions=competitionSelfChallengeData?.questions||[];
+      const currentQuestion=questions[competitionQuestionIndex];
+      if(currentQuestion?.groupId){
+        while(questions[competitionQuestionIndex]?.groupId===currentQuestion.groupId)competitionQuestionIndex++;
+      }else competitionQuestionIndex++;
+      competitionSelfFeedback=null;
+      competitionExerciseSelections={};competitionExerciseDrafts={};competitionExerciseTileDrafts={};
+      renderCompetitionSelfChallenge();
+      return;
+    }
     const currentQuestion=competitionRoomData?.questions?.[competitionQuestionIndex];
     if(currentQuestion?.groupId){
       while(competitionRoomData?.questions?.[competitionQuestionIndex]?.groupId===currentQuestion.groupId){
@@ -10732,6 +11533,8 @@ document.addEventListener("click",function(event){
   }
   else if(action==="daily-open"){openDailyTask(el.dataset.task);return;}
   else if(action==="daily-complete"){setDailyTaskDone(el.dataset.task);renderHome();return;}
+  else if(action==="daily-open-assigned"){openAssignedDailyTask(el.dataset.taskId||"");return;}
+  else if(action==="daily-complete-assigned"){completeStudentAssignedTask(el.dataset.taskId||"");return;}
   else if(action==="level-path"){
     const requestedLevel=normalizeGroupCourseLevel(el.dataset.level||"A1");
     if(!getStudentLevelAccess(requestedLevel)){showToast(`المستوى ${requestedLevel} مقفل حالياً من الإدارة.`);return;}
@@ -10973,7 +11776,24 @@ document.addEventListener("click",function(event){
   else if(action==="community-open-room"){communityRoom=el.dataset.room||"general";page="community";renderCommunity();return;}
   else if(action==="community-back"){communityRoom=null;renderCommunity();return;}
   else if(action==="admin-heatmap-mode"){adminExerciseHeatmapMode=el.dataset.mode==="time"?"time":"performance";render();return;}
-  if(action==="admin-nav"){adminGroupFullscreenOpen=false;adminSelectedGroupId=null;adminSection=el.dataset.section||"home";adminProgressLessonStatusFilter="";adminProgressMetricOpen="";adminProgressMetricStudentId="";render();return;}
+  if(action==="admin-task-new"){adminEditingTaskId=null;adminTaskDetailId="";render();return;}
+  else if(action==="admin-task-save"){saveAdminDailyTask();return;}
+  else if(action==="admin-task-edit"){adminEditingTaskId=el.dataset.id||null;adminTaskDetailId="";render();return;}
+  else if(action==="admin-task-cancel-edit"){adminEditingTaskId=null;render();return;}
+  else if(action==="admin-task-details"){adminTaskDetailId=el.dataset.id||"";adminEditingTaskId=null;render();return;}
+  else if(action==="admin-task-close-details"){adminTaskDetailId="";render();return;}
+  else if(action==="admin-task-toggle-published"){toggleAdminDailyTaskPublication(el.dataset.id||"");return;}
+  else if(action==="admin-task-delete"){deleteAdminDailyTask(el.dataset.id||"");return;}
+  else if(action==="admin-task-student-progress-toggle"){toggleAdminStudentTaskProgress(el.dataset.taskId||"",el.dataset.id||"");return;}
+  else if(action==="admin-task-target-all"){
+    const checked=el.dataset.select==="all";
+    document.querySelectorAll('input[name="adminTaskStudent"]').forEach(input=>{input.checked=checked;});
+    return;
+  }
+  else if(action==="admin-open-group-tasks"){
+    adminTaskGroupId=el.dataset.id||"";adminEditingTaskId=null;adminTaskDetailId="";adminGroupFullscreenOpen=false;adminSelectedGroupId=null;adminSection="tasks";render();return;
+  }
+  if(action==="admin-nav"){adminGroupFullscreenOpen=false;adminSelectedGroupId=null;adminSection=el.dataset.section||"home";adminProgressLessonStatusFilter="";adminProgressMetricOpen="";adminProgressMetricStudentId="";if(adminSection!=="tasks"){adminEditingTaskId=null;adminTaskDetailId="";}render();return;}
   else if(action==="admin-progress-open-metric"){
     const metric=String(el.dataset.metric||"");
     if(["words","review","lessons","streak","tasks"].includes(metric)){
@@ -11560,7 +12380,8 @@ document.addEventListener("click",function(event){
     el.disabled = true;
     Promise.all([
       firebaseDb.ref(`${DEUTSCH_A1_PATH}/users/${id}`).remove(),
-      firebaseDb.ref(`${DEUTSCH_A1_PATH}/results/${id}`).remove()
+      firebaseDb.ref(`${DEUTSCH_A1_PATH}/results/${id}`).remove(),
+      firebaseDb.ref(`${DEUTSCH_A1_PATH}/taskProgress/${id}`).remove()
     ]).then(async () => {
       await loadDeutschA1Data();
       render();
@@ -11822,9 +12643,11 @@ window.addEventListener("resize",refreshUiTextBaselines);
 document.addEventListener("load",event=>{if(event.target?.tagName==="IFRAME")broadcastSettingsTranslationLanguage();},true);
 
 function startDemoSession(){
+  stopStudentGroupTasksRealtimeSync();
   demoMode=true;
   currentStudentProfile={name:"Sara",email:"sara@example.com",active:true,lessonAccess:{}};
   currentStudentGroup=null;
+  cloudTaskProgress={};
   currentUser={id:"demo-student",role:"student",name:"Sara",email:"sara@example.com"};
   selectedLevel="A1.1";
   currentLesson=0;

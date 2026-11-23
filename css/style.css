@@ -3689,7 +3689,7 @@ body {
 }
 .competition-card-heading h3{margin:0;color:#1b2944;font-size:15px;font-weight:950}
 .competition-card-heading p{margin:3px 0 0;color:#8490a7;font-size:10px}
-.competition-mode-picker{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.competition-mode-picker{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:16px}
 .competition-mode-picker button{
   display:flex;flex-direction:column;gap:5px;align-items:center;justify-content:center;
   min-height:68px;padding:10px;border:1px solid #e4eaf5;border-radius:15px;
@@ -9944,3 +9944,130 @@ html.deutsch-night-mode .student-app .student-topbar strong{color:#fff!important
 }
 .upper-level-section-card.is-locked:hover,
 .upper-level-section-card:disabled:hover{transform:none;border-color:#e1e4fc}
+
+
+/* =========================================================
+   V53 — Admin daily task assignment and student completion
+   ========================================================= */
+.admin-task-welcome{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.admin-task-welcome-actions{display:flex;align-items:center;gap:10px;flex:0 0 auto}
+.admin-task-welcome-icon,.admin-task-form-mark{width:62px;height:62px;flex:0 0 62px;display:grid;place-items:center;border-radius:20px;background:linear-gradient(145deg,#e9eaff,#f4eaff);font-size:30px;color:#5a4ce6}
+.admin-task-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0 0 16px}
+.admin-task-summary-grid article{min-height:112px;padding:16px;border:1px solid #e2e6ff;border-radius:20px;background:linear-gradient(145deg,#fff,#f3f4ff);box-shadow:0 8px 22px rgba(47,59,139,.06);display:flex;flex-direction:column;gap:5px}
+.admin-task-summary-grid article>span{font-size:22px}
+.admin-task-summary-grid article strong{font-size:25px;color:#302b91;line-height:1.1}
+.admin-task-summary-grid article small{font-size:12px;color:#7380a4;font-weight:750}
+.admin-task-group-select-panel{display:grid;grid-template-columns:minmax(180px,1fr) auto auto;align-items:center;gap:12px;margin-bottom:16px}
+.admin-task-group-select-panel label{font-weight:850;color:#27356f}
+.admin-task-group-select-panel select{width:100%;min-width:0;padding:12px 14px;border:1px solid #d9ddff;border-radius:13px;background:#fff;color:#26346f;font-weight:800}
+.admin-task-level-chip{padding:8px 13px;border-radius:999px;background:#eeebff;color:#5745ce;font-size:12px;font-weight:900;white-space:nowrap}
+.admin-task-group-select-panel>small{grid-column:1/-1;color:#8590ae;font-size:11px}
+.admin-task-form-panel{margin-bottom:16px}
+.admin-task-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.admin-task-field{display:flex;flex-direction:column;gap:7px;min-width:0;color:#34416f;font-size:12px;font-weight:850}
+.admin-task-field input,.admin-task-field select,.admin-task-field textarea{width:100%;min-width:0;border:1px solid #d9ddff;border-radius:13px;background:#fff;padding:11px 13px;color:#202b58;font:inherit;font-size:13px;outline:none}
+.admin-task-field input:focus,.admin-task-field select:focus,.admin-task-field textarea:focus{border-color:#7b5af5;box-shadow:0 0 0 3px rgba(123,90,245,.11)}
+.admin-task-field textarea{resize:vertical;min-height:82px;line-height:1.7}
+.admin-task-field small{font-size:10px;color:#8993b0;font-weight:600;line-height:1.6}
+.admin-task-field-wide{grid-column:1/-1}
+.admin-task-student-picker{margin-top:15px;padding:14px;border:1px dashed #cfd4ff;border-radius:16px;background:#fafaff}
+.admin-task-student-picker[hidden]{display:none}
+.admin-task-student-picker-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;color:#303b78;font-size:13px}
+.admin-task-student-picker-head>div{display:flex;gap:7px;flex-wrap:wrap}
+.admin-task-student-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.admin-task-student-option{display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid #e4e7fb;border-radius:12px;background:#fff;cursor:pointer;min-width:0}
+.admin-task-student-option input{accent-color:#684af0;width:16px;height:16px;flex:0 0 auto}
+.admin-task-student-option span{display:flex;flex-direction:column;min-width:0;gap:2px}
+.admin-task-student-option strong{font-size:12px;color:#27366f;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.admin-task-student-option small{font-size:10px;color:#8792ad;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.admin-task-list{display:grid;gap:11px}
+.admin-task-card{display:grid;grid-template-columns:minmax(0,1fr) 170px;gap:12px;padding:15px;border:1px solid #e1e5ff;border-radius:18px;background:linear-gradient(135deg,#fff,#f7f7ff)}
+.admin-task-card.is-draft{background:#fbfbfe;opacity:.88}
+.admin-task-card-main{display:flex;gap:12px;min-width:0}
+.admin-task-card-icon{width:46px;height:46px;flex:0 0 46px;display:grid;place-items:center;border-radius:15px;background:#eeedff;font-size:23px}
+.admin-task-card-copy{min-width:0}
+.admin-task-card-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:#7481a4;font-size:10px;font-weight:800}
+.admin-task-card-meta .published{color:#16875c;background:#e5f8ef;padding:4px 8px;border-radius:999px}
+.admin-task-card-meta .draft{color:#a06b1d;background:#fff3d9;padding:4px 8px;border-radius:999px}
+.admin-task-card-copy h3{margin:6px 0 4px;color:#25336d;font-size:15px}
+.admin-task-card-copy p{margin:0 0 5px;color:#68779c;font-size:11px;line-height:1.7;white-space:pre-wrap}
+.admin-task-card-copy>small{color:#8a95af;font-size:10px}
+.admin-task-card-progress{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;padding:9px 12px;border-radius:14px;background:#f0f1ff;color:#66749b}
+.admin-task-card-progress strong{font-size:20px;color:#4037b0}
+.admin-task-card-progress span,.admin-task-card-progress small{font-size:10px}
+.admin-task-card-progress i{width:100%;height:7px;border-radius:99px;background:#dfe3f7;overflow:hidden;margin:3px 0}
+.admin-task-card-progress i b{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#27bd77,#4d61ee)}
+.admin-task-card-actions{grid-column:1/-1;display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-start;padding-top:9px;border-top:1px solid #edf0ff}
+.admin-task-card-actions .tiny-btn{font-size:11px}
+.admin-task-empty,.admin-task-empty{padding:36px 18px;text-align:center;border:1px dashed #d9ddff;border-radius:18px;background:#fbfbff;color:#7180a5}
+.admin-task-empty>span,.admin-task-empty span{font-size:34px}
+.admin-task-empty h2,.admin-task-empty h3{color:#303a83;margin:8px 0}
+.admin-task-empty p{font-size:12px;line-height:1.8}
+.admin-task-detail-panel{margin-top:16px}
+.daily-task-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:26px 14px;text-align:center;color:#7c88a6}
+.daily-task-empty>span{font-size:27px}
+.daily-task-empty strong{font-size:13px;color:#33416f}
+.daily-task-empty small{font-size:11px;line-height:1.7;max-width:420px}
+@media(max-width:760px){
+  .admin-task-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .admin-task-group-select-panel{grid-template-columns:1fr auto}
+  .admin-task-group-select-panel label{grid-column:1/-1}
+  .admin-task-card{grid-template-columns:1fr}
+  .admin-task-card-progress{display:grid;grid-template-columns:auto 1fr;align-items:center}
+  .admin-task-card-progress i,.admin-task-card-progress small{grid-column:1/-1}
+}
+@media(max-width:520px){
+  .admin-task-welcome-icon{width:46px;height:46px;flex-basis:46px;font-size:23px;border-radius:14px}
+  .admin-task-welcome-actions{flex-wrap:wrap;justify-content:flex-start}
+  .admin-task-form-grid,.admin-task-student-list{grid-template-columns:1fr}
+  .admin-task-group-select-panel{grid-template-columns:1fr}
+  .admin-task-group-select-panel>small{grid-column:auto}
+  .admin-task-student-picker-head{align-items:flex-start;flex-direction:column}
+  .admin-task-card{padding:11px}
+  .admin-task-card-actions .tiny-btn{flex:1 1 auto}
+}
+
+/* Personal self-competition mode */
+.competition-self-info-card{height:100%;}
+.competition-self-record-list{display:grid;gap:8px;}
+.competition-self-record-row{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:11px 12px;border:1px solid #e8edf7;border-radius:13px;background:#fff;
+}
+.competition-self-record-row>div{display:grid;gap:4px;min-width:0;}
+.competition-self-record-row strong{font-size:11px;color:#293750;line-height:1.5;}
+.competition-self-record-row small{font-size:9px;color:#8b96aa;}
+.competition-self-record-row>b{flex:0 0 auto;color:#3158ce;font-size:12px;white-space:nowrap;}
+.competition-self-banner{background:linear-gradient(115deg,#087b70,#3158ce 72%,#6550d8);}
+.competition-self-progress-card{position:sticky;top:12px;}
+.competition-self-live-score{display:flex;align-items:baseline;gap:8px;margin:3px 0 14px;color:#3158ce;}
+.competition-self-live-score strong{font-size:34px;line-height:1;font-weight:950;}
+.competition-self-live-score small{font-size:11px;color:#7886a0;font-weight:800;}
+.competition-self-progress-line{height:9px;overflow:hidden;border-radius:20px;background:#edf1f8;}
+.competition-self-progress-line span{display:block;height:100%;border-radius:20px;background:linear-gradient(90deg,#20a477,#3158ce);transition:width .25s ease;}
+.competition-self-progress-meta{display:flex;justify-content:space-between;gap:10px;margin:8px 0 16px;color:#7c89a1;font-size:10px;}
+.competition-self-progress-meta strong{color:#3158ce;}
+.competition-self-best-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid #edf0f6;color:#71809a;font-size:10px;}
+.competition-self-best-row strong{color:#2e426b;font-size:11px;white-space:nowrap;}
+.competition-self-result{
+  padding:22px 18px;border:1px solid #dfe8f8;border-radius:19px;
+  background:linear-gradient(145deg,#f8fbff,#f0f7ff);text-align:center;
+}
+.competition-self-result-icon{display:block;font-size:42px;margin-bottom:6px;}
+.competition-self-result-kicker{margin:0;color:#7182a0;font-size:11px;font-weight:850;}
+.competition-self-result h3{margin:6px 0 16px;color:#244bc0;font-size:clamp(27px,5vw,38px);font-weight:950;}
+.competition-self-result-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 15px;}
+.competition-self-result-stats>div{display:grid;gap:4px;padding:11px 5px;border:1px solid #e4eaf5;border-radius:13px;background:#fff;}
+.competition-self-result-stats strong{color:#263c68;font-size:18px;}
+.competition-self-result-stats small{color:#8793a8;font-size:9px;}
+.competition-self-result-message{margin:0 0 14px;padding:11px 12px;border-radius:12px;background:#eaf8f2;color:#247457;font-size:11px;font-weight:850;line-height:1.7;}
+.competition-self-result-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:16px;}
+.competition-self-result-actions .competition-primary-btn,.competition-self-result-actions .competition-secondary-btn{min-height:43px;font-size:11px;}
+@media(max-width:760px){
+  .competition-self-progress-card{position:static;}
+}
+@media(max-width:520px){
+  .competition-mode-picker{grid-template-columns:1fr;}
+  .competition-self-result-actions{grid-template-columns:1fr;}
+}
+

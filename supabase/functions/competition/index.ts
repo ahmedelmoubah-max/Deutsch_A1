@@ -221,6 +221,97 @@ function dbClient() {
   if (!supabase) throw new ApiError("Supabase service key ما متوفرش داخل Edge Function. راجع Secrets.", 500, "missing_server_key");
   return supabase;
 }
+function normalizeSelfTestTypes(lessonIndices: number[], rawTypes: any) {
+  const source = rawTypes && typeof rawTypes === "object" && !Array.isArray(rawTypes) ? rawTypes : {};
+  return Object.fromEntries(lessonIndices.map((index) => [
+    String(index),
+    [...new Set<number>((Array.isArray(source[String(index)]) ? source[String(index)] : []).map(Number)
+      .filter((value: number) => Number.isInteger(value) && value >= 0))].sort((a, b) => a - b),
+  ]));
+}
+async function selfChallengeKey(lessonIndices: number[], testTypes: Record<string, number[]>, wholeExercises: boolean, questionCount: number) {
+  const payload = JSON.stringify({
+    lessonIndices: lessonIndices.slice().sort((a, b) => a - b),
+    testTypes: Object.fromEntries(Object.keys(testTypes).sort().map((key) => [key, testTypes[key]])),
+    wholeExercises: Boolean(wholeExercises), questionCount: Number(questionCount),
+  });
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(payload));
+  return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+function safePersonalRecord(row: any) {
+  if (!row) return null;
+  return {
+    challengeKey: row.challenge_key,
+    lessonIndices: row.lesson_indices || [],
+    lessonNames: row.lesson_names || [],
+    questionCount: Number(row.question_count) || Number(row.total_questions) || 0,
+    bestScore: Number(row.best_score) || 0,
+    bestCorrectCount: Number(row.best_correct_count) || 0,
+    totalQuestions: Number(row.total_questions) || 0,
+    attempts: Number(row.attempts) || 0,
+    lastScore: Number(row.last_score) || 0,
+    lastCorrectCount: Number(row.last_correct_count) || 0,
+    updatedAt: row.updated_at || null,
+  };
+}
+function safeSelfChallenge(row: any, personalRecord: any = null) {
+  return {
+    id: row.id,
+    challengeKey: row.challenge_key,
+    lessonIndices: row.lesson_indices || [],
+    lessonNames: row.lesson_names || [],
+    testTypes: row.test_types || {},
+    wholeExercises: row.whole_exercises === true,
+    questionCount: Number(row.question_count) || 0,
+    questions: row.questions || [],
+    score: Number(row.score) || 0,
+    correctCount: Number(row.correct_count) || 0,
+    answeredCount: Number(row.answered_count) || 0,
+    previousBestScore: Number(row.previous_best_score) || 0,
+    status: row.status,
+    createdAt: row.created_at || null,
+    completedAt: row.completed_at || null,
+    personalRecord: safePersonalRecord(personalRecord),
+  };
+}
+async function readSelfPersonalRecord(uid: string, challengeKey: string) {
+  const { data, error } = await dbClient().from("competition_personal_records")
+    .select("uid,challenge_key,lesson_indices,lesson_names,question_count,best_score,best_correct_count,total_questions,attempts,last_score,last_correct_count,updated_at")
+    .eq("uid", uid).eq("challenge_key", challengeKey).maybeSingle();
+  if (error) throw new ApiError(error.message, 500, "personal_record_read_failed");
+  return data;
+}
+async function saveSelfPersonalRecord(challenge: any, score: number, correctCount: number) {
+  const existing = await readSelfPersonalRecord(challenge.uid, challenge.challenge_key);
+  const oldBest = Number(existing?.best_score) || 0;
+  const newBest = Math.max(oldBest, score);
+  const bestCorrect = score > oldBest
+    ? correctCount
+    : score === oldBest ? Math.max(Number(existing?.best_correct_count) || 0, correctCount)
+    : Number(existing?.best_correct_count) || 0;
+  const payload = {
+    uid: challenge.uid,
+    challenge_key: challenge.challenge_key,
+    lesson_indices: challenge.lesson_indices || [],
+    lesson_names: challenge.lesson_names || [],
+    test_types: challenge.test_types || {},
+    whole_exercises: challenge.whole_exercises === true,
+    question_count: Number(challenge.question_count) || 0,
+    best_score: newBest,
+    best_correct_count: bestCorrect,
+    total_questions: Number(challenge.question_count) || 0,
+    attempts: (Number(existing?.attempts) || 0) + 1,
+    last_score: score,
+    last_correct_count: correctCount,
+    updated_at: new Date().toISOString(),
+  };
+  const { data, error } = await dbClient().from("competition_personal_records")
+    .upsert(payload, { onConflict: "uid,challenge_key" })
+    .select("uid,challenge_key,lesson_indices,lesson_names,question_count,best_score,best_correct_count,total_questions,attempts,last_score,last_correct_count,updated_at")
+    .single();
+  if (error) throw new ApiError(error.message, 500, "personal_record_save_failed");
+  return data;
+}
 async function handleAction(action: string, body: any, identity: any) {
   const uid = identity.uid;
   if (action === "createCompetitionRoom") {
@@ -252,6 +343,92 @@ async function handleAction(action: string, body: any, identity: any) {
       throw new ApiError(error?.message || "تعذّر إنشاء غرفة المنافسة.", 500, "create_failed");
     }
     throw new ApiError("ما قدرناش نولدو رمز فريد. حاول مرة أخرى.", 503, "code_generation_failed");
+  }
+  if (action === "createSelfChallenge") {
+    const profile = await getStudentProfile(uid, identity.token);
+    const lessonIndices: number[] = Array.isArray(body.lessonIndices)
+      ? [...new Set<number>((body.lessonIndices as unknown[]).map(Number).filter((n) => Number.isInteger(n) && n >= 0 && n <= 10))]
+      : [];
+    const requestedCount = Number(body.questionCount);
+    const wholeExercises = body.wholeExercises === true;
+    if (!lessonIndices.length || lessonIndices.length > 11) throw new ApiError("اختار درساً واحداً على الأقل.", 400);
+    if (!Number.isInteger(requestedCount) || requestedCount < 1 || requestedCount > 1000) {
+      throw new ApiError("عدد الأسئلة لازم يكون بين 1 و 1000.", 400, "invalid_question_count");
+    }
+    await assertLessonAccess(profile, identity.token, lessonIndices);
+    const testTypes = normalizeSelfTestTypes(lessonIndices, body.testTypes);
+    const quiz = buildQuiz(lessonIndices, requestedCount, testTypes, wholeExercises);
+    const lessonNames = lessonIndices.map((index) => BANK[index]?.name || `L${index + 1}`);
+    const questionCount = quiz.questions.length;
+    const challengeKey = await selfChallengeKey(lessonIndices, testTypes, wholeExercises, questionCount);
+    const previousRecord = await readSelfPersonalRecord(uid, challengeKey);
+    const { data: row, error } = await dbClient().from("competition_self_challenges").insert({
+      uid, challenge_key: challengeKey, lesson_indices: lessonIndices, lesson_names: lessonNames,
+      test_types: testTypes, whole_exercises: wholeExercises, question_count: questionCount,
+      questions: quiz.questions, correct_indices: quiz.correctIndices,
+      previous_best_score: Number(previousRecord?.best_score) || 0,
+      score: 0, correct_count: 0, answered_count: 0, status: "active",
+    }).select("*").single();
+    if (error) throw new ApiError(error.message, 500, "self_challenge_create_failed");
+    return { challenge: safeSelfChallenge(row, previousRecord) };
+  }
+  if (action === "getSelfChallenge") {
+    const challengeId = String(body.challengeId || "");
+    if (!challengeId) throw new ApiError("معرّف التحدي غير صالح.", 400);
+    const { data: row, error } = await dbClient().from("competition_self_challenges")
+      .select("*").eq("id", challengeId).eq("uid", uid).maybeSingle();
+    if (error) throw new ApiError(error.message, 500, "self_challenge_read_failed");
+    if (!row) throw new ApiError("هاد التحدي ما بقاش متاح.", 404, "self_challenge_not_found");
+    const personalRecord = await readSelfPersonalRecord(uid, row.challenge_key);
+    return { challenge: safeSelfChallenge(row, personalRecord) };
+  }
+  if (action === "submitSelfChallengeAnswer") {
+    const challengeId = String(body.challengeId || "");
+    const questionIndex = Number(body.questionIndex);
+    const selectedIndex = Number(body.selectedIndex);
+    if (!challengeId || !Number.isInteger(questionIndex) || !Number.isInteger(selectedIndex)) {
+      throw new ApiError("الجواب المرسل غير صالح.", 400, "invalid_self_answer");
+    }
+    const { data: row, error: readError } = await dbClient().from("competition_self_challenges")
+      .select("*").eq("id", challengeId).eq("uid", uid).maybeSingle();
+    if (readError) throw new ApiError(readError.message, 500, "self_challenge_read_failed");
+    if (!row) throw new ApiError("هاد التحدي ما بقاش متاح.", 404, "self_challenge_not_found");
+    if (row.status !== "active") throw new ApiError("هاد التحدي تسالى بالفعل.", 409, "self_challenge_finished");
+    const questions = Array.isArray(row.questions) ? row.questions : [];
+    const correctIndices = Array.isArray(row.correct_indices) ? row.correct_indices : [];
+    if (questionIndex !== Number(row.answered_count) || questionIndex < 0 || questionIndex >= questions.length) {
+      throw new ApiError("هاد السؤال تسجّل من قبل أو ماشي هو السؤال الحالي.", 409, "self_question_out_of_order");
+    }
+    const options = Array.isArray(questions[questionIndex]?.options) ? questions[questionIndex].options : [];
+    if (selectedIndex < 0 || selectedIndex >= options.length) throw new ApiError("اختيار الجواب غير صالح.", 400, "invalid_self_option");
+    const correct = selectedIndex === Number(correctIndices[questionIndex]);
+    const pointsAwarded = correct ? 10 : 0;
+    const score = (Number(row.score) || 0) + pointsAwarded;
+    const correctCount = (Number(row.correct_count) || 0) + (correct ? 1 : 0);
+    const answeredCount = (Number(row.answered_count) || 0) + 1;
+    const finished = answeredCount >= questions.length;
+    const updates: any = { score, correct_count: correctCount, answered_count: answeredCount };
+    if (finished) { updates.status = "completed"; updates.completed_at = new Date().toISOString(); }
+    const { data: updated, error: updateError } = await dbClient().from("competition_self_challenges")
+      .update(updates).eq("id", challengeId).eq("uid", uid).eq("status", "active")
+      .eq("answered_count", Number(row.answered_count))
+      .select("*").single();
+    if (updateError) throw new ApiError(updateError.message, 409, "self_answer_save_failed");
+    let personalRecord = null;
+    if (finished) personalRecord = await saveSelfPersonalRecord(updated, score, correctCount);
+    return {
+      correct, pointsAwarded, score, correctCount, answeredCount, finished,
+      previousBestScore: Number(updated.previous_best_score) || 0,
+      personalRecord: safePersonalRecord(personalRecord),
+    };
+  }
+  if (action === "abandonSelfChallenge") {
+    const challengeId = String(body.challengeId || "");
+    if (!challengeId) throw new ApiError("معرّف التحدي غير صالح.", 400);
+    const { error } = await dbClient().from("competition_self_challenges")
+      .update({ status: "abandoned" }).eq("id", challengeId).eq("uid", uid).eq("status", "active");
+    if (error) throw new ApiError(error.message, 500, "self_challenge_abandon_failed");
+    return { success: true };
   }
   if (action === "joinCompetitionRoom") {
     const profile = await getStudentProfile(uid, identity.token);
@@ -309,7 +486,19 @@ async function handleAction(action: string, body: any, identity: any) {
   if (action === "getCompetitionStats") {
     const { data, error } = await dbClient().from("competition_stats").select("uid,name,total_points,competitions_played,wins").order("total_points", { ascending: false }).limit(50);
     if (error) throw new ApiError(error.message, 500, "database_error");
-    return { stats: (data || []).map((x: any) => ({ uid: x.uid, name: x.name, totalPoints: x.total_points, competitionsPlayed: x.competitions_played, wins: x.wins })) };
+    let personalRecords: any[] = [];
+    const { data: records, error: recordsError } = await dbClient().from("competition_personal_records")
+      .select("uid,challenge_key,lesson_indices,lesson_names,question_count,best_score,best_correct_count,total_questions,attempts,last_score,last_correct_count,updated_at")
+      .eq("uid", uid).order("updated_at", { ascending: false }).limit(12);
+    if (recordsError) {
+      // Keep the existing multiplayer leaderboard available if the migration
+      // has not been applied yet; self-competition itself requires the tables.
+      console.warn("Personal competition records unavailable:", recordsError.message);
+    } else personalRecords = (records || []).map(safePersonalRecord);
+    return {
+      stats: (data || []).map((x: any) => ({ uid: x.uid, name: x.name, totalPoints: x.total_points, competitionsPlayed: x.competitions_played, wins: x.wins })),
+      personalRecords,
+    };
   }
   throw new ApiError("طلب غير معروف.", 404, "unknown_action");
 }
