@@ -10208,3 +10208,10 @@ html.deutsch-night-mode .student-app .student-topbar strong{color:#fff!important
     height: 20px !important;
   }
 }
+
+/* Competition permissions — do not alter the bottom navigation. */
+.competition-lesson-chip.locked{opacity:1;background:#f4f5f8;border-color:#e4e7ef;color:#9099ac;cursor:not-allowed;box-shadow:none}
+.competition-lesson-chip.locked strong,.competition-lesson-chip.locked small{color:#8993a8}
+.competition-lesson-chip.locked .competition-lesson-check{background:#eceff5;color:#77839a;border-color:#dce2ed;font-size:11px}
+.competition-access-notice{font-size:12px;color:#6c7892;margin:8px 0}.competition-access-notice button{border:0;background:none;color:#3158ce;font-weight:800}
+.competition-primary-btn:disabled{opacity:.55;cursor:not-allowed}

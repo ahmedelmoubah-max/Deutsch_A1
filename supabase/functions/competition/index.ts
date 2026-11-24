@@ -66,24 +66,28 @@ async function getStudentProfile(uid: string, token: string) {
   if (!profile || profile.active === false || profile._systemPlaceholder === true) throw new ApiError("حساب التلميذ غير نشط أو غير موجود في Firebase.", 403, "student_not_allowed");
   return profile;
 }
+// Check the same course permissions as the group editor, using the current Firebase data.
+// Never silently ignore a failed group read or let an individual override reopen a locked lesson.
+function competitionLevelPermitted(profile: any, group: any, level: string) {
+  return Boolean(profile.groupId && group && group.competitionLevelAccess?.[level] === true && group.levelAccess?.[level] !== false && profile.levelAccess?.[level] !== false);
+}
+function competitionLessonPermitted(profile: any, group: any, index: number, level: string) {
+  if (!competitionLevelPermitted(profile, group, level) || !["A1", "A2"].includes(level)) return false;
+  if (!Number.isInteger(index) || index < 0 || !competitionBankForLevel(level)[index]?.questions?.length) return false;
+  const key = String(level === "A1" && index === 10 ? 7 : index + 1);
+  const perLevel = group.lessonAccessByLevel?.[level];
+  const groupAccess = perLevel && typeof perLevel === "object" ? perLevel : level === "A1" ? group.lessonAccess : null;
+  const ownByLevel = profile.lessonAccessByLevel?.[level];
+  const ownAccess = Object.prototype.hasOwnProperty.call(ownByLevel || {}, key)
+    ? ownByLevel[key] : level === "A1" ? profile.lessonAccess?.[key] : undefined;
+  return groupAccess?.[key] !== false && ownAccess !== false;
+}
 async function assertLessonAccess(profile: any, token: string, lessonIndices: number[], level = "A1") {
-  let groupAccess: any = null;
-  if (profile.groupId) {
-    try { groupAccess = await firebaseRead(`deutschA1/groups/${encodeURIComponent(String(profile.groupId))}/lessonAccessByLevel/${level}`, token); }
-    catch (_error) { groupAccess = null; }
-    if ((!groupAccess || typeof groupAccess !== "object") && level === "A1") {
-      try { groupAccess = await firebaseRead(`deutschA1/groups/${encodeURIComponent(String(profile.groupId))}/lessonAccess`, token); }
-      catch (_error) { groupAccess = null; }
-    }
-  }
-  const studentAccess = profile.lessonAccessByLevel?.[level] && typeof profile.lessonAccessByLevel[level] === "object"
-    ? profile.lessonAccessByLevel[level]
-    : level === "A1" ? profile.lessonAccess : null;
-  for (const index of lessonIndices) {
-    const key = String(level === "A1" && index === 10 ? 7 : index + 1);
-    if ((studentAccess && studentAccess[key] === false) || (groupAccess && groupAccess[key] === false)) {
-      throw new ApiError("كاين درس مختار ما عندكش الصلاحية تدخل ليه.", 403, "lesson_access_denied");
-    }
+  if (!profile.groupId) throw new ApiError("خاصك تكون منضم لمجموعة باش تشارك فالمنافسة.", 403, "competition_group_required");
+  const group = await firebaseRead(`deutschA1/groups/${encodeURIComponent(String(profile.groupId))}`, token);
+  if (!competitionLevelPermitted(profile, group, level)) throw new ApiError(`المستوى ${level} مقفول من الإدارة.`, 403, "competition_level_access_denied");
+  if (lessonIndices.some(index => !competitionLessonPermitted(profile, group, index, level))) {
+    throw new ApiError("كاين درس مقفول حسب صلاحيات المجموعة أو التلميذ.", 403, "lesson_access_denied");
   }
 }
 function normalizeCompetitionLevel(value: unknown) {
@@ -94,7 +98,7 @@ function normalizeCompetitionLevel(value: unknown) {
 async function assertCompetitionLevelAccess(profile: any, token: string, level: string) {
   if (!profile.groupId) throw new ApiError("خاصك تكون منضم لمجموعة باش تشارك فالمنافسة.", 403, "competition_group_required");
   const group = await firebaseRead(`deutschA1/groups/${encodeURIComponent(String(profile.groupId))}`, token);
-  if (!group || group.competitionLevelAccess?.[level] !== true) {
+  if (!group || group.competitionLevelAccess?.[level] !== true || group.levelAccess?.[level] === false || profile.levelAccess?.[level] === false) {
     throw new ApiError(`الإدارة ما فتحتش المستوى ${level} للمنافسة فالمجموعة ديالك.`, 403, "competition_level_access_denied");
   }
   // A1 and A2 have separate source-derived banks. B1/B2 stay unavailable until their own banks exist.
@@ -346,6 +350,15 @@ async function saveSelfPersonalRecord(challenge: any, score: number, correctCoun
 }
 async function handleAction(action: string, body: any, identity: any) {
   const uid = identity.uid;
+  if (action === "getCompetitionAccess") {
+    const profile = await getStudentProfile(uid, identity.token);
+    const group = profile.groupId ? await firebaseRead(`deutschA1/groups/${encodeURIComponent(String(profile.groupId))}`, identity.token) : null;
+    const levels = Object.fromEntries(["A1", "A2", "B1", "B2"].map(level => [level, {
+      allowed: competitionLevelPermitted(profile, group, level),
+      lessons: ["A1", "A2"].includes(level) ? competitionBankForLevel(level).map((_: any, index: number) => competitionLessonPermitted(profile, group, index, level)) : [],
+    }]));
+    return { levels, groupId: profile.groupId || "", groupName: group?.name || "" };
+  }
   if (action === "createCompetitionRoom") {
     console.info("competition create: validating authenticated student");
     const profile = await getStudentProfile(uid, identity.token);

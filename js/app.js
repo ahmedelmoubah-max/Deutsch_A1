@@ -917,7 +917,7 @@ function groupCompetitionLevelAccessForLevel(group,level){
 function getStudentCompetitionLevelAccess(level){
   if(!currentUser || currentUser.role!=="student")return true;
   if(!currentStudentProfile?.groupId || !currentStudentGroup)return false;
-  return groupCompetitionLevelAccessForLevel(currentStudentGroup,level);
+  return groupCompetitionLevelAccessForLevel(currentStudentGroup,level) && getStudentLevelAccess(level);
 }
 function competitionLevelHasQuestionBank(level){
   // A1 and A2 have separate source-derived question banks; B1/B2 are still pending.
@@ -1268,11 +1268,67 @@ function competitionLessonsForLevel(level=competitionSelectedLevel){
 function competitionLessonHasBank(index,level=competitionSelectedLevel){
   return Boolean(competitionCatalogForLevel(level)[Number(index)]?.types?.length);
 }
+let competitionVerifiedAccess=null;
+let competitionAccessRequest=null;
+let competitionAccessState="idle";
+let competitionAccessOwner="";
 function competitionLessonAccess(index,level=competitionSelectedLevel){
   const requestedLevel=normalizeGroupCourseLevel(level);
-  return requestedLevel==="A1"&&Number(index)===10
-    ?getStudentLessonAccess(6,"A1")
-    :getStudentLessonAccess(Number(index),requestedLevel);
+  const lessonIndex=Number(index);
+  if(!Number.isInteger(lessonIndex)||lessonIndex<0||!competitionLessonHasBank(lessonIndex,requestedLevel))return false;
+  return competitionAccessOwner===competitionAuthenticatedUid() && competitionVerifiedAccess?.levels?.[requestedLevel]?.allowed===true && competitionVerifiedAccess.levels[requestedLevel].lessons?.[lessonIndex]===true;
+}
+function competitionPermissionLevel(level){
+  if(competitionAccessOwner===competitionAuthenticatedUid() && competitionVerifiedAccess)return competitionVerifiedAccess.levels?.[level]?.allowed===true;
+  return getStudentCompetitionLevelAccess(level);
+}
+function competitionAccessDenied(error){
+  return ["lesson_access_denied","competition_level_access_denied","competition_group_required"].includes(error?.code) || (Number(error?.status)===403 && /درس|المستوى|المجموعة/.test(String(error?.message||"")));
+}
+async function refreshCompetitionPermissions(){
+  const uid=competitionAuthenticatedUid();
+  if(!firebaseReady||!firebaseAuth?.currentUser||!uid)return false;
+  if(competitionAccessRequest && competitionAccessOwner===uid)return competitionAccessRequest;
+  if(competitionAccessOwner!==uid){competitionVerifiedAccess=null;competitionAccessOwner=uid;}
+  const previous=JSON.stringify(competitionVerifiedAccess);
+  const previousState=competitionAccessState;
+  competitionAccessState="loading";
+  const request=(async()=>{
+    try{
+      const result=await competitionCallable("getCompetitionAccess",{});
+      if(competitionAuthenticatedUid()!==uid||competitionAccessOwner!==uid)return false;
+      if(!result.data?.levels)throw new Error("Invalid competition access response");
+      competitionVerifiedAccess=result.data;competitionAccessState="ready";
+      const changed=previous!==JSON.stringify(competitionVerifiedAccess)||previousState!=="ready";
+      const removed=competitionPruneLockedLessons();
+      if((changed||removed)&&page==="competition"&&!competitionRoomId&&!competitionSelfChallengeId){
+        competitionCreateMessage="";competitionCreateMessageIsError=false;renderCompetition();
+      }
+      return true;
+    }catch(error){
+      if(competitionAuthenticatedUid()!==uid||competitionAccessOwner!==uid)return false;
+      competitionVerifiedAccess=null;competitionAccessState="error";
+      competitionPruneLockedLessons();
+      if(page==="competition"&&!competitionRoomId&&!competitionSelfChallengeId && previousState!=="error")renderCompetition();
+      console.warn("Competition permissions unavailable:",error);return false;
+    }
+  })();
+  competitionAccessRequest=request;
+  try{return await request;}finally{if(competitionAccessRequest===request)competitionAccessRequest=null;}
+}
+// Check permissions while the selection screen is open; never interrupt a running quiz.
+setInterval(()=>{
+  if(page==="competition"&&currentUser?.role==="student"&&!competitionRoomId&&!competitionSelfChallengeId&&!competitionBusy)refreshCompetitionPermissions();
+},12000);
+function competitionPruneLockedLessons(){
+  const allowed=competitionSelectedLessons.filter(index=>competitionLessonAccess(index,competitionSelectedLevel));
+  const changed=allowed.length!==competitionSelectedLessons.length;
+  competitionSelectedLessons=allowed;
+  for(const key of Object.keys(competitionSelectedTestTypes)){
+    if(!allowed.includes(Number(key)))delete competitionSelectedTestTypes[key];
+  }
+  if(!allowed.includes(competitionExpandedLesson))competitionExpandedLesson=allowed[0]??null;
+  return changed;
 }
 function competitionLessonName(index,level=competitionSelectedLevel){
   const lesson=competitionLessonsForLevel(level)[Number(index)];
@@ -4098,7 +4154,7 @@ function competitionCreateFeedback(message,isError=false){
 function competitionCreateBusyUI(busy,action="competition-create"){
   const button=document.querySelector(`[data-action="${action}"]`);
   if(!button)return;
-  button.disabled=busy;
+  button.disabled=busy||!competitionVerifiedAccess||!competitionSelectedLessons.length;
   button.setAttribute("aria-busy",busy?"true":"false");
   button.textContent=busy
     ?(action==="competition-self-create"?"كنوجدّو تحدي نفسك…":"جاري الاتصال وإنشاء غرفة المنافسة…")
@@ -4146,17 +4202,18 @@ function renderCompetition(){
     return;
   }
   // Competition level access is granted separately by the administrator for each group.
-  const allowedCompetitionLevels=GROUP_COURSE_LEVELS.filter(level=>getStudentCompetitionLevelAccess(level));
+  const allowedCompetitionLevels=GROUP_COURSE_LEVELS.filter(level=>competitionPermissionLevel(level));
   if(!allowedCompetitionLevels.includes(competitionSelectedLevel)){
     competitionSelectedLevel=allowedCompetitionLevels.find(level=>competitionLevelHasQuestionBank(level))||allowedCompetitionLevels[0]||"A1";
     competitionSelectedLessons=[];competitionSelectedTestTypes={};competitionExpandedLesson=null;
   }
-  const selectedCompetitionLevelAllowed=getStudentCompetitionLevelAccess(competitionSelectedLevel);
+  const selectedCompetitionLevelAllowed=competitionPermissionLevel(competitionSelectedLevel);
   const selectedCompetitionLevelHasBank=competitionLevelHasQuestionBank(competitionSelectedLevel);
+  if(competitionVerifiedAccess || competitionAccessState==="error")competitionPruneLockedLessons();
   const levelCatalog=competitionCatalogForLevel(competitionSelectedLevel);
   const levelLessons=competitionLessonsForLevel(competitionSelectedLevel);
   const competitionLevelCards=GROUP_COURSE_LEVELS.map(level=>{
-    const allowed=getStudentCompetitionLevelAccess(level);
+    const allowed=competitionPermissionLevel(level);
     const hasBank=competitionLevelHasQuestionBank(level);
     const active=competitionSelectedLevel===level;
     const status=!allowed?"مقفل من الإدارة":hasBank?"متاح للمنافسة":"المستوى مفتوح · الاختبارات قيد الإضافة";
@@ -4182,8 +4239,8 @@ function renderCompetition(){
     const hasBank=Boolean(levelCatalog[index]?.types?.length);
     const selected=competitionSelectedLessons.includes(index);
     const disabled=!allowed||!hasBank;
-    return `<button type="button" class="competition-lesson-chip ${selected?"selected":""} ${disabled?"locked":""} ${hasBank?"":"no-bank"}" data-action="competition-lesson" data-lesson="${index}" ${disabled?"disabled":""} title="${hasBank?"":"التمارين التطبيقية لهذا الدرس غير متوفرة بعد"}">
-      <span class="competition-lesson-check">${selected?"✓":""}</span><strong>L${index+1}</strong><small>${escapeHtml(competitionLessonName(index,competitionSelectedLevel))}</small>
+    return `<button type="button" class="competition-lesson-chip ${selected?"selected":""} ${disabled?"locked":""} ${hasBank?"":"no-bank"}" data-action="competition-lesson" data-lesson="${index}" ${disabled?"disabled":""} title="${!hasBank?"التمارين التطبيقية لهذا الدرس غير متوفرة بعد":!allowed?"الدرس مقفول حسب صلاحيات المجموعة":"الدرس متاح"}" aria-pressed="${selected}">
+      <span class="competition-lesson-check">${disabled?"🔒":selected?"✓":""}</span><strong>L${index+1}</strong><small>${escapeHtml(competitionLessonName(index,competitionSelectedLevel))}</small>
     </button>`;
   }).join(""):"";
   // The chosen lesson opens its Test sections underneath the lesson grid.
@@ -4242,7 +4299,7 @@ function renderCompetition(){
     </section>
 
     <section class="competition-level-picker" aria-label="اختيار مستوى المنافسة">
-      <div class="competition-level-picker-heading"><div><strong>اختار مستوى المنافسة</strong><small>المستويات كتتحل من طرف الإدارة حسب المجموعة ديالك</small></div><span>المجموعة: ${escapeHtml(currentStudentGroup?.name||"غير معيّنة")}</span></div>
+      <div class="competition-level-picker-heading"><div><strong>اختار مستوى المنافسة</strong><small>المستويات كتتحل من طرف الإدارة حسب المجموعة ديالك</small></div><span>المجموعة: ${escapeHtml(competitionVerifiedAccess?.groupName||currentStudentGroup?.name||"غير معيّنة")}</span></div>
       <div class="competition-level-grid" role="group" aria-label="فلترة المنافسة حسب المستوى">${competitionLevelCards}</div>
     </section>
     ${competitionLevelCanPlay?`<div class="competition-create-grid">
@@ -4254,6 +4311,7 @@ function renderCompetition(){
           <button type="button" class="${competitionMode==="self"?"active":""}" data-action="competition-mode" data-mode="self"><strong>🎯 نافس نفسك</strong><small>قارن محاولاتك السابقة</small></button>
         </div>
         <div class="competition-field-head"><strong>اختار الدروس</strong><small>ضغط مرة باش تختار، ومرة ثانية باش تحيد المارك</small></div>
+        ${competitionAccessState!=="ready"&&!competitionVerifiedAccess?`<p class="competition-access-notice" role="status">${competitionAccessState==="error"?"تعذّر تحديث صلاحيات الدروس. حاول التحديث.":"جاري التحقق من الدروس المتاحة…"} ${competitionAccessState==="error"?'<button type="button" data-action="competition-access-refresh">تحديث</button>':""}</p>`:""}
         <div class="competition-lesson-grid">${lessonsMarkup}</div>
         <p class="competition-source-hint">${escapeHtml(competitionSourceHint)}</p>
         ${typePanel}
@@ -4273,7 +4331,7 @@ function renderCompetition(){
         ${competitionWholeExercises?"":`<div class="competition-count-picker">
           ${[5,10,15].map(count=>`<button type="button" class="${competitionQuestionCount===count?"active":""}" data-action="competition-count" data-count="${count}" ${count>availableQuestions?"disabled":""}>${count} أسئلة</button>`).join("")}
         </div>`}
-        <button type="button" class="competition-primary-btn" data-action="${competitionMode==="self"?"competition-self-create":"competition-create"}" aria-describedby="competitionCreationStatus" ${competitionBusy?"disabled":""}>${competitionBusy?(competitionMode==="self"?"كنوجدّو تحدي نفسك…":"كنوجدّو المنافسة…"):(competitionMode==="self"?"🎯 ابدأ تحدّي نفسك":"🏆 إنشاء غرفة المنافسة")}</button>
+        <button type="button" class="competition-primary-btn" data-action="${competitionMode==="self"?"competition-self-create":"competition-create"}" aria-describedby="competitionCreationStatus" ${competitionBusy||!competitionVerifiedAccess||!competitionSelectedLessons.length?"disabled":""}>${competitionBusy?(competitionMode==="self"?"كنوجدّو تحدي نفسك…":"كنوجدّو المنافسة…"):(competitionMode==="self"?"🎯 ابدأ تحدّي نفسك":"🏆 إنشاء غرفة المنافسة")}</button>
         <p id="competitionCreationStatus" role="status" aria-live="polite" ${competitionCreateMessage?"":"hidden"} style="margin:9px 0;padding:11px 12px;border:1px solid ${competitionCreateMessageIsError?"#f7b8c8":"#bccfff"};border-radius:12px;line-height:1.7;font-size:12px;font-weight:800;color:${competitionCreateMessageIsError?"#972c49":"#2052aa"};background:${competitionCreateMessageIsError?"#fff1f4":"#eaf2ff"};">${escapeHtml(competitionCreateMessage)}</p>
         <p class="competition-hint">${competitionMode==="self"?"غادي تلعب بوحدك، وتتسجل أفضل نتيجة ديالك باش تقارنها مع المحاولات الجاية.":"غادي يتولد رمز خاص بالغرفة. صيفطو للتلميذ أو للمجموعة باش ينضمو."}</p>
       </section>
@@ -4825,7 +4883,16 @@ function showCompetitionCreationError(error){
 
 async function createCompetition(){
   if(competitionBusy)return;
-  if(!getStudentCompetitionLevelAccess(competitionSelectedLevel)){
+  const requestedLevel=competitionSelectedLevel;
+  const requestedLessons=competitionSelectedLessons.slice();
+  competitionBusy=true;
+  const verified=await refreshCompetitionPermissions();
+  competitionBusy=false;
+  if(page!=="competition")return;
+  if(!verified || requestedLevel!==competitionSelectedLevel || requestedLessons.some(index=>!competitionLessonAccess(index,requestedLevel))){
+    competitionCreateMessage="";competitionCreateMessageIsError=false;renderCompetition();return;
+  }
+  if(!competitionPermissionLevel(competitionSelectedLevel)){
     competitionCreateFeedback(`المستوى ${competitionSelectedLevel} مقفول من الإدارة للمجموعة ديالك.`,true);return;
   }
   if(!competitionLevelHasQuestionBank(competitionSelectedLevel)){
@@ -4840,7 +4907,10 @@ async function createCompetition(){
     competitionCreateFeedback("سجّل الدخول بحساب تلميذ حقيقي باش تقدر تنشئ غرفة المنافسة.",true);
     return;
   }
-  const selected=competitionSelectedLessons.filter(index=>competitionLessonAccess(index,competitionSelectedLevel));
+  if(competitionPruneLockedLessons()){
+    renderCompetition();competitionCreateFeedback("تبدلات صلاحيات الدروس. راجع الدروس المتاحة واختار من جديد.",true);return;
+  }
+  const selected=competitionSelectedLessons.slice();
   if(!selected.length){competitionCreateFeedback("اختار درساً واحداً على الأقل باش تنشئ الغرفة.",true);return;}
   const countField=document.getElementById("competitionCustomCount");
   const available=competitionAvailableQuestionCount();
@@ -4891,6 +4961,11 @@ async function createCompetition(){
     showToast("تخلقات الغرفة! نسخ الرمز وصيفطو للتلميذ الثاني.");
   }catch(error){
     console.error("Create competition failed:",error);
+    if(competitionAccessDenied(error)){
+      competitionVerifiedAccess=null;competitionCreateMessage="";competitionCreateMessageIsError=false;
+      await refreshCompetitionPermissions();
+      if(page==="competition")renderCompetition();return;
+    }
     const details=competitionCreationMessageText(error);
     competitionCreateFeedback("⚠️ "+details,true);
     // Keep existing modal to allow copying the full technical error for support.
@@ -4904,7 +4979,16 @@ async function createCompetition(){
 }
 async function createSelfCompetition(){
   if(competitionBusy)return;
-  if(!getStudentCompetitionLevelAccess(competitionSelectedLevel)){
+  const requestedLevel=competitionSelectedLevel;
+  const requestedLessons=competitionSelectedLessons.slice();
+  competitionBusy=true;
+  const verified=await refreshCompetitionPermissions();
+  competitionBusy=false;
+  if(page!=="competition")return;
+  if(!verified || requestedLevel!==competitionSelectedLevel || requestedLessons.some(index=>!competitionLessonAccess(index,requestedLevel))){
+    competitionCreateMessage="";competitionCreateMessageIsError=false;renderCompetition();return;
+  }
+  if(!competitionPermissionLevel(competitionSelectedLevel)){
     competitionCreateFeedback(`المستوى ${competitionSelectedLevel} مقفول من الإدارة للمجموعة ديالك.`,true);return;
   }
   if(!competitionLevelHasQuestionBank(competitionSelectedLevel)){
@@ -4918,7 +5002,10 @@ async function createSelfCompetition(){
     competitionCreateFeedback("سجّل الدخول بحساب التلميذ باش تحفظ أفضل نتيجة ديالك.",true);
     return;
   }
-  const selected=competitionSelectedLessons.filter(index=>competitionLessonAccess(index,competitionSelectedLevel));
+  if(competitionPruneLockedLessons()){
+    renderCompetition();competitionCreateFeedback("تبدلات صلاحيات الدروس. راجع الدروس المتاحة واختار من جديد.",true);return;
+  }
+  const selected=competitionSelectedLessons.slice();
   if(!selected.length){competitionCreateFeedback("اختار درساً واحداً على الأقل باش تبدا تحدي نفسك.",true);return;}
   const countField=document.getElementById("competitionCustomCount");
   const available=competitionAvailableQuestionCount();
@@ -4954,6 +5041,11 @@ async function createSelfCompetition(){
     renderCompetitionSelfChallenge();
   }catch(error){
     console.error("Create self competition failed:",error);
+    if(competitionAccessDenied(error)){
+      competitionVerifiedAccess=null;competitionCreateMessage="";competitionCreateMessageIsError=false;
+      await refreshCompetitionPermissions();
+      if(page==="competition")renderCompetition();return;
+    }
     const message=competitionCreationMessageText(error);
     competitionCreateFeedback("⚠️ "+message,true);
     showToast(message);
@@ -5064,6 +5156,7 @@ async function leaveSelfCompetition(){
 function retrySelfCompetition(){
   const challenge=competitionSelfChallengeData;
   if(!challenge)return;
+  competitionSelectedLevel=normalizeGroupCourseLevel(challenge.level||"A1");
   competitionSelectedLessons=(challenge.lessonIndices||[]).slice();
   competitionSelectedTestTypes={...(challenge.testTypes||{})};
   competitionWholeExercises=challenge.wholeExercises===true;
@@ -7027,7 +7120,7 @@ function renderAdmin(){
   const editing=editingGroupId && cloudGroups[editingGroupId] ? cloudGroups[editingGroupId] : {};
   const currentGroupLevel=normalizeGroupCourseLevel(adminGroupLevelDraft||editing.level||"A1");
   const competitionAccessMarkup=`<section class="admin-group-competition-access">
-    <div class="admin-group-competition-access-head"><div><strong>مستويات المنافسة المتاحة لهذه المجموعة</strong><small>هاد الصلاحيات خاصة بالمنافسة فقط، وما كتبدلش صلاحيات الدروس العادية.</small></div><span>🏆</span></div>
+    <div class="admin-group-competition-access-head"><div><strong>مستويات المنافسة المتاحة لهذه المجموعة</strong><small>فتح المستوى للمنافسة ما كيحلّش الدروس المقفولة. المنافسة كتستعمل نفس الدروس المحددة أسفله.</small></div><span>🏆</span></div>
     <div class="admin-group-competition-access-grid">
       ${GROUP_COURSE_LEVELS.map(level=>{
         const open=groupCompetitionLevelAccessForLevel(editing,level);
@@ -7038,7 +7131,7 @@ function renderAdmin(){
         </label>`;
       }).join("")}
     </div>
-    <p class="admin-note">كل مجموعة عندها إعداد مستقل. إلا خليتي المستوى مقفول، التلاميذ ديال هاد المجموعة ما غاديش يقدرو ينشئو أو ينضمو لمنافسة فيه.</p>
+    <p class="admin-note">كل مجموعة عندها إعداد مستقل. المنافسة كتسمح فقط بالدروس المفتوحة فإعدادات المجموعة أسفله، وبشرط يكون المستوى مفتوح للدراسة والمنافسة. أي درس مقفول ما يمكنش اختياره أو الانضمام لمنافسة فيه.</p>
   </section>`;
   const groupLessonPanels=GROUP_COURSE_LEVELS.map(level=>{
     const isOpen=level===currentGroupLevel;
@@ -8938,6 +9031,7 @@ function renderStudentResults(){
   app.innerHTML=`<div class="student-results-promo">${studentLayout(content,"progress")}${fullscreenTool}</div>`;
 }
 function logout(){
+  competitionVerifiedAccess=null;competitionAccessOwner="";competitionAccessRequest=null;competitionAccessState="idle";
   demoMode = false;
   stopAdminResultsRealtimeSync();
   stopStudentGroupTasksRealtimeSync();
@@ -11482,14 +11576,15 @@ document.addEventListener("click",function(event){
     else if(tab==="talk"){talkReturnPage="home";talkReturnLesson=currentLesson;tutorLessonIndex=currentLesson;tutorTool="conversation";tutorToolOpen=false;tutorMessages=[];page="talk";}
     else if(tab==="sessions") page="sessions";
     else if(tab==="community"){page="community";communityRoom=null;}
-    else if(tab==="competition"){page="competition";loadCompetitionStats();}
+    else if(tab==="competition"){page="competition";competitionVerifiedAccess=null;competitionAccessState="loading";refreshCompetitionPermissions();loadCompetitionStats();}
     else if(tab==="progress"){page="student-results";studentResultsExpanded=false;studentResultsActiveTool="";}
     else studentResultsActiveTool="";
     render();return;
   }
+  else if(action==="competition-access-refresh"){refreshCompetitionPermissions();return;}
   else if(action==="competition-level"){
     const level=normalizeGroupCourseLevel(el.dataset.level||"A1");
-    if(!getStudentCompetitionLevelAccess(level)){
+    if(!competitionPermissionLevel(level)){
       showToast(`المستوى ${level} مقفول من الإدارة للمجموعة ديالك.`);return;
     }
     competitionSelectedLevel=level;
