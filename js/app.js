@@ -908,6 +908,21 @@ function groupSectionAccessForLevel(group,level){
   const saved=group?.sectionAccessByLevel?.[requestedLevel];
   return saved && typeof saved==="object" ? {...defaults,...saved} : defaults;
 }
+// Competition access is separate from course access. A level is closed for a
+// group until an administrator explicitly enables it in that group's settings.
+function groupCompetitionLevelAccessForLevel(group,level){
+  const requestedLevel=normalizeGroupCourseLevel(level);
+  return group?.competitionLevelAccess?.[requestedLevel]===true;
+}
+function getStudentCompetitionLevelAccess(level){
+  if(!currentUser || currentUser.role!=="student")return true;
+  if(!currentStudentProfile?.groupId || !currentStudentGroup)return false;
+  return groupCompetitionLevelAccessForLevel(currentStudentGroup,level);
+}
+function competitionLevelHasQuestionBank(level){
+  // A1 and A2 have separate source-derived question banks; B1/B2 are still pending.
+  return ["A1","A2"].includes(normalizeGroupCourseLevel(level));
+}
 function getStudentLevelAccess(level){
   if(!currentUser || currentUser.role!=="student")return true;
   const requestedLevel=normalizeGroupCourseLevel(level);
@@ -1081,6 +1096,11 @@ function saveGroupFromForm(){
     const input=document.querySelector(`[data-group-level-access="${courseLevel}"]`);
     return [courseLevel,input ? input.checked : groupLevelAccessForLevel(old,courseLevel)];
   }));
+  // Competition levels have their own per-group permissions, independent of course access.
+  const competitionLevelAccess=Object.fromEntries(GROUP_COURSE_LEVELS.map(courseLevel=>{
+    const input=document.querySelector(`[data-group-competition-level-access="${courseLevel}"]`);
+    return [courseLevel,input ? input.checked : groupCompetitionLevelAccessForLevel(old,courseLevel)];
+  }));
   // B1 and B2 each have four independent sections, matching the student's level dashboard.
   const sectionAccessByLevel={...(old.sectionAccessByLevel||{})};
   ["B1","B2"].forEach(courseLevel=>{
@@ -1099,7 +1119,7 @@ function saveGroupFromForm(){
   };
   const level=normalizeGroupCourseLevel(adminGroupLevelDraft||old.level||"A1");
   const lessonAccess=lessonAccessByLevel.A1||groupLessonDefaultChecks(old,"A1");
-  const group={...old,id,name,level,requiredDailyMinutes:required,levelAccess,sectionAccessByLevel,lessonAccessByLevel,
+  const group={...old,id,name,level,requiredDailyMinutes:required,levelAccess,competitionLevelAccess,sectionAccessByLevel,lessonAccessByLevel,
     // Keep the original A1 field for students and older clients that still read it.
     lessonAccess,
     updatedAt:new Date().toISOString(),createdAt:old.createdAt||new Date().toISOString()};
@@ -1229,6 +1249,7 @@ let tutorVoiceSession = null;
 let tutorMessages = [];
 let communityRoom = null;
 let competitionMode = "duel";
+let competitionSelectedLevel = "A1";
 let competitionSelectedLessons = [];
 let competitionQuestionCount = 10;
 let competitionWholeExercises = false;
@@ -1237,10 +1258,31 @@ let competitionExerciseDrafts = {};
 let competitionExerciseTileDrafts = {};
 // Catalog metadata only: no answer keys or full questions are sent to students.
 const competitionTestCatalog = [{"name":"Hallo & Herkunft","types":[{"name":"Verben","count":5},{"name":"Nomen","count":3},{"name":"Adjektive","count":3},{"name":"Präpositionen","count":3},{"name":"Grammatik","count":3}]},{"name":"Familie","types":[{"name":"Verben","count":7},{"name":"Nomen","count":18},{"name":"Adjektive","count":9},{"name":"Präpositionen","count":5},{"name":"Grammatik","count":5}]},{"name":"Wohnen","types":[{"name":"Verben","count":3},{"name":"Nomen","count":3},{"name":"Adjektive","count":3},{"name":"Präpositionen","count":3},{"name":"Grammatik","count":3}]},{"name":"Essen und Trinken","types":[{"name":"Verben","count":3},{"name":"Nomen","count":3},{"name":"Adjektive","count":3},{"name":"Präpositionen","count":3},{"name":"Grammatik","count":3}]},{"name":"Mein Alltag","types":[{"name":"Verben","count":3},{"name":"Nomen","count":3},{"name":"Adjektive","count":3},{"name":"Präpositionen","count":3},{"name":"Grammatik","count":3}]},{"name":"Meine Stadt, meine Wohnung","types":[{"name":"Zusatztest · Wörter verbinden","count":10},{"name":"Zusatztest · Artikel-Detektiv","count":12},{"name":"Zusatztest · Übersetzungsquiz","count":8},{"name":"Zusatztest · Lückensätze","count":8},{"name":"Zusatztest · Satzbau-Werkstatt","count":5},{"name":"Zusatztest · Wo bist du? – Präpositionen","count":6},{"name":"Zusatztest · Verben im Alltag","count":8},{"name":"Zusatztest · Adjektive-Duell","count":4},{"name":"Zusatztest · Lesen und verstehen","count":5},{"name":"Zusatztest · Fehler-Polizei","count":5},{"name":"Zusatztest · Wörter sortieren","count":12},{"name":"Zusatztest · Übersetzungswerkstatt","count":5},{"name":"Zusatztest · Abschlusstest","count":12}]},{"name":"Wie, wo und wann?","types":[{"name":"Zusatztest · Wörter verbinden","count":10},{"name":"Zusatztest · Wetter-Detektiv","count":8},{"name":"Zusatztest · Jahreszeiten und Monate","count":8},{"name":"Zusatztest · Wochentage ergänzen","count":5},{"name":"Zusatztest · Lückensätze","count":8},{"name":"Zusatztest · Satzbau-Werkstatt","count":5},{"name":"Zusatztest · am oder im?","count":8},{"name":"Zusatztest · Verben im Präsens","count":8},{"name":"Zusatztest · Wie, wo oder wann?","count":8},{"name":"Zusatztest · Hördetektiv (Satzverständnis)","count":5},{"name":"Zusatztest · Lesen und verstehen","count":5},{"name":"Zusatztest · Fehler-Polizei","count":5},{"name":"Zusatztest · Wörter sortieren","count":12},{"name":"Zusatztest · Übersetzungswerkstatt","count":5},{"name":"Zusatztest · Abschlusstest","count":12}]},{"name":"Unterwegs","types":[{"name":"Zusatztest · Wörter verbinden","count":10},{"name":"Zusatztest · Artikel-Detektiv","count":12},{"name":"Zusatztest · Übersetzungsquiz","count":8},{"name":"Zusatztest · Lückensätze","count":8},{"name":"Zusatztest · Buchstabensalat","count":8},{"name":"Zusatztest · Satzbau-Werkstatt","count":5},{"name":"Zusatztest · Mit dem Bus oder mit der Bahn?","count":6},{"name":"Zusatztest · Verben unterwegs","count":8},{"name":"Zusatztest · Adjektive-Match","count":8},{"name":"Zusatztest · Lesen und verstehen","count":5},{"name":"Zusatztest · Fehler-Polizei","count":5},{"name":"Zusatztest · Wörter sortieren","count":12},{"name":"Zusatztest · Übersetzungswerkstatt","count":5},{"name":"Zusatztest · Abschlusstest","count":12}]},{"name":"Unter Freunden – Der Flohmarkt","types":[{"name":"Zusatztest · Wörter verbinden","count":10},{"name":"Zusatztest · Artikel-Detektiv","count":12},{"name":"Zusatztest · Übersetzungsquiz","count":10},{"name":"Zusatztest · Lückensätze","count":8},{"name":"Zusatztest · Buchstabensalat","count":8},{"name":"Zusatztest · Satzbau-Werkstatt","count":5},{"name":"Zusatztest · Adjektive im Flohmarkt","count":8},{"name":"Zusatztest · Verben richtig konjugieren","count":8},{"name":"Zusatztest · Adjektive verbinden","count":8},{"name":"Zusatztest · Lesen und verstehen","count":6},{"name":"Zusatztest · Dialog ergänzen","count":4},{"name":"Zusatztest · Fehler-Polizei","count":8},{"name":"Zusatztest · Wörter sortieren","count":16},{"name":"Zusatztest · Übersetzungswerkstatt","count":8},{"name":"Zusatztest · Abschlusstest","count":15}]},{"name":"Gesundheit & Termine","types":[{"name":"Verben","count":3},{"name":"Nomen","count":3},{"name":"Adjektive","count":3},{"name":"Präpositionen","count":3},{"name":"Grammatik","count":3}]}];
+const a2CompetitionTestCatalog = [{"name":"Erfahrungen und Pläne","types":[]},{"name":"Gut aussehen","types":[{"name":"Übung 1 · Kleidungsstücke verbinden","count":12},{"name":"Übung 2 · Artikel-Detektiv","count":10},{"name":"Übung 3 · Farben-Quiz","count":10},{"name":"Übung 4 · Welche Kleidung passt?","count":4},{"name":"Übung 5 · Akkusativ – Was trage ich?","count":8},{"name":"Übung 6 · Das Verb tragen","count":7},{"name":"Übung 7 · Hat oder haben?","count":4},{"name":"Übung 8 · Wo? – Präpositionen","count":4},{"name":"Übung 10 · Vergleichssätze","count":6},{"name":"Übung 12 · Lesen und verstehen","count":5},{"name":"Übung 13 · Dialog in einer Boutique","count":5},{"name":"Übung 14 · Wortschatz sortieren","count":12},{"name":"Übung 15 · Als oder wie?","count":8},{"name":"Übung 17 · Abschlusstest","count":12}]},{"name":"Familie und Freunde","types":[{"name":"Übung 1 · Familienwörter verbinden","count":10},{"name":"Übung 2 · Artikel-Detektiv","count":12},{"name":"Übung 3 · Familien-Quiz","count":8},{"name":"Übung 4 · Familienbeziehungen","count":8},{"name":"Übung 7 · Welche Familie ist das?","count":6},{"name":"Übung 8 · Paare: männlich und weiblich","count":8},{"name":"Übung 9 · Adjektive-Duell","count":4},{"name":"Übung 10 · Hördetektiv","count":5},{"name":"Übung 11 · Lesen und verstehen","count":6},{"name":"Übung 14 · Wörter sortieren","count":12},{"name":"Übung 17 · Abschlusstest","count":12}]},{"name":"Die Ferienwohnung","types":[{"name":"Übung 1 · Wörter verbinden","count":10},{"name":"Übung 2 · Artikel-Detektiv","count":12},{"name":"Übung 3 · Übersetzungsquiz","count":8},{"name":"Übung 4 · Lückensätze","count":8},{"name":"Übung 7 · Wo bist du? – Präpositionen","count":8},{"name":"Übung 8 · Verben: stehen, stellen, liegen, legen, hängen","count":8},{"name":"Übung 9 · Verben und ihr Gegenteil","count":6},{"name":"Übung 10 · Hördetektiv","count":5},{"name":"Übung 11 · Lesen und verstehen","count":6},{"name":"Übung 14 · Wörter sortieren","count":12},{"name":"Übung 17 · Abschlusstest","count":12}]},{"name":"Guten Appetit","types":[{"name":"Übung 1 · Lebensmittel verbinden","count":10},{"name":"Übung 2 · Artikel-Detektiv","count":12},{"name":"Übung 4 · Lebensmittel-Verben","count":8},{"name":"Übung 7 · Akkusativ: Mengenangaben","count":6},{"name":"Übung 8 · Was passt nicht?","count":5},{"name":"Übung 9 · Müll richtig sortieren","count":4},{"name":"Übung 10 · Was ist falsch?","count":4},{"name":"Übung 11 · Lesen und verstehen","count":5},{"name":"Übung 12 · Dialog im Restaurant","count":5},{"name":"Übung 14 · Gast oder Kellner?","count":5},{"name":"Übung 15 · Konjunktiv II: Formen","count":12},{"name":"Übung 16 · Sätze ergänzen","count":8},{"name":"Übung 17 · Abschlusstest","count":12}]},{"name":"Gefühle und Streetart","types":[{"name":"Übung 1 · Gefühle erkennen","count":5},{"name":"Übung 2 · Gefühle und Situationen","count":5},{"name":"Übung 3 · Synonyme","count":5},{"name":"Übung 4 · Lückensätze: Gefühle","count":5},{"name":"Übung 5 · Streetart-Wortschatz","count":11},{"name":"Übung 6 · Lesen: Streetart in Berlin","count":10},{"name":"Übung 7 · Meinungen ausdrücken","count":5},{"name":"Übung 8 · dies- und Possessivpronomen","count":15},{"name":"Übung 9 · Reflexivpronomen","count":9},{"name":"Übung 10 · Reflexive Verben im Satz","count":14},{"name":"Übung 13 · Lesen: Open-Air-Kino","count":5},{"name":"Übung 14 · Zeitangaben und Dativ","count":13},{"name":"Übung 15 · Reflexivpronomen im Kontext","count":13},{"name":"Übung 17 · Abschlusstest","count":12}]},{"name":"Schule und Beruf","types":[{"name":"Übung 1 · Wortverbindungen","count":10},{"name":"Übung 2 · Was passt?","count":12},{"name":"Übung 3 · Übersetzungsquiz","count":8},{"name":"Übung 4 · Lückensätze","count":8},{"name":"Übung 7 · Mit oder ohne?","count":6},{"name":"Übung 8 · Modalverben im Präteritum","count":8},{"name":"Übung 9 · Ausdrücke zuordnen","count":4},{"name":"Übung 10 · Hördetektiv","count":5},{"name":"Übung 11 · Die Welt ist mein Büro","count":5},{"name":"Übung 14 · Grammatik sortieren","count":12},{"name":"Übung 17 · Abschlusstest","count":12}]},{"name":"Glück und Gesundheit","types":[{"name":"Übung 1 · Körper-Quiz","count":5},{"name":"Übung 2 · Körperteile verbinden","count":8},{"name":"Übung 3 · Richtig oder falsch?","count":5},{"name":"Übung 4 · Unser Herz","count":5},{"name":"Übung 5 · Was fehlt Ihnen?","count":6},{"name":"Übung 6 · Dr. Brinkmann und seine Patienten","count":5},{"name":"Übung 7 · Verben in der richtigen Form","count":5},{"name":"Übung 8 · Beim Arzt sprechen","count":5},{"name":"Übung 9 · Gefühle zuordnen","count":6},{"name":"Übung 10 · Positiv oder negativ?","count":8},{"name":"Übung 11 · Wer ist am glücklichsten?","count":5},{"name":"Übung 12 · in, seit oder bis?","count":7},{"name":"Übung 13 · von … bis","count":4},{"name":"Übung 14 · Vergleiche: als oder wie?","count":5},{"name":"Übung 16 · Adjektivendungen","count":8},{"name":"Übung 17 · Abschlusstest","count":12}]},{"name":"Flohmarkt und Wochenende","types":[{"name":"Abschlusstest","count":8}]},{"name":"Reisen und Urlaubserlebnisse","types":[{"name":"Abschlusstest","count":8}]}];
+function competitionCatalogForLevel(level=competitionSelectedLevel){
+  return normalizeGroupCourseLevel(level)==="A2"?a2CompetitionTestCatalog:competitionTestCatalog;
+}
+function competitionLessonsForLevel(level=competitionSelectedLevel){
+  return normalizeGroupCourseLevel(level)==="A2"?a2CourseLessons:lessons;
+}
+function competitionLessonHasBank(index,level=competitionSelectedLevel){
+  return Boolean(competitionCatalogForLevel(level)[Number(index)]?.types?.length);
+}
+function competitionLessonAccess(index,level=competitionSelectedLevel){
+  const requestedLevel=normalizeGroupCourseLevel(level);
+  return requestedLevel==="A1"&&Number(index)===10
+    ?getStudentLessonAccess(6,"A1")
+    :getStudentLessonAccess(Number(index),requestedLevel);
+}
+function competitionLessonName(index,level=competitionSelectedLevel){
+  const lesson=competitionLessonsForLevel(level)[Number(index)];
+  const bankLesson=competitionCatalogForLevel(level)[Number(index)];
+  return bankLesson?.name||lesson?.title||lesson?.name||`L${Number(index)+1}`;
+}
 let competitionSelectedTestTypes = {};
 let competitionExpandedLesson = null;
 function competitionEnsureTypes(lessonIndex){
-  const all=competitionTestCatalog[lessonIndex]?.types||[];
+  const all=competitionCatalogForLevel()[lessonIndex]?.types||[];
   const current=competitionSelectedTestTypes[lessonIndex];
   if(!Array.isArray(current)){
     competitionSelectedTestTypes[lessonIndex]=all.map((_,i)=>i);
@@ -1249,12 +1291,12 @@ function competitionEnsureTypes(lessonIndex){
 }
 function competitionAvailableQuestionCount(){
   return competitionSelectedLessons.reduce((total,lessonIndex)=>{
-    const types=competitionTestCatalog[lessonIndex]?.types||[];
+    const types=competitionCatalogForLevel()[lessonIndex]?.types||[];
     return total+competitionEnsureTypes(lessonIndex).reduce((num,typeIndex)=>num+(types[typeIndex]?.count||0),0);
   },0);
 }
 function competitionTypeTitle(name){
-  return String(name||'Test').replace(/^L7 A1\.1\s*·\s*/,'').replace(/^Zusatztest\s*·\s*/,'').trim();
+  return String(name||'Test').replace(/^L7 A1\.1\s*·\s*/,'').replace(/^Zusatztest\s*·\s*/,'').replace(/^Übung\s*\d+\s*·\s*/,'').trim();
 }
 function competitionSelectedTypePayload(){
   return Object.fromEntries(competitionSelectedLessons.map(index=>[String(index),competitionEnsureTypes(index).slice()]));
@@ -1513,7 +1555,6 @@ function studentBottomNav(active){
     ["home","اليوم"],
     ["learn","تعلّم"],
     ["talk","تكلّم"],
-    ["sessions","الجلسات"],
     ["progress","تقدّمي"],
     ["community","المجتمع"],
     ["competition","المنافسة"]
@@ -4104,20 +4145,53 @@ function renderCompetition(){
     renderCompetitionRoom();
     return;
   }
-  // Selection is user-controlled: do not automatically re-check L1/the last lesson.
-  const lessonsMarkup=lessons.map((lesson,index)=>{
-    const allowed=getStudentLessonAccess(index);
-    const selected=competitionSelectedLessons.includes(index);
-    return `<button type="button" class="competition-lesson-chip ${selected?"selected":""} ${allowed?"":"locked"}" data-action="competition-lesson" data-lesson="${index}" ${allowed?"":"disabled"}>
-      <span class="competition-lesson-check">${selected?"✓":""}</span><strong>L${index+1}</strong><small>${escapeHtml(competitionTestCatalog[index]?.name||lesson.name)}</small>
+  // Competition level access is granted separately by the administrator for each group.
+  const allowedCompetitionLevels=GROUP_COURSE_LEVELS.filter(level=>getStudentCompetitionLevelAccess(level));
+  if(!allowedCompetitionLevels.includes(competitionSelectedLevel)){
+    competitionSelectedLevel=allowedCompetitionLevels.find(level=>competitionLevelHasQuestionBank(level))||allowedCompetitionLevels[0]||"A1";
+    competitionSelectedLessons=[];competitionSelectedTestTypes={};competitionExpandedLesson=null;
+  }
+  const selectedCompetitionLevelAllowed=getStudentCompetitionLevelAccess(competitionSelectedLevel);
+  const selectedCompetitionLevelHasBank=competitionLevelHasQuestionBank(competitionSelectedLevel);
+  const levelCatalog=competitionCatalogForLevel(competitionSelectedLevel);
+  const levelLessons=competitionLessonsForLevel(competitionSelectedLevel);
+  const competitionLevelCards=GROUP_COURSE_LEVELS.map(level=>{
+    const allowed=getStudentCompetitionLevelAccess(level);
+    const hasBank=competitionLevelHasQuestionBank(level);
+    const active=competitionSelectedLevel===level;
+    const status=!allowed?"مقفل من الإدارة":hasBank?"متاح للمنافسة":"المستوى مفتوح · الاختبارات قيد الإضافة";
+    const shortStatus=!allowed?"مقفل":hasBank?"متاح":"قريباً";
+    return `<button type="button" class="competition-level-card competition-level-filter ${active?"is-selected":""} ${allowed?"is-open":"is-locked"} ${hasBank?"has-bank":"no-bank"}" data-action="competition-level" data-level="${level}" ${allowed?"":"disabled"} aria-pressed="${active}" aria-label="فلتر مستوى ${level}: ${status}" title="${status}">
+      <strong class="competition-level-filter-code">${level}</strong>
+      <span class="competition-level-filter-status">${allowed?(hasBank?"✓ ":"◷ "):"🔒 "}${shortStatus}</span>
     </button>`;
   }).join("");
+  const competitionLevelNotice=!currentStudentProfile?.groupId
+    ?"حسابك ما مربوط حتى بمجموعة. تواصل مع الإدارة باش تضيفك لمجموعة وتفتح ليك مستوى المنافسة."
+    :!currentStudentGroup
+      ?"ما قدرناش نجيبو إعدادات المجموعة ديالك. حدّث الصفحة أو تواصل مع الإدارة."
+      :!allowedCompetitionLevels.length
+        ?"الإدارة ما فتحت حتى مستوى للمنافسة فالمجموعة ديالك."
+        :!selectedCompetitionLevelHasBank
+          ?`المستوى ${competitionSelectedLevel} مفتوح للمجموعة ديالك، ولكن بنك أسئلة المنافسة ديالو مازال ما تضافش. حالياً بنوك المنافسة المتوفرة هي A1 وA2.`
+          :"";
+  const competitionLevelCanPlay=selectedCompetitionLevelAllowed&&selectedCompetitionLevelHasBank;
+  // Selection is user-controlled: do not automatically re-check L1/the last lesson.
+  const lessonsMarkup=competitionLevelCanPlay?levelLessons.map((lesson,index)=>{
+    const allowed=competitionLessonAccess(index,competitionSelectedLevel);
+    const hasBank=Boolean(levelCatalog[index]?.types?.length);
+    const selected=competitionSelectedLessons.includes(index);
+    const disabled=!allowed||!hasBank;
+    return `<button type="button" class="competition-lesson-chip ${selected?"selected":""} ${disabled?"locked":""} ${hasBank?"":"no-bank"}" data-action="competition-lesson" data-lesson="${index}" ${disabled?"disabled":""} title="${hasBank?"":"التمارين التطبيقية لهذا الدرس غير متوفرة بعد"}">
+      <span class="competition-lesson-check">${selected?"✓":""}</span><strong>L${index+1}</strong><small>${escapeHtml(competitionLessonName(index,competitionSelectedLevel))}</small>
+    </button>`;
+  }).join(""):"";
   // The chosen lesson opens its Test sections underneath the lesson grid.
   if(competitionExpandedLesson===null || !competitionSelectedLessons.includes(competitionExpandedLesson)){
     competitionExpandedLesson=competitionSelectedLessons[0]??null;
   }
   const activeLessonIndex=competitionExpandedLesson;
-  const activeTypes=activeLessonIndex===null?[]:(competitionTestCatalog[activeLessonIndex]?.types||[]);
+  const activeTypes=activeLessonIndex===null?[]:(levelCatalog[activeLessonIndex]?.types||[]);
   const activeSelected=activeLessonIndex===null?[]:competitionEnsureTypes(activeLessonIndex);
   const testTypesMarkup=activeTypes.map((type,typeIndex)=>{
     const checked=activeSelected.includes(typeIndex);
@@ -4135,7 +4209,7 @@ function renderCompetition(){
     <section class="competition-test-panel" aria-label="اختيار أنواع أسئلة الدرس">
       <div class="competition-test-panel-head">
         <div><strong>📚 Test ديال ${escapeHtml("L"+(activeLessonIndex+1))}</strong>
-        <small>${escapeHtml(competitionTestCatalog[activeLessonIndex]?.name||"")} · اختار التمارين اللي بغيتي</small></div>
+        <small>${escapeHtml(competitionLessonName(activeLessonIndex,competitionSelectedLevel))} · اختار التمارين اللي بغيتي</small></div>
         <div class="competition-test-tools"><button type="button" data-action="competition-types-all" data-lesson="${activeLessonIndex}">اختيار الكل</button><button type="button" data-action="competition-lesson-remove" data-lesson="${activeLessonIndex}">حيد الدرس</button></div>
       </div>
       ${competitionSelectedLessons.length>1?`<div class="competition-selected-lessons-tabs" role="group" aria-label="بدّل بين اختبارات الدروس المختارة">${competitionSelectedLessons.map(i=>`<button type="button" class="${i===activeLessonIndex?"active":""}" data-action="competition-open-lesson" data-lesson="${i}" aria-pressed="${i===activeLessonIndex}">تعديل ${"L"+(i+1)}</button>`).join("")}</div>`:""}
@@ -4154,6 +4228,7 @@ function renderCompetition(){
       <div><strong>${escapeHtml((record.lessonNames||[]).join(" · ")||"اختبار شخصي")}</strong><small>${Number(record.attempts)||0} محاولات · ${Number(record.totalQuestions)||Number(record.questionCount)||0} سؤال</small></div>
       <b>${Number(record.bestScore)||0} نقطة</b>
     </div>`).join("");
+  const competitionSourceHint=competitionSelectedLevel==="A2"?"📘 A2: الأسئلة مستخرجة من التمارين التطبيقية الأصلية للدروس 2–10.":"📘 A1: الأسئلة من بنك اختبارات الدروس والتمارين الإضافية الأصلية.";
   const selfInfoCard=`
     <section class="competition-card competition-self-info-card">
       <div class="competition-card-heading"><span>🎯</span><div><h3>أفضل نتائجك</h3><p>تتسجل تلقائياً وكتقدر تحسنها فكل محاولة</p></div></div>
@@ -4166,7 +4241,11 @@ function renderCompetition(){
       <div class="competition-my-points"><strong>${Number(myStats.totalPoints)||0}</strong><small>${competitionMode==="self"?"نقاط الغرف الجماعية":"مجموع نقاطك"}</small></div>
     </section>
 
-    <div class="competition-create-grid">
+    <section class="competition-level-picker" aria-label="اختيار مستوى المنافسة">
+      <div class="competition-level-picker-heading"><div><strong>اختار مستوى المنافسة</strong><small>المستويات كتتحل من طرف الإدارة حسب المجموعة ديالك</small></div><span>المجموعة: ${escapeHtml(currentStudentGroup?.name||"غير معيّنة")}</span></div>
+      <div class="competition-level-grid" role="group" aria-label="فلترة المنافسة حسب المستوى">${competitionLevelCards}</div>
+    </section>
+    ${competitionLevelCanPlay?`<div class="competition-create-grid">
       <section class="competition-card">
         <div class="competition-card-heading"><span>${competitionMode==="self"?"🎯":"⚡"}</span><div><h3>${competitionMode==="self"?"تحدّي شخصي":"أنشئ منافسة"}</h3><p>${competitionMode==="self"?"اختبر مستواك وسجّل أفضل نتيجة":"صايب غرفة وشارك الرمز مع صحابك"}</p></div></div>
         <div class="competition-mode-picker">
@@ -4176,7 +4255,7 @@ function renderCompetition(){
         </div>
         <div class="competition-field-head"><strong>اختار الدروس</strong><small>ضغط مرة باش تختار، ومرة ثانية باش تحيد المارك</small></div>
         <div class="competition-lesson-grid">${lessonsMarkup}</div>
-        <p class="competition-source-hint">📘 L6–L9: التمارين من صفحات Test الأصلية ديال كل درس. L1–L5 وL10: اختبارات الأصناف المدمجة فالموقع.</p>
+        <p class="competition-source-hint">${escapeHtml(competitionSourceHint)}</p>
         ${typePanel}
         <div class="competition-full-exercise-choice">
           <label class="competition-full-exercise-label" for="competitionWholeExercises">
@@ -4215,6 +4294,7 @@ function renderCompetition(){
       <div class="competition-card-heading"><span>🌍</span><div><h3>المتصدرون</h3><p>ترتيب مجموع نقاط المنافسات</p></div></div>
       ${leaderboard?`<div class="competition-global-list">${leaderboard}</div>`:`<div class="competition-empty">مازال ما تسجلات حتى منافسة. كون أول بطل!</div>`}
     </section>
+    </div>`:`<section class="competition-level-unavailable" role="status"><span>${selectedCompetitionLevelAllowed?"📘":"🔒"}</span><div><strong>${selectedCompetitionLevelAllowed?`المستوى ${competitionSelectedLevel} مفتوح`:"المنافسة غير متاحة حالياً"}</strong><p>${escapeHtml(competitionLevelNotice||"اختار مستوى مفتوح من الإدارة باش تبدا المنافسة.")}</p></div></section>`}
   `;
   // Do not recreate the entire app/header/navbar on every checkbox click.
   // Replacing only the setup view prevents scroll resets and visible flicker.
@@ -4634,9 +4714,29 @@ function listenCompetitionRoom(roomId){
   refreshCompetitionRoom(roomId);
   competitionRoomPollTimer=setInterval(()=>refreshCompetitionRoom(roomId),2500);
 }
+async function refreshStudentCompetitionGroup(){
+  if(!firebaseReady || currentUser?.role!=="student")return false;
+  const groupId=String(currentStudentProfile?.groupId||"");
+  if(!groupId){
+    const changed=currentStudentGroup!==null;
+    currentStudentGroup=null;
+    return changed;
+  }
+  try{
+    const snapshot=await firebaseDb.ref(`${DEUTSCH_A1_PATH}/groups/${groupId}`).once("value");
+    const nextGroup=snapshot.val()||null;
+    const changed=JSON.stringify(nextGroup)!==JSON.stringify(currentStudentGroup);
+    currentStudentGroup=nextGroup;
+    return changed;
+  }catch(error){
+    console.warn("Competition group access refresh failed:",error);
+    return false;
+  }
+}
 async function loadCompetitionStats(){
   if(!firebaseReady||!firebaseAuth?.currentUser)return;
   try{
+    const groupAccessChanged=await refreshStudentCompetitionGroup();
     const result=await competitionCallable("getCompetitionStats",{});
     const nextStats=Array.isArray(result.data?.stats)?result.data.stats:[];
     const nextRecords=Array.isArray(result.data?.personalRecords)?result.data.personalRecords:[];
@@ -4663,7 +4763,7 @@ async function loadCompetitionStats(){
         else console.warn("Self competition restore unavailable:",error);
       }
     }
-    if((changed||restoredChallenge)&&page==="competition"&&!competitionRoomId)renderCompetition();
+    if((changed||restoredChallenge||groupAccessChanged)&&page==="competition"&&!competitionRoomId)renderCompetition();
   }catch(error){console.warn("Competition stats unavailable:",error);}
 }
 
@@ -4725,6 +4825,12 @@ function showCompetitionCreationError(error){
 
 async function createCompetition(){
   if(competitionBusy)return;
+  if(!getStudentCompetitionLevelAccess(competitionSelectedLevel)){
+    competitionCreateFeedback(`المستوى ${competitionSelectedLevel} مقفول من الإدارة للمجموعة ديالك.`,true);return;
+  }
+  if(!competitionLevelHasQuestionBank(competitionSelectedLevel)){
+    competitionCreateFeedback(`بنك أسئلة المنافسة للمستوى ${competitionSelectedLevel} مازال ما تضافش.`,true);return;
+  }
   // A local file is a demo preview: it cannot create shared rooms.
   if(location.protocol==="file:" || demoMode){
     competitionCreateFeedback("هاد نسخة المعاينة المحلية. الغرف الحقيقية خاصها حساب تلميذ مسجّل وموقع عبر HTTPS، ماشي فتح index.html مباشرة من الملفات.",true);
@@ -4734,7 +4840,7 @@ async function createCompetition(){
     competitionCreateFeedback("سجّل الدخول بحساب تلميذ حقيقي باش تقدر تنشئ غرفة المنافسة.",true);
     return;
   }
-  const selected=competitionSelectedLessons.filter(index=>(index===10?getStudentLessonAccess(6):getStudentLessonAccess(index)));
+  const selected=competitionSelectedLessons.filter(index=>competitionLessonAccess(index,competitionSelectedLevel));
   if(!selected.length){competitionCreateFeedback("اختار درساً واحداً على الأقل باش تنشئ الغرفة.",true);return;}
   const countField=document.getElementById("competitionCustomCount");
   const available=competitionAvailableQuestionCount();
@@ -4754,7 +4860,7 @@ async function createCompetition(){
   competitionCreateFeedback("جاري الاتصال بخدمة المنافسة وإنشاء الغرفة… خليك فهاد الصفحة حتى يظهر الرمز أو رسالة الخطأ.");
   try{
     const result=await competitionCallable("createCompetitionRoom",{
-      mode:competitionMode,lessonIndices:selected,questionCount:competitionQuestionCount,testTypes,
+      level:competitionSelectedLevel,mode:competitionMode,lessonIndices:selected,questionCount:competitionQuestionCount,testTypes,
       wholeExercises:competitionWholeExercises
     });
     const payload=result?.data||{};
@@ -4774,7 +4880,7 @@ async function createCompetition(){
     competitionRoomData={
       id:generatedRoomId,code:generatedCode,createdBy:creatorUid,isCreator:true,creatorName,
       mode:competitionMode,status:"waiting",lessonIndices:selected.slice(),
-      lessonNames:selected.map(index=>competitionTestCatalog[index]?.name||lessons[index]?.name||`L${index+1}`),
+      lessonNames:selected.map(index=>competitionLessonName(index,competitionSelectedLevel)),
       questionCount:competitionQuestionCount,questions:[],
       members:{[creatorUid]:{uid:creatorUid,name:creatorName,score:0,answeredCount:0,
         correctCount:0,finished:false,joinedAt:Date.now()}}
@@ -4798,6 +4904,12 @@ async function createCompetition(){
 }
 async function createSelfCompetition(){
   if(competitionBusy)return;
+  if(!getStudentCompetitionLevelAccess(competitionSelectedLevel)){
+    competitionCreateFeedback(`المستوى ${competitionSelectedLevel} مقفول من الإدارة للمجموعة ديالك.`,true);return;
+  }
+  if(!competitionLevelHasQuestionBank(competitionSelectedLevel)){
+    competitionCreateFeedback(`بنك أسئلة المنافسة للمستوى ${competitionSelectedLevel} مازال ما تضافش.`,true);return;
+  }
   if(window.location.protocol==="file:"||demoMode){
     competitionCreateFeedback("تحدّي النفس الحقيقي كيحتاج حساب تلميذ مسجّل وفتح الموقع عبر HTTPS.",true);
     return;
@@ -4806,7 +4918,7 @@ async function createSelfCompetition(){
     competitionCreateFeedback("سجّل الدخول بحساب التلميذ باش تحفظ أفضل نتيجة ديالك.",true);
     return;
   }
-  const selected=competitionSelectedLessons.filter(index=>(index===10?getStudentLessonAccess(6):getStudentLessonAccess(index)));
+  const selected=competitionSelectedLessons.filter(index=>competitionLessonAccess(index,competitionSelectedLevel));
   if(!selected.length){competitionCreateFeedback("اختار درساً واحداً على الأقل باش تبدا تحدي نفسك.",true);return;}
   const countField=document.getElementById("competitionCustomCount");
   const available=competitionAvailableQuestionCount();
@@ -4824,7 +4936,7 @@ async function createSelfCompetition(){
   competitionCreateFeedback("كنحضّرو التحدي الشخصي وكنجيبو الأسئلة…");
   try{
     const result=await competitionCallable("createSelfChallenge",{
-      lessonIndices:selected,questionCount:requestedCount,testTypes,wholeExercises:competitionWholeExercises
+      level:competitionSelectedLevel,lessonIndices:selected,questionCount:requestedCount,testTypes,wholeExercises:competitionWholeExercises
     });
     const challenge=result.data?.challenge;
     if(!challenge?.id||!Array.isArray(challenge.questions)||!challenge.questions.length){
@@ -6902,16 +7014,32 @@ function renderAdmin(){
     const groupLevel=normalizeGroupCourseLevel(g.level);
     const allowed=Object.values(groupLessonAccessForLevel(g,groupLevel)||{}).filter(Boolean).length;
     const enabledLevels=GROUP_COURSE_LEVELS.filter(level=>groupLevelAccessForLevel(g,level));
-    const enabledLabel=enabledLevels.length?`المستويات المفتوحة: ${enabledLevels.join(" · ")}`:"جميع المستويات مقفولة";
+    const enabledLabel=enabledLevels.length?`المستويات الدراسية: ${enabledLevels.join(" · ")}`:"المستويات الدراسية مقفولة";
+    const competitionEnabledLevels=GROUP_COURSE_LEVELS.filter(level=>groupCompetitionLevelAccessForLevel(g,level));
+    const competitionLabel=competitionEnabledLevels.length?`المنافسة: ${competitionEnabledLevels.join(" · ")}`:"المنافسة مقفولة";
     const groupUsers=users.filter(u=>u.groupId===id);
     const count=groupUsers.length;
     const groupSeconds=groupUsers.reduce((sum,u)=>sum+Number((((cloudActivity[u.id]||{})[today]||{}).totalSeconds)||0),0);
     const groupLogins=groupUsers.reduce((sum,u)=>sum+Number((((cloudActivity[u.id]||{})[today]||{}).loginCount)||0),0);
     const dailyTaskCount=Object.values(g.dailyTasks||{}).filter(task=>task&&task.published===true).length;
-    return `<div class="admin-group-row"><div><strong>${escapeHtml(g.name||id)}</strong><small>${escapeHtml(enabledLabel)} · ${count} طالب · ${allowed}/10 دروس في ${groupLevel} · ${dailyTaskCount} مهام منشورة · ${Number(g.requiredDailyMinutes)||0} دقيقة/اليوم · اليوم: ${formatDuration(groupSeconds)}، ${groupLogins} دخول</small></div><div class="admin-group-row-actions"><button class="tiny-btn primary" data-action="admin-open-group" data-id="${escapeHtml(id)}">فتح المجموعة</button><button class="tiny-btn" data-action="admin-open-group-tasks" data-id="${escapeHtml(id)}">المهام اليومية</button><button class="tiny-btn" data-action="admin-edit-group" data-id="${escapeHtml(id)}">تعديل</button><button class="tiny-btn danger" data-action="admin-delete-group" data-id="${escapeHtml(id)}">حذف</button></div></div>`;
+    return `<div class="admin-group-row"><div><strong>${escapeHtml(g.name||id)}</strong><small>${escapeHtml(enabledLabel)} · ${escapeHtml(competitionLabel)} · ${count} طالب · ${allowed}/10 دروس في ${groupLevel} · ${dailyTaskCount} مهام منشورة · ${Number(g.requiredDailyMinutes)||0} دقيقة/اليوم · اليوم: ${formatDuration(groupSeconds)}، ${groupLogins} دخول</small></div><div class="admin-group-row-actions"><button class="tiny-btn primary" data-action="admin-open-group" data-id="${escapeHtml(id)}">فتح المجموعة</button><button class="tiny-btn" data-action="admin-open-group-tasks" data-id="${escapeHtml(id)}">المهام اليومية</button><button class="tiny-btn" data-action="admin-edit-group" data-id="${escapeHtml(id)}">تعديل</button><button class="tiny-btn danger" data-action="admin-delete-group" data-id="${escapeHtml(id)}">حذف</button></div></div>`;
   }).join(""):`<p class="admin-empty-note">مازال ما كاينة حتى مجموعة. زِد أول مجموعة من النموذج أعلاه.</p>`;
   const editing=editingGroupId && cloudGroups[editingGroupId] ? cloudGroups[editingGroupId] : {};
   const currentGroupLevel=normalizeGroupCourseLevel(adminGroupLevelDraft||editing.level||"A1");
+  const competitionAccessMarkup=`<section class="admin-group-competition-access">
+    <div class="admin-group-competition-access-head"><div><strong>مستويات المنافسة المتاحة لهذه المجموعة</strong><small>هاد الصلاحيات خاصة بالمنافسة فقط، وما كتبدلش صلاحيات الدروس العادية.</small></div><span>🏆</span></div>
+    <div class="admin-group-competition-access-grid">
+      ${GROUP_COURSE_LEVELS.map(level=>{
+        const open=groupCompetitionLevelAccessForLevel(editing,level);
+        return `<label class="admin-competition-level-option">
+          <input type="checkbox" data-group-competition-level-access="${level}" ${open?"checked":""} aria-label="فتح المنافسة في ${level} لهذه المجموعة">
+          <span class="admin-competition-level-option-level">${level}</span>
+          <span class="admin-competition-level-option-state"><b class="is-on">مفتوح</b><b class="is-off">مقفول</b></span>
+        </label>`;
+      }).join("")}
+    </div>
+    <p class="admin-note">كل مجموعة عندها إعداد مستقل. إلا خليتي المستوى مقفول، التلاميذ ديال هاد المجموعة ما غاديش يقدرو ينشئو أو ينضمو لمنافسة فيه.</p>
+  </section>`;
   const groupLessonPanels=GROUP_COURSE_LEVELS.map(level=>{
     const isOpen=level===currentGroupLevel;
     const enabled=groupLevelAccessForLevel(editing,level);
@@ -7233,6 +7361,7 @@ function renderAdmin(){
           <label>اسم المجموعة<input id="groupName" type="text" value="${escapeHtml(editing.name||"")}" placeholder="مثلاً: A1 صباحي"></label>
           <label>الوقت المطلوب يومياً (بالدقائق)<input id="groupRequiredMinutes" type="number" min="0" max="600" value="${editing.requiredDailyMinutes==null?30:Number(editing.requiredDailyMinutes)}"></label>
         </div>
+        ${competitionAccessMarkup}
         <div class="admin-group-level-accordion">
           <div class="admin-group-level-accordion-heading">
             <strong>المستويات الدراسية والدروس المتاحة</strong>
@@ -11358,6 +11487,17 @@ document.addEventListener("click",function(event){
     else studentResultsActiveTool="";
     render();return;
   }
+  else if(action==="competition-level"){
+    const level=normalizeGroupCourseLevel(el.dataset.level||"A1");
+    if(!getStudentCompetitionLevelAccess(level)){
+      showToast(`المستوى ${level} مقفول من الإدارة للمجموعة ديالك.`);return;
+    }
+    competitionSelectedLevel=level;
+    competitionSelectedLessons=[];competitionSelectedTestTypes={};competitionExpandedLesson=null;
+    competitionCreateMessage="";competitionCreateMessageIsError=false;
+    if(!competitionLevelHasQuestionBank(level))showToast(`المستوى ${level} مفتوح، ولكن بنك أسئلة المنافسة ديالو مازال ما تضافش.`);
+    renderCompetition();return;
+  }
   else if(action==="competition-mode"){
     competitionMode=["duel","group","self"].includes(el.dataset.mode)?el.dataset.mode:"duel";
     competitionCreateMessage="";competitionCreateMessageIsError=false;
@@ -11365,7 +11505,8 @@ document.addEventListener("click",function(event){
   }
   else if(action==="competition-lesson"){
     const idx=Number(el.dataset.lesson);
-    if(!Number.isInteger(idx)||idx<0||idx>10||!(idx===10?getStudentLessonAccess(6):getStudentLessonAccess(idx)))return;
+    const levelLessons=competitionLessonsForLevel(competitionSelectedLevel);
+    if(!Number.isInteger(idx)||idx<0||idx>=levelLessons.length||!competitionLessonHasBank(idx,competitionSelectedLevel)||!competitionLessonAccess(idx,competitionSelectedLevel))return;
     if(competitionSelectedLessons.includes(idx)){
       // Clicking a checked lesson removes its tick, including the last lesson.
       competitionSelectedLessons=competitionSelectedLessons.filter(i=>i!==idx);
@@ -11398,12 +11539,12 @@ document.addEventListener("click",function(event){
   else if(action==="competition-types-all"){
     const idx=Number(el.dataset.lesson);
     if(!competitionSelectedLessons.includes(idx))return;
-    competitionSelectedTestTypes[idx]=(competitionTestCatalog[idx]?.types||[]).map((_,i)=>i);
+    competitionSelectedTestTypes[idx]=(competitionCatalogForLevel()[idx]?.types||[]).map((_,i)=>i);
     renderCompetition();return;
   }
   else if(action==="competition-type"){
     const idx=Number(el.dataset.lesson),typeIndex=Number(el.dataset.type);
-    const types=competitionTestCatalog[idx]?.types||[];
+    const types=competitionCatalogForLevel()[idx]?.types||[];
     if(!competitionSelectedLessons.includes(idx)||!Number.isInteger(typeIndex)||!types[typeIndex])return;
     const selected=competitionEnsureTypes(idx).slice();
     if(selected.includes(typeIndex)){
