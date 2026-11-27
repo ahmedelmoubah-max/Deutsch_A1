@@ -157,12 +157,59 @@ const lessons = [
 "Adjektive":[["nah","قريب","Der Bahnhof ist nah.","📍"],["weit","بعيد","Die Schule ist weit.","🗺️"],["schnell","سريع","Der Zug ist schnell.","🚄"]],
 "Präpositionen":[["zu","إلى","Ich gehe zum Arzt.","➡️"],["nach","إلى مدينة / بلد","Wir fahren nach Berlin.","🚆"],["an","عند / على","Die Haltestelle ist an der Ecke.","🚏"]],
 "Grammatik":[["mit + Dativ","مع وسيلة النقل","Ich fahre mit dem Bus.","📘"],["Imperativ","صيغة الأمر","Gehen Sie geradeaus.","➡️"],["Weg fragen","السؤال عن الطريق","Wie komme ich zum Bahnhof?","🗺️"]]}},
-{ name:"Gesundheit & Termine", data:{
-"Verben":[["brauchen","يحتاج","Ich brauche einen Termin.","📅"],["helfen","يساعد","Der Arzt hilft mir.","🩺"],["warten","ينتظر","Ich warte im Wartezimmer.","⏳"]],
-"Nomen":[["der Arzt","الطبيب","Der Arzt ist freundlich.","🩺"],["der Termin","الموعد","Mein Termin ist um zehn Uhr.","📅"],["der Kopf","الرأس","Mein Kopf tut weh.","🤕"]],
-"Adjektive":[["krank","مريض","Heute bin ich krank.","🤒"],["gesund","بصحة جيدة","Obst ist gesund.","🍎"],["frei","فارغ / متاح","Ist morgen ein Termin frei?","🗓️"]],
-"Präpositionen":[["zum","إلى الـ","Ich gehe zum Arzt.","➡️"],["seit","منذ","Ich bin seit zwei Tagen krank.","📆"],["um","على الساعة","Der Termin ist um elf Uhr.","🕚"]],
-"Grammatik":[["sollen","ينبغي / خاص","Sie sollen viel Wasser trinken.","📘"],["Schmerzen haben","عنده ألم","Ich habe Kopfschmerzen.","🤕"],["Imperativ","صيغة الأمر","Nehmen Sie bitte Platz.","🪑"]]}}
+{ name:"Urlaub, Jahreszeiten und Erlebnisse", data:{
+"Verben":[
+["reisen","يسافر","Ich reise im Sommer nach Italien.","✈️"],
+["fahren","يسافر / يذهب بوسيلة نقل","Wir fahren ans Meer.","🚗"],
+["schwimmen","يسبح","Ich schwimme im Meer.","🏊"],
+["wandern","يتنزه مشياً","Wir wandern in den Bergen.","🥾"],
+["besuchen","يزور","Ich besuche ein Museum.","🏛️"],
+["machen","يفعل / يقوم بـ","Was machst du im Urlaub?","🧳"],
+["erleben","يعيش تجربة","Ich erlebe viele neue Dinge.","✨"],
+["wünschen","يتمنى","Ich würde gern nach Rom reisen.","💭"]
+],
+"Nomen":[
+["der Urlaub","العطلة","Wir machen im Sommer Urlaub.","🏖️"],
+["die Jahreszeit","الفصل","Welche Jahreszeit magst du?","🍂"],
+["der Frühling","الربيع","Im Frühling blühen viele Blumen.","🌸"],
+["der Sommer","الصيف","Im Sommer ist es warm.","☀️"],
+["der Herbst","الخريف","Im Herbst sind die Bäume bunt.","🍁"],
+["der Winter","الشتاء","Im Winter ist es kalt.","❄️"],
+["das Meer","البحر","Ich fahre ans Meer.","🌊"],
+["der Strand","الشاطئ","Wir liegen am Strand.","🏖️"],
+["die Berge","الجبال","Ich wandere gern in den Bergen.","⛰️"],
+["der Wald","الغابة","Der Wald ist schön.","🌲"],
+["der See","البحيرة","Wir schwimmen im See.","🏞️"],
+["die Insel","الجزيرة","Ich möchte auf einer Insel Urlaub machen.","🏝️"],
+["der Fluss","النهر","Der Fluss ist lang.","🛶"],
+["das Museum","المتحف","Wir besuchen ein Museum.","🏛️"],
+["die Sehenswürdigkeit","المعلم السياحي","Die Stadt hat viele Sehenswürdigkeiten.","📸"],
+["das Erlebnis","التجربة","Das war ein schönes Erlebnis.","✨"]
+],
+"Adjektive":[
+["warm","دافئ","Im Sommer ist es warm.","🌤️"],
+["sonnig","مشمس","Heute ist es sonnig.","☀️"],
+["kalt","بارد","Im Winter ist es kalt.","🧊"],
+["schön","جميل","Der Strand ist schön.","🌅"],
+["interessant","مثير للاهتمام","Das Museum ist interessant.","🏛️"],
+["neu","جديد","Ich möchte neue Orte entdecken.","🧭"],
+["bunt","متعدد الألوان","Im Herbst sind die Blätter bunt.","🍁"]
+],
+"Präpositionen":[
+["nach","إلى مدينة أو بلد","Ich fahre nach Rom.","➡️"],
+["in","في مدينة أو بلد","Ich bin im Sommer in Spanien.","📍"],
+["auf","في جزيرة","Wir machen Urlaub auf Sylt.","🏝️"],
+["im","في فصل أو شهر","Im Winter fahre ich in die Berge.","❄️"]
+],
+"Grammatik":[
+["Ich war noch nie ...","لم يسبق لي أن ...","Ich war noch nie in Rom.","📘"],
+["Konjunktiv II – würde","صيغة التمني بـ würde","Ich würde gern nach Italien reisen.","💭"],
+["Perfekt mit haben","الماضي مع haben","Ich habe ein Museum besucht.","📖"],
+["Perfekt mit sein","الماضي مع sein","Ich bin nach Rom gefahren.","✈️"],
+["nach + Stadt/Land","nach مع المدن والبلدان","Wir fahren nach Paris.","🗺️"],
+["in + Stadt/Land","in مع المكان","Ich bin in Österreich.","📍"],
+["im + Jahreszeit/Monat","im مع الفصول والشهور","Im Frühling ist es warm.","🌸"]
+]}}
 ];
 
 
@@ -236,7 +283,7 @@ const pronouns = [
   ["wir", "نحن"], ["ihr", "أنتم"], ["sie / Sie", "هم / حضرتك"]
 ];
 
-const dialogues = [{"title":"Hallo & Herkunft","intro":"Lerne, dich vorzustellen, nach dem Befinden, der Herkunft, dem Wohnort, dem Alter und den Sprachen zu fragen.","lines":[["Sara","Hallo! Ich heiße Sara. Wie heißt du?","سلام! سميتي سارة. شنو سميتك؟"],["Adam","Hallo Sara, ich heiße Adam. Wie geht's dir?","سلام سارة، سميتي آدم. كيداير؟"],["Sara","Mir geht's gut, danke. Und dir?","أنا بخير، شكراً. ونتا؟"],["Adam","Auch gut, danke. Woher kommst du?","حتى أنا بخير، شكراً. منين نتي؟"],["Sara","Ich komme aus Marokko, aus Tanger. Und du?","أنا من المغرب، من طنجة. ونتا؟"],["Adam","Ich komme aus Deutschland, aber ich wohne jetzt in Rabat.","أنا من ألمانيا، ولكن دابا ساكن فالرباط."],["Sara","Wo wohnst du genau?","فين ساكن بالضبط؟"],["Adam","Ich wohne in einer kleinen Wohnung im Zentrum.","ساكن فشقة صغيرة فالوسط ديال المدينة."],["Sara","Wie alt bist du?","شحال فعمرك؟"],["Adam","Ich bin 24 Jahre alt. Und du?","عندي 24 عام. ونتي؟"],["Sara","Ich bin 22 Jahre alt. Welche Sprachen sprichst du?","عندي 22 عام. شنو اللغات اللي كتهضر؟"],["Adam","Ich spreche Arabisch, Deutsch und ein bisschen Französisch.","كنهضر العربية والألمانية وشوية ديال الفرنسية."],["Sara","Sehr schön! Freut mich, dich kennenzulernen.","زوين! فرحانة بالتعارف معاك."],["Adam","Mich auch. Tschüss, bis bald!","حتى أنا. بالسلامة، حتى لمرة الجاية!"]]},{"title":"Meine Familie","intro":"Stelle deine Familie vor. Sprich über Eltern, Geschwister, Großeltern, Alter und Wohnort.","lines":[["Lina","Hallo Omar! Wie geht es dir?","سلام عمر! كيداير؟"],["Omar","Gut, danke. Und dir?","بخير، شكراً. ونتي؟"],["Lina","Auch gut. Wie groß ist deine Familie?","حتى أنا بخير. شحال كبيرة العائلة ديالك؟"],["Omar","Wir sind sechs Personen: meine Eltern, meine drei Geschwister und ich.","حنا ستة: الوالدين، وثلاثة ديال الخوت وأنا."],["Lina","Wie heißt deine Mutter?","شنو سميت الوالدة ديالك؟"],["Omar","Meine Mutter heißt Amina und mein Vater heißt Hassan.","الوالدة سميتها أمينة والوالد سميتو حسن."],["Lina","Hast du Brüder oder Schwestern?","واش عندك خوت ولا خواتات؟"],["Omar","Ich habe zwei Brüder und eine Schwester. Meine Schwester heißt Salma.","عندي جوج ديال الخوت وخت وحدة. ختي سميتها سلمى."],["Lina","Wie alt ist Salma?","شحال فعمر سلمى؟"],["Omar","Sie ist 16 Jahre alt. Mein älterer Bruder ist 22.","عندها 16 عام. خويا الكبير عندو 22 عام."],["Lina","Wohnst du bei deinen Eltern?","واش ساكن مع الوالدين ديالك؟"],["Omar","Ja, wir wohnen zusammen in Tanger. Meine Großeltern wohnen in Tétouan.","إيه، ساكنين مجموعين فطنجة. الجدود ساكنين فتطوان."],["Lina","Besuchst du deine Großeltern oft?","واش كتزور الجدود بزاف؟"],["Omar","Ja, wir besuchen sie jeden Sonntag. Wir essen zusammen und sprechen viel.","إيه، كنزوروهم كل نهار الأحد. كناكلو مجموعين وكنهضرو بزاف."],["Lina","Das ist schön. Familie ist sehr wichtig!","هادي حاجة زوينة. العائلة مهمة بزاف!"],["Omar","Ja, ich liebe meine Familie. Bis bald, Lina!","إيه، كنبغي العائلة ديالي. حتى لمرة الجاية لينا!"]]},{"title":"Meine Wohnung","intro":"Beschreibe eine Wohnung, frage nach Zimmern und übe Ortsangaben mit auf, unter und neben.","lines":[["Mina","Hallo! Suchst du eine Wohnung?","سلام! واش كتقلب على شقة؟"],["Youssef","Ja, ich suche eine kleine Wohnung in der Stadt.","إيه، كنقلب على شقة صغيرة فالمدينة."],["Mina","Wie viele Zimmer brauchst du?","شحال من بيت محتاج؟"],["Youssef","Zwei Zimmer und eine Küche. Gibt es einen Balkon?","جوج ديال البيوت وكوزينة. واش كاين بالكون؟"],["Mina","Ja, es gibt einen kleinen Balkon. Die Wohnung ist hell.","إيه، كاين بالكون صغير. الشقة مضوية."],["Youssef","Wo steht der Tisch?","فين كاينة الطابلة؟"],["Mina","Der Tisch steht neben dem Fenster.","الطابلة كاينة حدا الشرجم."],["Youssef","Und wo ist die Tasche?","وفين كاينة الشنطة؟"],["Mina","Sie ist unter dem Stuhl. Das Buch liegt auf dem Tisch.","كاينة تحت الكرسي. الكتاب فوق الطابلة."],["Youssef","Die Wohnung gefällt mir. Wie viel kostet sie?","عجبتني الشقة. بشحال الكراء ديالها؟"],["Mina","Sie kostet 400 Euro im Monat.","الكراء ديالها 400 أورو فالشهر."],["Youssef","Danke! Ich möchte die Wohnung gern sehen.","شكراً! بغيت نشوف الشقة."]]},{"title":"Essen und Trinken","intro":"Bestelle Essen und Getränke, sage, was du gern magst, und übe höfliche Wünsche.","lines":[["Kellner","Guten Tag! Was möchten Sie trinken?","نهارك سعيد! شنو بغيتي تشرب؟"],["Amir","Ich möchte ein Glas Wasser, bitte.","بغيت كاس ديال الما، عافاك."],["Kellner","Gern. Möchten Sie auch etwas essen?","بكل سرور. واش بغيتي حتى شي حاجة تاكل؟"],["Amir","Ja, ich möchte ein Sandwich und einen Salat.","إيه، بغيت ساندويتش وسلطة."],["Kellner","Möchten Sie Käse im Sandwich?","واش بغيتي الفرماج فالساندويتش؟"],["Amir","Ja, bitte. Aber ohne Zwiebeln.","إيه، عافاك. ولكن بلا بصلة."],["Kellner","Und möchten Sie Kaffee oder Tee?","وبغيتي القهوة ولا أتاي؟"],["Amir","Einen Tee mit Minze, bitte. Ich trinke gern Tee.","أتاي بالنعناع، عافاك. كنعجبني نشرب أتاي."],["Kellner","Natürlich. Sonst noch etwas?","بالطبع. شي حاجة أخرى؟"],["Amir","Nein, danke. Das ist alles.","لا، شكراً. هادا كلشي."],["Kellner","Hier bitte. Guten Appetit!","تفضل. بالصحة والراحة!"],["Amir","Danke schön!","شكراً بزاف!"]]},{"title":"Mein Alltag","intro":"Erzähle über Uhrzeiten, Arbeit, Deutschkurs und deine täglichen Gewohnheiten.","lines":[["Nora","Guten Morgen, Sami! Wann stehst du auf?","صباح الخير سامي! فوقاش كتفيق؟"],["Sami","Ich stehe um sieben Uhr auf.","كنفيق مع السبعة ديال الصباح."],["Nora","Was machst du am Morgen?","شنو كتدير فالصباح؟"],["Sami","Ich frühstücke und fahre um acht Uhr zur Arbeit.","كنفطر وكنمشي للخدمة مع الثمانية."],["Nora","Wo arbeitest du?","فين كتخدم؟"],["Sami","Ich arbeite von acht bis vier in einem Büro.","كنخدم من الثمانية حتى الربعة فمكتب."],["Nora","Lernst du auch Deutsch?","واش حتى نتا كتقرا الألمانية؟"],["Sami","Ja, mein Deutschkurs beginnt um sechs Uhr am Abend.","إيه، درس الألمانية ديالي كيبدا مع الستة ديال العشية."],["Nora","Bist du danach müde?","واش كتكون عيان من بعد؟"],["Sami","Ja, ein bisschen. Ich muss aber noch Hausaufgaben machen.","إيه، شوية. ولكن خاصني مازال ندير الواجب."],["Nora","Wann gehst du schlafen?","فوقاش كتمشي تنعس؟"],["Sami","Meistens um elf Uhr. Und du?","غالباً مع الحداش. ونتي؟"],["Nora","Ich schlafe um halb elf. Bis morgen!","كننعس مع العشرة ونص. حتى لغدا!"]]},{"title":"Freizeit & Hobbys","intro":"Frage nach Hobbys und Plänen und benutze gern und können.","lines":[["Adam","Hallo Lina! Was machst du gern in deiner Freizeit?","سلام لينا! شنو كيعجبك ديري فوقت الفراغ؟"],["Lina","Ich lese gern Bücher und höre Musik.","كنحب نقرا الكتب ونسمع الموسيقى."],["Adam","Machst du auch Sport?","واش كتديري حتى الرياضة؟"],["Lina","Ja, ich spiele Volleyball. Kannst du schwimmen?","إيه، كنلعب الكرة الطائرة. واش كتقدر تعوم؟"],["Adam","Ja, ich kann gut schwimmen, aber ich spiele nicht gern Volleyball.","إيه، كنعرف نعوم مزيان، ولكن ما كنعجبنيش نلعب الكرة الطائرة."],["Lina","Was machst du am Wochenende?","شنو كتدير فنهاية الأسبوع؟"],["Adam","Am Samstag spiele ich Fußball mit meinen Freunden.","نهار السبت كنلعب الكرة مع صحابي."],["Lina","Und am Sonntag?","ونهار الأحد؟"],["Adam","Am Sonntag lese ich oder sehe einen Film.","نهار الأحد كنقرا ولا كنتفرج فشي فيلم."],["Lina","Möchtest du am Samstag mit uns schwimmen gehen?","واش بغيتي تجي تعوم معانا نهار السبت؟"],["Adam","Ja, gern! Um wie viel Uhr treffen wir uns?","إيه، بكل سرور! مع شحال نتلاقاو؟"],["Lina","Um zehn Uhr vor dem Schwimmbad.","مع العشرة قدام المسبح."],["Adam","Super! Bis Samstag!","زوين! حتى للسبت!"]]},{"title":"Einkaufen","intro":"Frage nach Preisen, Mengen und Farben und bezahle im Geschäft.","lines":[["Verkäuferin","Guten Tag! Kann ich Ihnen helfen?","نهارك سعيد! نقدر نعاونك؟"],["Kundin","Ja, bitte. Wie viel kostet diese Tasche?","إيه، عافاك. بشحال هاد الشنطة؟"],["Verkäuferin","Sie kostet 25 Euro.","الثمن ديالها 25 أورو."],["Kundin","Oh, das ist ein bisschen teuer. Haben Sie eine billigere Tasche?","أوه، شوية غالية. واش عندكم شنطة أرخص؟"],["Verkäuferin","Ja, diese blaue Tasche kostet nur 15 Euro.","إيه، هاد الشنطة الزرقا ثمنها غير 15 أورو."],["Kundin","Die gefällt mir. Haben Sie auch Äpfel?","عجبتني. واش عندكم حتى التفاح؟"],["Verkäuferin","Ja. Ein Kilo Äpfel kostet zwei Euro.","إيه. كيلو ديال التفاح بجوج أورو."],["Kundin","Dann nehme ich eine Tasche und ein Kilo Äpfel.","إوا ناخد شنطة وكيلو ديال التفاح."],["Verkäuferin","Das macht zusammen 17 Euro.","المجموع هو 17 أورو."],["Kundin","Kann ich mit Karte bezahlen?","نقدر نخلص بالبطاقة؟"],["Verkäuferin","Ja, natürlich.","إيه، بالطبع."],["Kundin","Danke schön. Auf Wiedersehen!","شكراً بزاف. إلى اللقاء!"],["Verkäuferin","Auf Wiedersehen und einen schönen Tag!","إلى اللقاء ونهار سعيد!"]]},{"title":"Arbeit & Beruf","intro":"Sprich über deinen Beruf, deinen Arbeitsplatz, deine Erfahrung und deine Wünsche.","lines":[["Frau Klein","Guten Morgen. Was sind Sie von Beruf?","صباح الخير. شنو هي المهنة ديالك؟"],["Youssef","Ich bin Fahrer. Und Sie?","أنا سائق. ونتي؟"],["Frau Klein","Ich arbeite als Bürokauffrau in einer Firma.","كنخدم كموظفة إدارية فشركة."],["Youssef","Ich suche gerade eine Arbeit in Deutschland.","دابا كنقلب على خدمة فألمانيا."],["Frau Klein","Haben Sie schon Erfahrung?","واش عندك تجربة من قبل؟"],["Youssef","Ja, ich arbeite seit drei Jahren als Fahrer.","إيه، كنخدم كسائق من ثلاث سنين."],["Frau Klein","Sind Sie pünktlich und zuverlässig?","واش كتجي فالوقت ويمكن الاعتماد عليك؟"],["Youssef","Ja, ich bin pünktlich und fleißig.","إيه، كنجي فالوقت وكنخدم بجدية."],["Frau Klein","Warum möchten Sie bei unserer Firma arbeiten?","علاش بغيتي تخدم فالشركة ديالنا؟"],["Youssef","Ich möchte meine Deutschkenntnisse verbessern und in Ihrem Team arbeiten.","بغيت نحسن الألمانية ديالي ونخدم مع الفريق ديالكم."],["Frau Klein","Gut. Bitte schicken Sie uns Ihren Lebenslauf.","مزيان. عافاك صيفط لينا السيرة الذاتية ديالك."],["Youssef","Sehr gern. Vielen Dank für das Gespräch.","بكل سرور. شكراً بزاف على المقابلة."],["Frau Klein","Gern. Auf Wiedersehen!","بكل سرور. إلى اللقاء!"]]},{"title":"Stadt & Verkehr","intro":"Frage nach dem Weg und übe Verkehrsmittel, Richtungen und einfache Anweisungen.","lines":[["Touristin","Entschuldigung, wie komme ich zum Bahnhof?","سمح ليا، كيفاش نوصل لمحطة القطار؟"],["Passant","Gehen Sie hier geradeaus.","سير نيشان من هنا."],["Touristin","Wie weit ist der Bahnhof?","واش المحطة بعيدة؟"],["Passant","Nein, sie ist ganz nah. Gehen Sie bis zur Ampel.","لا، قريبة بزاف. سير حتى للضو."],["Touristin","Und dann?","ومن بعد؟"],["Passant","Biegen Sie links ab. Der Bahnhof ist neben der Bank.","دور على اليسار. المحطة حدا البنك."],["Touristin","Kann ich auch mit dem Bus fahren?","واش نقدر حتى نمشي بالطوبيس؟"],["Passant","Ja. Nehmen Sie den Bus Nummer fünf.","إيه. خد الطوبيس رقم خمسة."],["Touristin","Wo ist die Haltestelle?","فين كاينة محطة الطوبيس؟"],["Passant","Sie ist an der Ecke, gegenüber dem Café.","كاينة فالزاوية، مقابلة مع القهوة."],["Touristin","Vielen Dank für Ihre Hilfe!","شكراً بزاف على المساعدة ديالك!"],["Passant","Gern geschehen. Gute Fahrt!","بلا جميل. رحلة سعيدة!"]]},{"title":"Gesundheit & Termine","intro":"Vereinbare einen Termin, beschreibe Beschwerden und verstehe einfache Ratschläge.","lines":[["Mitarbeiterin","Guten Tag, Praxis Dr. Weber. Was kann ich für Sie tun?","نهارك سعيد، عيادة الدكتور فيبر. كيفاش نقدر نعاونك؟"],["Patient","Guten Tag. Ich brauche einen Termin beim Arzt.","نهارك سعيد. محتاج موعد عند الطبيب."],["Mitarbeiterin","Was fehlt Ihnen?","شنو كتحس؟"],["Patient","Ich bin krank und mein Kopf tut weh.","أنا مريض وراسي كيوجعني."],["Mitarbeiterin","Seit wann haben Sie Schmerzen?","من شحال هادي والوجع عندك؟"],["Patient","Seit zwei Tagen. Ich bin auch sehr müde.","من يومين. وحتى عيان بزاف."],["Mitarbeiterin","Haben Sie morgen um zehn Uhr Zeit?","واش عندك الوقت غدا مع العشرة؟"],["Patient","Ja, das passt. Vielen Dank.","إيه، مناسب. شكراً بزاف."],["Arzt","Guten Morgen. Was fehlt Ihnen?","صباح الخير. شنو كتحس؟"],["Patient","Ich habe Kopfschmerzen.","عندي الصداع."],["Arzt","Trinken Sie viel Wasser und ruhen Sie sich aus.","شرب بزاف ديال الما وارتاح."],["Patient","Muss ich Medikamente nehmen?","واش خاصني ناخد الدوا؟"],["Arzt","Ich untersuche Sie zuerst. Bitte warten Sie einen Moment.","غادي نفحصك اللول. عافاك تسنى شوية."],["Patient","In Ordnung. Danke, Herr Doktor.","حاضر. شكراً دكتور."]]}];
+const dialogues = [{"title":"Hallo & Herkunft","intro":"Lerne, dich vorzustellen, nach dem Befinden, der Herkunft, dem Wohnort, dem Alter und den Sprachen zu fragen.","lines":[["Sara","Hallo! Ich heiße Sara. Wie heißt du?","سلام! سميتي سارة. شنو سميتك؟"],["Adam","Hallo Sara, ich heiße Adam. Wie geht's dir?","سلام سارة، سميتي آدم. كيداير؟"],["Sara","Mir geht's gut, danke. Und dir?","أنا بخير، شكراً. ونتا؟"],["Adam","Auch gut, danke. Woher kommst du?","حتى أنا بخير، شكراً. منين نتي؟"],["Sara","Ich komme aus Marokko, aus Tanger. Und du?","أنا من المغرب، من طنجة. ونتا؟"],["Adam","Ich komme aus Deutschland, aber ich wohne jetzt in Rabat.","أنا من ألمانيا، ولكن دابا ساكن فالرباط."],["Sara","Wo wohnst du genau?","فين ساكن بالضبط؟"],["Adam","Ich wohne in einer kleinen Wohnung im Zentrum.","ساكن فشقة صغيرة فالوسط ديال المدينة."],["Sara","Wie alt bist du?","شحال فعمرك؟"],["Adam","Ich bin 24 Jahre alt. Und du?","عندي 24 عام. ونتي؟"],["Sara","Ich bin 22 Jahre alt. Welche Sprachen sprichst du?","عندي 22 عام. شنو اللغات اللي كتهضر؟"],["Adam","Ich spreche Arabisch, Deutsch und ein bisschen Französisch.","كنهضر العربية والألمانية وشوية ديال الفرنسية."],["Sara","Sehr schön! Freut mich, dich kennenzulernen.","زوين! فرحانة بالتعارف معاك."],["Adam","Mich auch. Tschüss, bis bald!","حتى أنا. بالسلامة، حتى لمرة الجاية!"]]},{"title":"Meine Familie","intro":"Stelle deine Familie vor. Sprich über Eltern, Geschwister, Großeltern, Alter und Wohnort.","lines":[["Lina","Hallo Omar! Wie geht es dir?","سلام عمر! كيداير؟"],["Omar","Gut, danke. Und dir?","بخير، شكراً. ونتي؟"],["Lina","Auch gut. Wie groß ist deine Familie?","حتى أنا بخير. شحال كبيرة العائلة ديالك؟"],["Omar","Wir sind sechs Personen: meine Eltern, meine drei Geschwister und ich.","حنا ستة: الوالدين، وثلاثة ديال الخوت وأنا."],["Lina","Wie heißt deine Mutter?","شنو سميت الوالدة ديالك؟"],["Omar","Meine Mutter heißt Amina und mein Vater heißt Hassan.","الوالدة سميتها أمينة والوالد سميتو حسن."],["Lina","Hast du Brüder oder Schwestern?","واش عندك خوت ولا خواتات؟"],["Omar","Ich habe zwei Brüder und eine Schwester. Meine Schwester heißt Salma.","عندي جوج ديال الخوت وخت وحدة. ختي سميتها سلمى."],["Lina","Wie alt ist Salma?","شحال فعمر سلمى؟"],["Omar","Sie ist 16 Jahre alt. Mein älterer Bruder ist 22.","عندها 16 عام. خويا الكبير عندو 22 عام."],["Lina","Wohnst du bei deinen Eltern?","واش ساكن مع الوالدين ديالك؟"],["Omar","Ja, wir wohnen zusammen in Tanger. Meine Großeltern wohnen in Tétouan.","إيه، ساكنين مجموعين فطنجة. الجدود ساكنين فتطوان."],["Lina","Besuchst du deine Großeltern oft?","واش كتزور الجدود بزاف؟"],["Omar","Ja, wir besuchen sie jeden Sonntag. Wir essen zusammen und sprechen viel.","إيه، كنزوروهم كل نهار الأحد. كناكلو مجموعين وكنهضرو بزاف."],["Lina","Das ist schön. Familie ist sehr wichtig!","هادي حاجة زوينة. العائلة مهمة بزاف!"],["Omar","Ja, ich liebe meine Familie. Bis bald, Lina!","إيه، كنبغي العائلة ديالي. حتى لمرة الجاية لينا!"]]},{"title":"Meine Wohnung","intro":"Beschreibe eine Wohnung, frage nach Zimmern und übe Ortsangaben mit auf, unter und neben.","lines":[["Mina","Hallo! Suchst du eine Wohnung?","سلام! واش كتقلب على شقة؟"],["Youssef","Ja, ich suche eine kleine Wohnung in der Stadt.","إيه، كنقلب على شقة صغيرة فالمدينة."],["Mina","Wie viele Zimmer brauchst du?","شحال من بيت محتاج؟"],["Youssef","Zwei Zimmer und eine Küche. Gibt es einen Balkon?","جوج ديال البيوت وكوزينة. واش كاين بالكون؟"],["Mina","Ja, es gibt einen kleinen Balkon. Die Wohnung ist hell.","إيه، كاين بالكون صغير. الشقة مضوية."],["Youssef","Wo steht der Tisch?","فين كاينة الطابلة؟"],["Mina","Der Tisch steht neben dem Fenster.","الطابلة كاينة حدا الشرجم."],["Youssef","Und wo ist die Tasche?","وفين كاينة الشنطة؟"],["Mina","Sie ist unter dem Stuhl. Das Buch liegt auf dem Tisch.","كاينة تحت الكرسي. الكتاب فوق الطابلة."],["Youssef","Die Wohnung gefällt mir. Wie viel kostet sie?","عجبتني الشقة. بشحال الكراء ديالها؟"],["Mina","Sie kostet 400 Euro im Monat.","الكراء ديالها 400 أورو فالشهر."],["Youssef","Danke! Ich möchte die Wohnung gern sehen.","شكراً! بغيت نشوف الشقة."]]},{"title":"Essen und Trinken","intro":"Bestelle Essen und Getränke, sage, was du gern magst, und übe höfliche Wünsche.","lines":[["Kellner","Guten Tag! Was möchten Sie trinken?","نهارك سعيد! شنو بغيتي تشرب؟"],["Amir","Ich möchte ein Glas Wasser, bitte.","بغيت كاس ديال الما، عافاك."],["Kellner","Gern. Möchten Sie auch etwas essen?","بكل سرور. واش بغيتي حتى شي حاجة تاكل؟"],["Amir","Ja, ich möchte ein Sandwich und einen Salat.","إيه، بغيت ساندويتش وسلطة."],["Kellner","Möchten Sie Käse im Sandwich?","واش بغيتي الفرماج فالساندويتش؟"],["Amir","Ja, bitte. Aber ohne Zwiebeln.","إيه، عافاك. ولكن بلا بصلة."],["Kellner","Und möchten Sie Kaffee oder Tee?","وبغيتي القهوة ولا أتاي؟"],["Amir","Einen Tee mit Minze, bitte. Ich trinke gern Tee.","أتاي بالنعناع، عافاك. كنعجبني نشرب أتاي."],["Kellner","Natürlich. Sonst noch etwas?","بالطبع. شي حاجة أخرى؟"],["Amir","Nein, danke. Das ist alles.","لا، شكراً. هادا كلشي."],["Kellner","Hier bitte. Guten Appetit!","تفضل. بالصحة والراحة!"],["Amir","Danke schön!","شكراً بزاف!"]]},{"title":"Mein Alltag","intro":"Erzähle über Uhrzeiten, Arbeit, Deutschkurs und deine täglichen Gewohnheiten.","lines":[["Nora","Guten Morgen, Sami! Wann stehst du auf?","صباح الخير سامي! فوقاش كتفيق؟"],["Sami","Ich stehe um sieben Uhr auf.","كنفيق مع السبعة ديال الصباح."],["Nora","Was machst du am Morgen?","شنو كتدير فالصباح؟"],["Sami","Ich frühstücke und fahre um acht Uhr zur Arbeit.","كنفطر وكنمشي للخدمة مع الثمانية."],["Nora","Wo arbeitest du?","فين كتخدم؟"],["Sami","Ich arbeite von acht bis vier in einem Büro.","كنخدم من الثمانية حتى الربعة فمكتب."],["Nora","Lernst du auch Deutsch?","واش حتى نتا كتقرا الألمانية؟"],["Sami","Ja, mein Deutschkurs beginnt um sechs Uhr am Abend.","إيه، درس الألمانية ديالي كيبدا مع الستة ديال العشية."],["Nora","Bist du danach müde?","واش كتكون عيان من بعد؟"],["Sami","Ja, ein bisschen. Ich muss aber noch Hausaufgaben machen.","إيه، شوية. ولكن خاصني مازال ندير الواجب."],["Nora","Wann gehst du schlafen?","فوقاش كتمشي تنعس؟"],["Sami","Meistens um elf Uhr. Und du?","غالباً مع الحداش. ونتي؟"],["Nora","Ich schlafe um halb elf. Bis morgen!","كننعس مع العشرة ونص. حتى لغدا!"]]},{"title":"Freizeit & Hobbys","intro":"Frage nach Hobbys und Plänen und benutze gern und können.","lines":[["Adam","Hallo Lina! Was machst du gern in deiner Freizeit?","سلام لينا! شنو كيعجبك ديري فوقت الفراغ؟"],["Lina","Ich lese gern Bücher und höre Musik.","كنحب نقرا الكتب ونسمع الموسيقى."],["Adam","Machst du auch Sport?","واش كتديري حتى الرياضة؟"],["Lina","Ja, ich spiele Volleyball. Kannst du schwimmen?","إيه، كنلعب الكرة الطائرة. واش كتقدر تعوم؟"],["Adam","Ja, ich kann gut schwimmen, aber ich spiele nicht gern Volleyball.","إيه، كنعرف نعوم مزيان، ولكن ما كنعجبنيش نلعب الكرة الطائرة."],["Lina","Was machst du am Wochenende?","شنو كتدير فنهاية الأسبوع؟"],["Adam","Am Samstag spiele ich Fußball mit meinen Freunden.","نهار السبت كنلعب الكرة مع صحابي."],["Lina","Und am Sonntag?","ونهار الأحد؟"],["Adam","Am Sonntag lese ich oder sehe einen Film.","نهار الأحد كنقرا ولا كنتفرج فشي فيلم."],["Lina","Möchtest du am Samstag mit uns schwimmen gehen?","واش بغيتي تجي تعوم معانا نهار السبت؟"],["Adam","Ja, gern! Um wie viel Uhr treffen wir uns?","إيه، بكل سرور! مع شحال نتلاقاو؟"],["Lina","Um zehn Uhr vor dem Schwimmbad.","مع العشرة قدام المسبح."],["Adam","Super! Bis Samstag!","زوين! حتى للسبت!"]]},{"title":"Einkaufen","intro":"Frage nach Preisen, Mengen und Farben und bezahle im Geschäft.","lines":[["Verkäuferin","Guten Tag! Kann ich Ihnen helfen?","نهارك سعيد! نقدر نعاونك؟"],["Kundin","Ja, bitte. Wie viel kostet diese Tasche?","إيه، عافاك. بشحال هاد الشنطة؟"],["Verkäuferin","Sie kostet 25 Euro.","الثمن ديالها 25 أورو."],["Kundin","Oh, das ist ein bisschen teuer. Haben Sie eine billigere Tasche?","أوه، شوية غالية. واش عندكم شنطة أرخص؟"],["Verkäuferin","Ja, diese blaue Tasche kostet nur 15 Euro.","إيه، هاد الشنطة الزرقا ثمنها غير 15 أورو."],["Kundin","Die gefällt mir. Haben Sie auch Äpfel?","عجبتني. واش عندكم حتى التفاح؟"],["Verkäuferin","Ja. Ein Kilo Äpfel kostet zwei Euro.","إيه. كيلو ديال التفاح بجوج أورو."],["Kundin","Dann nehme ich eine Tasche und ein Kilo Äpfel.","إوا ناخد شنطة وكيلو ديال التفاح."],["Verkäuferin","Das macht zusammen 17 Euro.","المجموع هو 17 أورو."],["Kundin","Kann ich mit Karte bezahlen?","نقدر نخلص بالبطاقة؟"],["Verkäuferin","Ja, natürlich.","إيه، بالطبع."],["Kundin","Danke schön. Auf Wiedersehen!","شكراً بزاف. إلى اللقاء!"],["Verkäuferin","Auf Wiedersehen und einen schönen Tag!","إلى اللقاء ونهار سعيد!"]]},{"title":"Arbeit & Beruf","intro":"Sprich über deinen Beruf, deinen Arbeitsplatz, deine Erfahrung und deine Wünsche.","lines":[["Frau Klein","Guten Morgen. Was sind Sie von Beruf?","صباح الخير. شنو هي المهنة ديالك؟"],["Youssef","Ich bin Fahrer. Und Sie?","أنا سائق. ونتي؟"],["Frau Klein","Ich arbeite als Bürokauffrau in einer Firma.","كنخدم كموظفة إدارية فشركة."],["Youssef","Ich suche gerade eine Arbeit in Deutschland.","دابا كنقلب على خدمة فألمانيا."],["Frau Klein","Haben Sie schon Erfahrung?","واش عندك تجربة من قبل؟"],["Youssef","Ja, ich arbeite seit drei Jahren als Fahrer.","إيه، كنخدم كسائق من ثلاث سنين."],["Frau Klein","Sind Sie pünktlich und zuverlässig?","واش كتجي فالوقت ويمكن الاعتماد عليك؟"],["Youssef","Ja, ich bin pünktlich und fleißig.","إيه، كنجي فالوقت وكنخدم بجدية."],["Frau Klein","Warum möchten Sie bei unserer Firma arbeiten?","علاش بغيتي تخدم فالشركة ديالنا؟"],["Youssef","Ich möchte meine Deutschkenntnisse verbessern und in Ihrem Team arbeiten.","بغيت نحسن الألمانية ديالي ونخدم مع الفريق ديالكم."],["Frau Klein","Gut. Bitte schicken Sie uns Ihren Lebenslauf.","مزيان. عافاك صيفط لينا السيرة الذاتية ديالك."],["Youssef","Sehr gern. Vielen Dank für das Gespräch.","بكل سرور. شكراً بزاف على المقابلة."],["Frau Klein","Gern. Auf Wiedersehen!","بكل سرور. إلى اللقاء!"]]},{"title":"Stadt & Verkehr","intro":"Frage nach dem Weg und übe Verkehrsmittel, Richtungen und einfache Anweisungen.","lines":[["Touristin","Entschuldigung, wie komme ich zum Bahnhof?","سمح ليا، كيفاش نوصل لمحطة القطار؟"],["Passant","Gehen Sie hier geradeaus.","سير نيشان من هنا."],["Touristin","Wie weit ist der Bahnhof?","واش المحطة بعيدة؟"],["Passant","Nein, sie ist ganz nah. Gehen Sie bis zur Ampel.","لا، قريبة بزاف. سير حتى للضو."],["Touristin","Und dann?","ومن بعد؟"],["Passant","Biegen Sie links ab. Der Bahnhof ist neben der Bank.","دور على اليسار. المحطة حدا البنك."],["Touristin","Kann ich auch mit dem Bus fahren?","واش نقدر حتى نمشي بالطوبيس؟"],["Passant","Ja. Nehmen Sie den Bus Nummer fünf.","إيه. خد الطوبيس رقم خمسة."],["Touristin","Wo ist die Haltestelle?","فين كاينة محطة الطوبيس؟"],["Passant","Sie ist an der Ecke, gegenüber dem Café.","كاينة فالزاوية، مقابلة مع القهوة."],["Touristin","Vielen Dank für Ihre Hilfe!","شكراً بزاف على المساعدة ديالك!"],["Passant","Gern geschehen. Gute Fahrt!","بلا جميل. رحلة سعيدة!"]]},{"title":"Urlaub, Jahreszeiten und Erlebnisse","intro":"Sprich über Jahreszeiten, Urlaubsziele, Aktivitäten und neue Erlebnisse.","lines":[["Sara","Welche Jahreszeit magst du am liebsten?","شنو هو الفصل اللي كيعجبك أكثر؟"],["Adam","Ich mag den Sommer. Es ist warm und sonnig.","كنحب الصيف، كيكون الجو دافئ ومشمس."],["Sara","Wohin fährst du im Urlaub?","لفين كتمشي فالعطلة؟"],["Adam","Ich fahre gern ans Meer und liege am Strand.","كنمشي للبحر وكنرتاح فالشاطئ."],["Sara","Warst du schon einmal in Italien?","واش سبق ليك مشيتي لإيطاليا؟"],["Adam","Nein, ich war noch nie in Italien. Ich würde gern nach Rom reisen.","لا، ما سبقش ليا مشيت لإيطاليا. بغيت نسافر لروما."],["Sara","Was machst du gern im Urlaub?","شنو كيعجبك تدير فالعطلة؟"],["Adam","Ich schwimme, wandere und besuche Museen.","كنعوم، وكنتمشى فالجبال، وكنزور المتاحف."],["Sara","Mit wem reist du?","مع من كتسافر؟"],["Adam","Ich reise mit meiner Familie. Wir haben viel Spaß.","كنسافر مع العائلة ديالي وكنستمتعو بزاف."],["Sara","Das klingt schön!","هادشي كيبان زوين!"],["Adam","Ja, der Urlaub ist immer ein schönes Erlebnis.","إيه، العطلة ديما تجربة زوينة."]]}];
 
 [lessons[2], lessons[3]] = [lessons[3], lessons[2]];
 [dialogues[2], dialogues[3]] = [dialogues[3], dialogues[2]];
@@ -1257,7 +1304,7 @@ let competitionExerciseSelections = {};
 let competitionExerciseDrafts = {};
 let competitionExerciseTileDrafts = {};
 // Catalog metadata only: no answer keys or full questions are sent to students.
-const competitionTestCatalog = [{"name":"Hallo & Herkunft","types":[{"name":"Verben","count":5},{"name":"Nomen","count":3},{"name":"Adjektive","count":3},{"name":"Präpositionen","count":3},{"name":"Grammatik","count":3}]},{"name":"Familie","types":[{"name":"Verben","count":7},{"name":"Nomen","count":18},{"name":"Adjektive","count":9},{"name":"Präpositionen","count":5},{"name":"Grammatik","count":5}]},{"name":"Wohnen","types":[{"name":"Verben","count":3},{"name":"Nomen","count":3},{"name":"Adjektive","count":3},{"name":"Präpositionen","count":3},{"name":"Grammatik","count":3}]},{"name":"Essen und Trinken","types":[{"name":"Verben","count":3},{"name":"Nomen","count":3},{"name":"Adjektive","count":3},{"name":"Präpositionen","count":3},{"name":"Grammatik","count":3}]},{"name":"Mein Alltag","types":[{"name":"Verben","count":3},{"name":"Nomen","count":3},{"name":"Adjektive","count":3},{"name":"Präpositionen","count":3},{"name":"Grammatik","count":3}]},{"name":"Meine Stadt, meine Wohnung","types":[{"name":"Zusatztest · Wörter verbinden","count":10},{"name":"Zusatztest · Artikel-Detektiv","count":12},{"name":"Zusatztest · Übersetzungsquiz","count":8},{"name":"Zusatztest · Lückensätze","count":8},{"name":"Zusatztest · Satzbau-Werkstatt","count":5},{"name":"Zusatztest · Wo bist du? – Präpositionen","count":6},{"name":"Zusatztest · Verben im Alltag","count":8},{"name":"Zusatztest · Adjektive-Duell","count":4},{"name":"Zusatztest · Lesen und verstehen","count":5},{"name":"Zusatztest · Fehler-Polizei","count":5},{"name":"Zusatztest · Wörter sortieren","count":12},{"name":"Zusatztest · Übersetzungswerkstatt","count":5},{"name":"Zusatztest · Abschlusstest","count":12}]},{"name":"Wie, wo und wann?","types":[{"name":"Zusatztest · Wörter verbinden","count":10},{"name":"Zusatztest · Wetter-Detektiv","count":8},{"name":"Zusatztest · Jahreszeiten und Monate","count":8},{"name":"Zusatztest · Wochentage ergänzen","count":5},{"name":"Zusatztest · Lückensätze","count":8},{"name":"Zusatztest · Satzbau-Werkstatt","count":5},{"name":"Zusatztest · am oder im?","count":8},{"name":"Zusatztest · Verben im Präsens","count":8},{"name":"Zusatztest · Wie, wo oder wann?","count":8},{"name":"Zusatztest · Hördetektiv (Satzverständnis)","count":5},{"name":"Zusatztest · Lesen und verstehen","count":5},{"name":"Zusatztest · Fehler-Polizei","count":5},{"name":"Zusatztest · Wörter sortieren","count":12},{"name":"Zusatztest · Übersetzungswerkstatt","count":5},{"name":"Zusatztest · Abschlusstest","count":12}]},{"name":"Unterwegs","types":[{"name":"Zusatztest · Wörter verbinden","count":10},{"name":"Zusatztest · Artikel-Detektiv","count":12},{"name":"Zusatztest · Übersetzungsquiz","count":8},{"name":"Zusatztest · Lückensätze","count":8},{"name":"Zusatztest · Buchstabensalat","count":8},{"name":"Zusatztest · Satzbau-Werkstatt","count":5},{"name":"Zusatztest · Mit dem Bus oder mit der Bahn?","count":6},{"name":"Zusatztest · Verben unterwegs","count":8},{"name":"Zusatztest · Adjektive-Match","count":8},{"name":"Zusatztest · Lesen und verstehen","count":5},{"name":"Zusatztest · Fehler-Polizei","count":5},{"name":"Zusatztest · Wörter sortieren","count":12},{"name":"Zusatztest · Übersetzungswerkstatt","count":5},{"name":"Zusatztest · Abschlusstest","count":12}]},{"name":"Unter Freunden – Der Flohmarkt","types":[{"name":"Zusatztest · Wörter verbinden","count":10},{"name":"Zusatztest · Artikel-Detektiv","count":12},{"name":"Zusatztest · Übersetzungsquiz","count":10},{"name":"Zusatztest · Lückensätze","count":8},{"name":"Zusatztest · Buchstabensalat","count":8},{"name":"Zusatztest · Satzbau-Werkstatt","count":5},{"name":"Zusatztest · Adjektive im Flohmarkt","count":8},{"name":"Zusatztest · Verben richtig konjugieren","count":8},{"name":"Zusatztest · Adjektive verbinden","count":8},{"name":"Zusatztest · Lesen und verstehen","count":6},{"name":"Zusatztest · Dialog ergänzen","count":4},{"name":"Zusatztest · Fehler-Polizei","count":8},{"name":"Zusatztest · Wörter sortieren","count":16},{"name":"Zusatztest · Übersetzungswerkstatt","count":8},{"name":"Zusatztest · Abschlusstest","count":15}]},{"name":"Gesundheit & Termine","types":[{"name":"Verben","count":3},{"name":"Nomen","count":3},{"name":"Adjektive","count":3},{"name":"Präpositionen","count":3},{"name":"Grammatik","count":3}]}];
+const competitionTestCatalog = [{"name":"Hallo & Herkunft","types":[{"name":"Verben","count":5},{"name":"Nomen","count":3},{"name":"Adjektive","count":3},{"name":"Präpositionen","count":3},{"name":"Grammatik","count":3}]},{"name":"Familie","types":[{"name":"Verben","count":7},{"name":"Nomen","count":18},{"name":"Adjektive","count":9},{"name":"Präpositionen","count":5},{"name":"Grammatik","count":5}]},{"name":"Wohnen","types":[{"name":"Verben","count":3},{"name":"Nomen","count":3},{"name":"Adjektive","count":3},{"name":"Präpositionen","count":3},{"name":"Grammatik","count":3}]},{"name":"Essen und Trinken","types":[{"name":"Verben","count":3},{"name":"Nomen","count":3},{"name":"Adjektive","count":3},{"name":"Präpositionen","count":3},{"name":"Grammatik","count":3}]},{"name":"Mein Alltag","types":[{"name":"Verben","count":3},{"name":"Nomen","count":3},{"name":"Adjektive","count":3},{"name":"Präpositionen","count":3},{"name":"Grammatik","count":3}]},{"name":"Meine Stadt, meine Wohnung","types":[{"name":"Zusatztest · Wörter verbinden","count":10},{"name":"Zusatztest · Artikel-Detektiv","count":12},{"name":"Zusatztest · Übersetzungsquiz","count":8},{"name":"Zusatztest · Lückensätze","count":8},{"name":"Zusatztest · Satzbau-Werkstatt","count":5},{"name":"Zusatztest · Wo bist du? – Präpositionen","count":6},{"name":"Zusatztest · Verben im Alltag","count":8},{"name":"Zusatztest · Adjektive-Duell","count":4},{"name":"Zusatztest · Lesen und verstehen","count":5},{"name":"Zusatztest · Fehler-Polizei","count":5},{"name":"Zusatztest · Wörter sortieren","count":12},{"name":"Zusatztest · Übersetzungswerkstatt","count":5},{"name":"Zusatztest · Abschlusstest","count":12}]},{"name":"Wie, wo und wann?","types":[{"name":"Zusatztest · Wörter verbinden","count":10},{"name":"Zusatztest · Wetter-Detektiv","count":8},{"name":"Zusatztest · Jahreszeiten und Monate","count":8},{"name":"Zusatztest · Wochentage ergänzen","count":5},{"name":"Zusatztest · Lückensätze","count":8},{"name":"Zusatztest · Satzbau-Werkstatt","count":5},{"name":"Zusatztest · am oder im?","count":8},{"name":"Zusatztest · Verben im Präsens","count":8},{"name":"Zusatztest · Wie, wo oder wann?","count":8},{"name":"Zusatztest · Hördetektiv (Satzverständnis)","count":5},{"name":"Zusatztest · Lesen und verstehen","count":5},{"name":"Zusatztest · Fehler-Polizei","count":5},{"name":"Zusatztest · Wörter sortieren","count":12},{"name":"Zusatztest · Übersetzungswerkstatt","count":5},{"name":"Zusatztest · Abschlusstest","count":12}]},{"name":"Unterwegs","types":[{"name":"Zusatztest · Wörter verbinden","count":10},{"name":"Zusatztest · Artikel-Detektiv","count":12},{"name":"Zusatztest · Übersetzungsquiz","count":8},{"name":"Zusatztest · Lückensätze","count":8},{"name":"Zusatztest · Buchstabensalat","count":8},{"name":"Zusatztest · Satzbau-Werkstatt","count":5},{"name":"Zusatztest · Mit dem Bus oder mit der Bahn?","count":6},{"name":"Zusatztest · Verben unterwegs","count":8},{"name":"Zusatztest · Adjektive-Match","count":8},{"name":"Zusatztest · Lesen und verstehen","count":5},{"name":"Zusatztest · Fehler-Polizei","count":5},{"name":"Zusatztest · Wörter sortieren","count":12},{"name":"Zusatztest · Übersetzungswerkstatt","count":5},{"name":"Zusatztest · Abschlusstest","count":12}]},{"name":"Unter Freunden – Der Flohmarkt","types":[{"name":"Zusatztest · Wörter verbinden","count":10},{"name":"Zusatztest · Artikel-Detektiv","count":12},{"name":"Zusatztest · Übersetzungsquiz","count":10},{"name":"Zusatztest · Lückensätze","count":8},{"name":"Zusatztest · Buchstabensalat","count":8},{"name":"Zusatztest · Satzbau-Werkstatt","count":5},{"name":"Zusatztest · Adjektive im Flohmarkt","count":8},{"name":"Zusatztest · Verben richtig konjugieren","count":8},{"name":"Zusatztest · Adjektive verbinden","count":8},{"name":"Zusatztest · Lesen und verstehen","count":6},{"name":"Zusatztest · Dialog ergänzen","count":4},{"name":"Zusatztest · Fehler-Polizei","count":8},{"name":"Zusatztest · Wörter sortieren","count":16},{"name":"Zusatztest · Übersetzungswerkstatt","count":8},{"name":"Zusatztest · Abschlusstest","count":15}]},{"name":"Urlaub, Jahreszeiten und Erlebnisse","types":[{"name":"Verben","count":8},{"name":"Nomen","count":16},{"name":"Adjektive","count":7},{"name":"Präpositionen","count":4},{"name":"Grammatik","count":7}]}];
 const a2CompetitionTestCatalog = [{"name":"Erfahrungen und Pläne","types":[]},{"name":"Gut aussehen","types":[{"name":"Übung 1 · Kleidungsstücke verbinden","count":12},{"name":"Übung 2 · Artikel-Detektiv","count":10},{"name":"Übung 3 · Farben-Quiz","count":10},{"name":"Übung 4 · Welche Kleidung passt?","count":4},{"name":"Übung 5 · Akkusativ – Was trage ich?","count":8},{"name":"Übung 6 · Das Verb tragen","count":7},{"name":"Übung 7 · Hat oder haben?","count":4},{"name":"Übung 8 · Wo? – Präpositionen","count":4},{"name":"Übung 10 · Vergleichssätze","count":6},{"name":"Übung 12 · Lesen und verstehen","count":5},{"name":"Übung 13 · Dialog in einer Boutique","count":5},{"name":"Übung 14 · Wortschatz sortieren","count":12},{"name":"Übung 15 · Als oder wie?","count":8},{"name":"Übung 17 · Abschlusstest","count":12}]},{"name":"Familie und Freunde","types":[{"name":"Übung 1 · Familienwörter verbinden","count":10},{"name":"Übung 2 · Artikel-Detektiv","count":12},{"name":"Übung 3 · Familien-Quiz","count":8},{"name":"Übung 4 · Familienbeziehungen","count":8},{"name":"Übung 7 · Welche Familie ist das?","count":6},{"name":"Übung 8 · Paare: männlich und weiblich","count":8},{"name":"Übung 9 · Adjektive-Duell","count":4},{"name":"Übung 10 · Hördetektiv","count":5},{"name":"Übung 11 · Lesen und verstehen","count":6},{"name":"Übung 14 · Wörter sortieren","count":12},{"name":"Übung 17 · Abschlusstest","count":12}]},{"name":"Die Ferienwohnung","types":[{"name":"Übung 1 · Wörter verbinden","count":10},{"name":"Übung 2 · Artikel-Detektiv","count":12},{"name":"Übung 3 · Übersetzungsquiz","count":8},{"name":"Übung 4 · Lückensätze","count":8},{"name":"Übung 7 · Wo bist du? – Präpositionen","count":8},{"name":"Übung 8 · Verben: stehen, stellen, liegen, legen, hängen","count":8},{"name":"Übung 9 · Verben und ihr Gegenteil","count":6},{"name":"Übung 10 · Hördetektiv","count":5},{"name":"Übung 11 · Lesen und verstehen","count":6},{"name":"Übung 14 · Wörter sortieren","count":12},{"name":"Übung 17 · Abschlusstest","count":12}]},{"name":"Guten Appetit","types":[{"name":"Übung 1 · Lebensmittel verbinden","count":10},{"name":"Übung 2 · Artikel-Detektiv","count":12},{"name":"Übung 4 · Lebensmittel-Verben","count":8},{"name":"Übung 7 · Akkusativ: Mengenangaben","count":6},{"name":"Übung 8 · Was passt nicht?","count":5},{"name":"Übung 9 · Müll richtig sortieren","count":4},{"name":"Übung 10 · Was ist falsch?","count":4},{"name":"Übung 11 · Lesen und verstehen","count":5},{"name":"Übung 12 · Dialog im Restaurant","count":5},{"name":"Übung 14 · Gast oder Kellner?","count":5},{"name":"Übung 15 · Konjunktiv II: Formen","count":12},{"name":"Übung 16 · Sätze ergänzen","count":8},{"name":"Übung 17 · Abschlusstest","count":12}]},{"name":"Gefühle und Streetart","types":[{"name":"Übung 1 · Gefühle erkennen","count":5},{"name":"Übung 2 · Gefühle und Situationen","count":5},{"name":"Übung 3 · Synonyme","count":5},{"name":"Übung 4 · Lückensätze: Gefühle","count":5},{"name":"Übung 5 · Streetart-Wortschatz","count":11},{"name":"Übung 6 · Lesen: Streetart in Berlin","count":10},{"name":"Übung 7 · Meinungen ausdrücken","count":5},{"name":"Übung 8 · dies- und Possessivpronomen","count":15},{"name":"Übung 9 · Reflexivpronomen","count":9},{"name":"Übung 10 · Reflexive Verben im Satz","count":14},{"name":"Übung 13 · Lesen: Open-Air-Kino","count":5},{"name":"Übung 14 · Zeitangaben und Dativ","count":13},{"name":"Übung 15 · Reflexivpronomen im Kontext","count":13},{"name":"Übung 17 · Abschlusstest","count":12}]},{"name":"Schule und Beruf","types":[{"name":"Übung 1 · Wortverbindungen","count":10},{"name":"Übung 2 · Was passt?","count":12},{"name":"Übung 3 · Übersetzungsquiz","count":8},{"name":"Übung 4 · Lückensätze","count":8},{"name":"Übung 7 · Mit oder ohne?","count":6},{"name":"Übung 8 · Modalverben im Präteritum","count":8},{"name":"Übung 9 · Ausdrücke zuordnen","count":4},{"name":"Übung 10 · Hördetektiv","count":5},{"name":"Übung 11 · Die Welt ist mein Büro","count":5},{"name":"Übung 14 · Grammatik sortieren","count":12},{"name":"Übung 17 · Abschlusstest","count":12}]},{"name":"Glück und Gesundheit","types":[{"name":"Übung 1 · Körper-Quiz","count":5},{"name":"Übung 2 · Körperteile verbinden","count":8},{"name":"Übung 3 · Richtig oder falsch?","count":5},{"name":"Übung 4 · Unser Herz","count":5},{"name":"Übung 5 · Was fehlt Ihnen?","count":6},{"name":"Übung 6 · Dr. Brinkmann und seine Patienten","count":5},{"name":"Übung 7 · Verben in der richtigen Form","count":5},{"name":"Übung 8 · Beim Arzt sprechen","count":5},{"name":"Übung 9 · Gefühle zuordnen","count":6},{"name":"Übung 10 · Positiv oder negativ?","count":8},{"name":"Übung 11 · Wer ist am glücklichsten?","count":5},{"name":"Übung 12 · in, seit oder bis?","count":7},{"name":"Übung 13 · von … bis","count":4},{"name":"Übung 14 · Vergleiche: als oder wie?","count":5},{"name":"Übung 16 · Adjektivendungen","count":8},{"name":"Übung 17 · Abschlusstest","count":12}]},{"name":"Flohmarkt und Wochenende","types":[{"name":"Abschlusstest","count":8}]},{"name":"Reisen und Urlaubserlebnisse","types":[{"name":"Abschlusstest","count":8}]}];
 function competitionCatalogForLevel(level=competitionSelectedLevel){
   return normalizeGroupCourseLevel(level)==="A2"?a2CompetitionTestCatalog:competitionTestCatalog;
@@ -1535,6 +1582,7 @@ function items(){ return lessonData().data[currentCategory] || []; }
 // The visual vocabulary uses the exact illustrated words from the corresponding
 // standalone course lesson. Tests continue to use the original lessonData arrays.
 function learningItems(){
+  if(lessonNumber()===10) return items();
   const courseLesson=window.DEUTSCH_LESSON_VOCABULARY && window.DEUTSCH_LESSON_VOCABULARY[String(lessonNumber())];
   const courseWords=courseLesson && courseLesson[currentCategory];
   if(!Array.isArray(courseWords) || !courseWords.length) return items();
@@ -3479,13 +3527,13 @@ const tutorLessonProfiles = [
     vocab:["der Bus","der Zug","der Bahnhof","die Straße","fahren"]
   },
   {
-    title:"Gesundheit & Termine", label:"الصحة والمواعيد", goal:"صف حالتك الصحية واحجز موعداً عند الطبيب.",
-    greeting:"Guten Tag! Was fehlt Ihnen? Haben Sie Schmerzen?",
-    translation:"نهارك سعيد! ما الذي يؤلمك؟ هل تشعر بألم؟",
-    questions:["Wie fühlen Sie sich?","Seit wann haben Sie Schmerzen?","Wann ist Ihr Termin beim Arzt?"],
-    sample:"Ich habe Kopfschmerzen. Ich möchte einen Termin beim Arzt.",
-    keywords:["krank","gesund","schmerzen","kopfschmerzen","arzt","termin","weh","fühle","fuhle"],
-    vocab:["der Arzt","der Termin","krank","gesund","die Schmerzen"]
+    title:"Urlaub, Jahreszeiten und Erlebnisse", label:"العطلة والفصول والتجارب", goal:"تحدّث عن الفصول والعطلة والأماكن التي زرتها أو تريد زيارتها.",
+    greeting:"Welche Jahreszeit mögen Sie? Wo möchten Sie Urlaub machen?",
+    translation:"ما الفصل الذي تحبه؟ وأين تريد قضاء العطلة؟",
+    questions:["Was machen Sie gern im Urlaub?","Waren Sie schon einmal am Meer?","Wohin würden Sie gern reisen?"],
+    sample:"Ich mag den Sommer. Ich fahre gern ans Meer. Ich war noch nie in Rom.",
+    keywords:["urlaub","reise","reisen","sommer","winter","frühling","fruhling","herbst","meer","strand","berge","war","noch","nie","würde","wurde"],
+    vocab:["der Urlaub","die Jahreszeit","der Strand","das Meer","reisen"]
   }
 ];
 
@@ -7740,7 +7788,7 @@ function studentVocabularyReviewLessonName(lessonNo, level="A1"){
     7:"Wie, wo und wann?",
     8:"Unterwegs",
     9:"Flohmarkt",
-    10:"Reisen & Jahreszeiten"
+    10:"Freizeit & Hobbys"
   };
   return courseNames[no] || lessons[no-1]?.name || `Lektion ${no}`;
 }
@@ -7774,12 +7822,114 @@ function studentVocabularyReviewIcon(word,category,fallback=""){
   if(category==="Verben")return "🏃";
   return "⭐";
 }
+const STUDENT_A1_FREIZEIT_VOCABULARY = {
+  Nomen: [
+    {de:"die Freizeit",ar:"وقت الفراغ",icon:"⏳"},
+    {de:"das Rad",ar:"الدراجة",icon:"🚲"},
+    {de:"die Freunde",ar:"الأصدقاء",icon:"👥"},
+    {de:"das Kino",ar:"السينما",icon:"🎬"},
+    {de:"der Park",ar:"الحديقة",icon:"🌳"},
+    {de:"die Musik",ar:"الموسيقى",icon:"🎵"},
+    {de:"das Computerspiel",ar:"لعبة الكمبيوتر",icon:"🎮"},
+    {de:"das Internet",ar:"الإنترنت",icon:"🌐"},
+    {de:"die Familie",ar:"العائلة",icon:"👨‍👩‍👧"},
+    {de:"das Klavier",ar:"البيانو",icon:"🎹"},
+    {de:"das Fitness-Studio",ar:"صالة اللياقة البدنية",icon:"🏋️"},
+    {de:"der Fußball",ar:"كرة القدم",icon:"⚽"},
+    {de:"das Wochenende",ar:"نهاية الأسبوع",icon:"📅"},
+    {de:"der Montag",ar:"يوم الاثنين",icon:"🗓️"},
+    {de:"der Samstag",ar:"يوم السبت",icon:"📆"},
+    {de:"der Sonntag",ar:"يوم الأحد",icon:"📆"},
+    {de:"der Morgen",ar:"الصباح",icon:"🌅"},
+    {de:"der Mittag",ar:"منتصف النهار",icon:"☀️"},
+    {de:"der Abend",ar:"المساء",icon:"🌙"},
+    {de:"das Schwimmbad",ar:"المسبح",icon:"🏊"},
+    {de:"die Stadt",ar:"المدينة",icon:"🏙️"},
+    {de:"der Film",ar:"الفيلم",icon:"🎞️"}
+  ],
+  Verben: [
+    {de:"Rad fahren",ar:"يركب الدراجة",example:"Ich fahre gern Rad.",exampleAr:"أحب ركوب الدراجة.",icon:"🚲"},
+    {de:"Freunde treffen",ar:"يلتقي الأصدقاء",example:"Ich treffe meine Freunde.",exampleAr:"ألتقي أصدقائي.",icon:"👥"},
+    {de:"ins Kino gehen",ar:"يذهب إلى السينما",example:"Am Wochenende gehe ich ins Kino.",exampleAr:"في عطلة نهاية الأسبوع أذهب إلى السينما.",icon:"🎬"},
+    {de:"feiern",ar:"يحتفل",example:"Wir feiern am Samstag.",exampleAr:"نحتفل يوم السبت.",icon:"🎉"},
+    {de:"in den Park gehen",ar:"يذهب إلى الحديقة",example:"Ich gehe in den Park.",exampleAr:"أذهب إلى الحديقة.",icon:"🌳"},
+    {de:"Musik hören",ar:"يستمع إلى الموسيقى",example:"Ich höre gern Musik.",exampleAr:"أحب الاستماع إلى الموسيقى.",icon:"🎵"},
+    {de:"Computerspiele spielen",ar:"يلعب ألعاب الكمبيوتر",example:"Ich spiele gern Computerspiele.",exampleAr:"أحب لعب ألعاب الكمبيوتر.",icon:"🎮"},
+    {de:"im Internet surfen",ar:"يتصفح الإنترنت",example:"Ich surfe im Internet.",exampleAr:"أتصفح الإنترنت.",icon:"🌐"},
+    {de:"tanzen",ar:"يرقص",example:"Ich tanze gern.",exampleAr:"أحب الرقص.",icon:"💃"},
+    {de:"snowboarden",ar:"يتزلج على اللوح",example:"Ich snowboarde im Winter.",exampleAr:"أتزلج على اللوح في الشتاء.",icon:"🏂"},
+    {de:"die Familie besuchen",ar:"يزور العائلة",example:"Ich besuche meine Familie.",exampleAr:"أزور عائلتي.",icon:"👨‍👩‍👧"},
+    {de:"Klavier spielen",ar:"يعزف على البيانو",example:"Ich spiele Klavier.",exampleAr:"أعزف على البيانو.",icon:"🎹"},
+    {de:"fernsehen",ar:"يشاهد التلفاز",example:"Am Abend sehe ich fern.",exampleAr:"في المساء أشاهد التلفاز.",icon:"📺"},
+    {de:"einkaufen",ar:"يتسوق",example:"Ich gehe am Samstag einkaufen.",exampleAr:"أذهب للتسوق يوم السبت.",icon:"🛍️"},
+    {de:"ins Fitness-Studio gehen",ar:"يذهب إلى صالة اللياقة",example:"Ich gehe ins Fitness-Studio.",exampleAr:"أذهب إلى صالة اللياقة.",icon:"🏋️"},
+    {de:"können",ar:"يستطيع",example:"Ich kann gut schwimmen.",exampleAr:"أستطيع السباحة جيداً.",icon:"💪"},
+    {de:"müssen",ar:"يجب عليه",example:"Ich muss heute lernen.",exampleAr:"يجب عليّ أن أدرس اليوم.",icon:"📌"},
+    {de:"möchten",ar:"يودّ / يرغب",example:"Ich möchte am Wochenende ins Kino gehen.",exampleAr:"أود الذهاب إلى السينما في عطلة نهاية الأسبوع.",icon:"💬"},
+    {de:"sehen",ar:"يشاهد",example:"Am Sonntag sehe ich einen Film.",exampleAr:"يوم الأحد أشاهد فيلماً.",icon:"🎞️"}
+  ],
+  Adjektive: [],
+  Ausdrücke: [
+    {de:"Ich lese gern.",ar:"أحب القراءة.",icon:"📖"},
+    {de:"Ich höre gern Musik.",ar:"أحب الاستماع إلى الموسيقى.",icon:"🎵"},
+    {de:"Ich spiele gern Fußball.",ar:"أحب لعب كرة القدم.",icon:"⚽"},
+    {de:"Ich fahre gern Rad.",ar:"أحب ركوب الدراجة.",icon:"🚲"},
+    {de:"ich kann",ar:"أستطيع",icon:"💪"},
+    {de:"ich muss",ar:"يجب عليّ",icon:"📌"},
+    {de:"ich möchte",ar:"أودّ",icon:"💬"},
+    {de:"du kannst",ar:"تستطيع",icon:"💪"},
+    {de:"du musst",ar:"يجب عليك",icon:"📌"},
+    {de:"du möchtest",ar:"تودّ",icon:"💬"},
+    {de:"er / sie / es kann",ar:"هو / هي يستطيع",icon:"💪"},
+    {de:"er / sie / es muss",ar:"يجب عليه / عليها",icon:"📌"},
+    {de:"er / sie / es möchte",ar:"هو / هي يودّ",icon:"💬"},
+    {de:"wir können",ar:"نستطيع",icon:"💪"},
+    {de:"wir müssen",ar:"يجب علينا",icon:"📌"},
+    {de:"wir möchten",ar:"نودّ",icon:"💬"},
+    {de:"in den Park",ar:"إلى الحديقة",icon:"🌳"},
+    {de:"im Park",ar:"في الحديقة",icon:"🌳"},
+    {de:"ins Kino",ar:"إلى السينما",icon:"🎬"},
+    {de:"im Kino",ar:"في السينما",icon:"🎬"},
+    {de:"in die Stadt",ar:"إلى المدينة",icon:"🏙️"},
+    {de:"in der Stadt",ar:"في المدينة",icon:"🏙️"},
+    {de:"am Montag",ar:"يوم الاثنين",icon:"🗓️"},
+    {de:"am Wochenende",ar:"في عطلة نهاية الأسبوع",icon:"📅"},
+    {de:"um 8 Uhr",ar:"على الساعة الثامنة",icon:"🕗"},
+    {de:"am Morgen",ar:"في الصباح",icon:"🌅"},
+    {de:"am Mittag",ar:"في منتصف النهار",icon:"☀️"},
+    {de:"am Abend",ar:"في المساء",icon:"🌙"},
+    {de:"am Samstag",ar:"يوم السبت",icon:"📆"},
+    {de:"am Sonntag",ar:"يوم الأحد",icon:"📆"},
+    {de:"vor dem Schwimmbad",ar:"أمام المسبح",icon:"🏊"},
+    {de:"Was machst du gern?",ar:"ماذا تحب أن تفعل؟",icon:"💬"},
+    {de:"Ich lese gern und höre Musik.",ar:"أحب القراءة والاستماع إلى الموسيقى.",icon:"📖"},
+    {de:"Was machst du am Wochenende?",ar:"ماذا تفعل في عطلة نهاية الأسبوع؟",icon:"📅"},
+    {de:"Ich treffe meine Freunde.",ar:"ألتقي أصدقائي.",icon:"👥"}
+  ]
+};
+
+function studentVocabularyUniqueEntries(...groups){
+  const seen=new Set();
+  return groups.flat().filter(entry=>{
+    const german=Array.isArray(entry)?entry[0]:entry?.de;
+    const key=String(german||"").toLocaleLowerCase("de").replace(/\s*\([^)]*\)/g,"").trim();
+    if(!key||seen.has(key))return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function studentVocabularyReviewEntries(lessonNo,category,level=studentVocabularyReviewLevel){
   const courseLevel=String(level||"A1").toUpperCase()==="A2"?"A2":"A1";
   const no=Number(lessonNo)||1;
   let source=[];
   if(courseLevel==="A2"){
     source=STUDENT_A2_VOCABULARY[no]?.[category] || [];
+  }else if(no===5){
+    const freizeitLesson=lessons.find(lesson=>lesson.name==="Freizeit & Hobbys");
+    const baseEntries=freizeitLesson?.data?.[category] || [];
+    const freizeitEntries=STUDENT_A1_FREIZEIT_VOCABULARY[category] || [];
+    source=studentVocabularyUniqueEntries(baseEntries,freizeitEntries);
   }else{
     const courseLesson=window.DEUTSCH_LESSON_VOCABULARY && window.DEUTSCH_LESSON_VOCABULARY[String(no)];
     const courseEntries=courseLesson && courseLesson[category];
@@ -7829,6 +7979,9 @@ function studentVocabularyWordExamples(item){
   const key=studentVocabularyWordKey(item.german);
   const category=item.category||"Verben";
   const meaning=item.meaning||"";
+  if(category==="Ausdrücke"){
+    return [{de:item.german,ar:item.meaning,art:"💬"}];
+  }
   if(category==="Verben"){
     if(key==="sprechen"){
       return [
@@ -7988,7 +8141,7 @@ function studentVocabularyTrainingMethod(){
   return studentVocabularyTrainingMethods.find(method=>method.id===studentVocabularyTrainingMode)||null;
 }
 function studentVocabularyTrainingCategoryArabic(category){
-  return ({Nomen:"الأسماء",Verben:"الأفعال",Adjektive:"الصفات"})[category]||"المفردات";
+  return ({Nomen:"الأسماء",Verben:"الأفعال",Adjektive:"الصفات",Ausdrücke:"العبارات والتعابير"})[category]||"المفردات";
 }
 function studentVocabularyTrainingOptions(item,useGerman=false){
   const category=item.category||studentVocabularyReviewCategory||"Verben";
@@ -8009,6 +8162,10 @@ function studentVocabularyTrainingOptions(item,useGerman=false){
     Adjektive:{
       de:["schön","klein","ruhig","teuer"],
       ar:["جميل","صغير","هادئ","غالي"]
+    },
+    Ausdrücke:{
+      de:["am Wochenende","im Park","Ich lese gern.","um 8 Uhr"],
+      ar:["في عطلة نهاية الأسبوع","في الحديقة","أحب القراءة","على الساعة الثامنة"]
     }
   };
   const fallback=(fallbacks[category]||fallbacks.Verben)[useGerman?"de":"ar"];
@@ -8128,18 +8285,22 @@ function studentVocabularyReviewMarkup(){
   const lessonCount=level==="A2"?a2CourseLessons.length:lessons.length;
   const lessonNo=Math.min(lessonCount,Math.max(1,Number(studentVocabularyReviewLesson)||(level==="A2"?1:6)));
   studentVocabularyReviewLesson=lessonNo;
-  const category=["Nomen","Verben","Adjektive"].includes(studentVocabularyReviewCategory)?studentVocabularyReviewCategory:"Verben";
+  const categoryOptions=[
+    {id:"Nomen",label:"Nomen",icon:"♙"},
+    {id:"Verben",label:"Verben",icon:"🏃"},
+    {id:"Adjektive",label:"Adjektiv",icon:"☆"},
+    ...(level==="A1"&&lessonNo===5?[{id:"Ausdrücke",label:"Ausdrücke",icon:"💬"}]:[])
+  ];
+  const allowedCategoryIds=categoryOptions.map(item=>item.id);
+  const category=allowedCategoryIds.includes(studentVocabularyReviewCategory)?studentVocabularyReviewCategory:"Verben";
+  studentVocabularyReviewCategory=category;
   const entries=studentVocabularyReviewEntries(lessonNo,category,level);
   const options=Array.from({length:lessonCount},(_,index)=>{
     const no=index+1;
     const label=studentVocabularyReviewLessonName(no,level);
     return `<option value="${no}" ${no===lessonNo?"selected":""}>${level} · L${no} ${escapeHtml(label)}</option>`;
   }).join("");
-  const categoryButtons=[
-    {id:"Nomen",label:"Nomen",icon:"♙"},
-    {id:"Verben",label:"Verben",icon:"🏃"},
-    {id:"Adjektive",label:"Adjektiv",icon:"☆"}
-  ].map(item=>`<button type="button" class="student-vocab-category ${category===item.id?"active":""}" data-action="student-vocab-category" data-category="${item.id}" aria-pressed="${category===item.id}">
+  const categoryButtons=categoryOptions.map(item=>`<button type="button" class="student-vocab-category ${category===item.id?"active":""}" data-action="student-vocab-category" data-category="${item.id}" aria-pressed="${category===item.id}">
     <span>${item.icon}</span><strong>${item.label}</strong>
   </button>`).join("");
   const rows=entries.map(item=>{
@@ -8172,7 +8333,7 @@ function studentVocabularyReviewMarkup(){
       <select id="studentVocabularyLessonFilter" aria-label="اختَر الدرس" data-level="${level}">${options}</select>
       <span class="student-vocab-funnel" aria-hidden="true">⚲</span>
     </div>
-    <nav class="student-vocab-categories" aria-label="تصنيف المفردات">${categoryButtons}</nav>
+    <nav class="student-vocab-categories ${categoryOptions.length===4?"has-expressions":""}" aria-label="تصنيف المفردات">${categoryButtons}</nav>
     <button type="button" class="student-vocab-category-training" data-action="student-vocab-start-category-practice" data-category="${category}" data-lesson="${lessonNo}" data-level="${level}" ${entries.length?"":"disabled"}>
       <span class="student-vocab-category-training-icon">🎓</span>
       <span class="student-vocab-category-training-copy"><strong>تدرّب على ${studentVocabularyTrainingCategoryArabic(category)}</strong><small>اختبر نفسك في ${entries.length} ${entries.length===1?"كلمة":"كلمة من هذا الدرس"}</small></span>
@@ -9866,7 +10027,7 @@ function renderLevelHome(){
     {title:"التسوق", desc:"الشراء والأسعار والمقاسات", icon:"🛍️"},
     {title:"العمل والمهنة", desc:"المهن والعمل والحياة المهنية", icon:"💼"},
     {title:"المدينة والمواصلات", desc:"الأماكن والتنقل ووسائل النقل", icon:"🚆"},
-    {title:"الصحة والمواعيد", desc:"الصحة والأعراض وحجز المواعيد", icon:"🩺"}
+    {title:"العطلة والفصول والتجارب", desc:"الفصول الأربعة والعطلة والأنشطة والتجارب", icon:"🏖️"}
   ];
   const resultRows = Object.values(readStudentResults(currentUser?.id || "") || {}).filter(item=>item && typeof item==="object");
   const completedForLesson = index => resultRows.some(result=>{
@@ -10033,9 +10194,9 @@ function renderLessonHub(){
 
   const arabicTitles=[
     "التحية والتعارف","العائلة والأسرة","الطعام والشراب","السكن والمنزل","وقت الفراغ والهوايات",
-    "الحياة اليومية","التسوق والشراء","العمل والمهن","المدينة والمواصلات","الصحة والمواعيد"
+    "الحياة اليومية","التسوق والشراء","العمل والمهن","المدينة والمواصلات","العطلة والفصول والتجارب"
   ];
-  const heroIcons=["👋","👨‍👩‍👧","🥐","🏡","⚽","⏰","🛍️","💼","🚌","🩺"];
+  const heroIcons=["👋","👨‍👩‍👧","🥐","🏡","⚽","⏰","🛍️","💼","🚌","🏖️"];
   const arabicDescriptions=[
     "تعلّم عبارات التحية والتعارف وتقديم نفسك بالألمانية.",
     "تعلّم كيف تتحدث عن عائلتك وأفرادها.",
@@ -10046,7 +10207,7 @@ function renderLessonHub(){
     "تعلّم التسوق والسؤال عن الأسعار والكميات.",
     "تعرّف على المهن ومكان العمل والخبرة.",
     "تعلّم السؤال عن الطريق ووسائل النقل.",
-    "تعلّم وصف الحالة الصحية وحجز المواعيد."
+    "تعلّم الفصول الأربعة وأماكن العطلة والأنشطة والتحدث عن التجارب."
   ];
   const arabicTitle=arabicTitles[currentLesson]||lessonData().name;
   const heroIcon=heroIcons[currentLesson]||"📘";
@@ -12334,7 +12495,9 @@ document.addEventListener("click",function(event){
   }
   else if(action==="student-vocab-category"){
     const category=el.dataset.category||"Verben";
-    if(["Nomen","Verben","Adjektive"].includes(category)){
+    const allowedCategories=["Nomen","Verben","Adjektive"];
+    if(String(studentVocabularyReviewLevel||"A1").toUpperCase()!=="A2"&&Number(studentVocabularyReviewLesson)===5)allowedCategories.push("Ausdrücke");
+    if(allowedCategories.includes(category)){
       studentVocabularyReviewCategory=category;
       render();
     }
@@ -12394,7 +12557,9 @@ document.addEventListener("click",function(event){
     const category=el.dataset.category||studentVocabularyReviewCategory||"Verben";
     const lessonNo=Number(el.dataset.lesson)||Number(studentVocabularyReviewLesson)||6;
     const level=String(el.dataset.level||studentVocabularyReviewLevel||"A1").toUpperCase()==="A2"?"A2":"A1";
-    if(!["Nomen","Verben","Adjektive"].includes(category)){showToast("اختَر تصنيفاً صحيحاً للتدريب.");return;}
+    const allowedCategories=["Nomen","Verben","Adjektive"];
+    if(level==="A1"&&lessonNo===5)allowedCategories.push("Ausdrücke");
+    if(!allowedCategories.includes(category)){showToast("اختَر تصنيفاً صحيحاً للتدريب.");return;}
     const pool=studentVocabularyReviewEntries(lessonNo,category,level).filter(entry=>entry.german&&entry.meaning);
     if(!pool.length){showToast("لا توجد كلمات للتدريب في هذا التصنيف.");return;}
     studentVocabularyTrainingScope="category";
@@ -12685,7 +12850,7 @@ document.addEventListener("click",function(event){
     const stage=el.dataset.stage||"explanation";
     if(stage==="explanation"){
       activeVerbCard=null;
-      if([4,5,6,7,8].includes(currentLesson)){openLessonSectionPage("course");return;}
+      if([4,5,6,7,8,9].includes(currentLesson)){openLessonSectionPage("course");return;}
       const coursePath=getLessonSectionPagePath("course",lessonNumber());
       if(window.location.protocol==="file:"){
         courseReturnPage="lesson-hub";page="lesson";render();return;
